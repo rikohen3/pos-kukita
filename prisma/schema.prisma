@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Supplier {
+  id       Int       @id @default(autoincrement())
+  name     String
+  phone    String?
+  items    String?   
+  products Product[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    
+  products Product[]
+}
+
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  image       String?
+  categoryId  Int
+  category    Category      @relation(fields: [categoryId], references: [id])
+  supplierId  Int
+  supplier    Supplier      @relation(fields: [supplierId], references: [id])
+  buyPrice    Int           
+  sellPrice   Int           
+  stock       Int           @default(0)
+  packageItems PackageItem[]
+  saleItems    SaleItem[]
+}
+
+model Package {
+  id          Int           @id @default(autoincrement())
+  name        String   
+  image       String?     
+  sellPrice   Int
+  isActive    Boolean       @default(true)
+  items       PackageItem[]
+  saleItems   SaleItem[]
+}
+
+model PackageItem {
+  id        Int     @id @default(autoincrement())
+  packageId Int
+  package   Package @relation(fields: [packageId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  qty       Int     
+}
+
+model Sale {
+  id            Int        @id @default(autoincrement())
+  invoice       String     @unique
+  totalAmount   Int
+  paymentMethod String     
+  cashReceived  Int?
+  createdAt     DateTime   @default(now())
+  items         SaleItem[]
+}
+
+model SaleItem {
+  id        Int      @id @default(autoincrement())
+  saleId    Int
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  productId Int?
+  product   Product? @relation(fields: [productId], references: [id])
+  packageId Int?
+  package   Package? @relation(fields: [packageId], references: [id])
+  qty       Int
+  price     Int
+  subtotal  Int
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  category    String   
+  description String
+  amount      Int
+  createdAt   DateTime @default(now())
+}
