@@ -253,6 +253,11 @@ app.put('/api/products/:id/stock', async (req, res) => {
   }
 });
 
+// --- HALAMAN UTAMA SERVER ---
+app.get('/', (req, res) => {
+  res.send('<h1>Server POS Kukita Berjalan Normal! 🚀</h1><p>Backend API siap digunakan oleh aplikasi kasir.</p>');
+});
+
 // --- MENJALANKAN SERVER ---
 app.listen(PORT, () => {
   console.log(`🚀 POS Kukita Backend (Dapur Utama) mendengarkan di: http://localhost:${PORT}`);
