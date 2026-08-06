@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesin Kasir POS Kukita</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; display: flex; gap: 20px; flex-direction: column; }
+        .header { background: #ff4757; color: white; padding: 15px; border-radius: 8px; text-align: center; }
+        
+        /* Layout untuk membagi layar Kiri (Menu) dan Kanan (Keranjang) */
+        .layar-utama { display: flex; gap: 20px; align-items: flex-start; }
+        .kiri { flex: 2; }
+        .kanan { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 20px; }
+        
+        .produk-container { display: flex; flex-wrap: wrap; gap: 15px; }
+        .kartu-produk { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 180px; text-align: center; border: 2px solid transparent; display: flex; flex-direction: column; justify-content: space-between; }
+        .kartu-produk:hover { border-color: #ff4757; }
+        .harga { color: #2ed573; font-weight: bold; font-size: 18px; margin: 10px 0; }
+        
+        /* Tombol & Keranjang */
+        .btn { background: #ff4757; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
+        .btn:hover { background: #e03e4d; }
+        .btn-success { background: #2ed573; font-size: 18px; padding: 15px; margin-top: 20px; width: 100%; }
+        .btn-success:hover { background: #27b662; }
+        .btn-success:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .item-keranjang { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 12px 0; align-items: center;}
+        .item-controls { display: flex; gap: 10px; align-items: center; }
+        .btn-kecil { padding: 5px 12px; cursor: pointer; border: none; background: #ddd; border-radius: 5px; font-weight: bold; }
+        .btn-kecil:hover { background: #ccc; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🛒 Kasir POS Kukita</h1>
+        <p>Status Mesin: <span id="status" style="color: #ffff00;">Menghubungkan ke Server...</span></p>
+    </div>
+
+    <div class="layar-utama">
+        <!-- Bagian Kiri: Katalog Produk -->
+        <div class="kiri">
+            <h2 style="margin-top: 0;">Daftar Menu</h2>
+            <div class="produk-container" id="daftar-menu">
+                <!-- Produk otomatis dimuat di sini -->
+            </div>
+        </div>
+
+        <!-- Bagian Kanan: Keranjang Belanja -->
+        <div class="kanan">
+            <h2 style="margin-top: 0;">🛒 Keranjang Belanja</h2>
+            <div id="isi-keranjang">
+                <p style="color: gray; text-align: center;">Keranjang masih kosong</p>
+            </div>
+            
+            <hr style="margin: 20px 0; border: 0; border-top: 2px dashed #ccc;">
+            
+            <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: bold;">
+                <span>Total:</span>
+                <span id="total-harga">Rp 0</span>
+            </div>
+            
+            <button class="btn btn-success" id="btn-bayar" onclick="prosesPembayaran()" disabled>Bayar Sekarang</button>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'https://pos-kukita-production.up.railway.app';
+        let keranjang = []; // Brankas sementara penyimpan data belanja
+
+        // 1. Fungsi Mengambil Data Kue dari Server
+        async function ambilKatalog() {
+            try {
+                const respons = await fetch(`${SERVER_URL}/api/catalog`);
+                const hasil = await respons.json();
+                
+                if (hasil.success) {
+                    document.getElementById('status').innerText = "Online 🟢";
+                    tampilkanProduk(hasil.data.products);
+                }
+            } catch (error) {
+                document.getElementById('status').innerText = "Gagal Terhubung 🔴";
+                console.error("Error:", error);
+            }
+        }
+
+        // 2. Fungsi Menampilkan Kartu Kue
+        function tampilkanProduk(produk) {
+            const wadah = document.getElementById('daftar-menu');
+            wadah.innerHTML = ''; 
+
+            produk.forEach(item => {
+                // Bungkus data untuk dilempar ke keranjang saat diklik
+                const dataItem = JSON.stringify({
+                    id: item.id,
+                    name: item.name,
+                    price: item.sellPrice,
+                    stock: item.stock,
+                    type: 'product'
+                }).replace(/"/g, '&quot;');
+
+                const kartu = document.createElement('div');
+                kartu.className = 'kartu-produk';
+                kartu.innerHTML = `
+                    <div>
+                        <h3 style="margin: 5px 0;">${item.name}</h3>
+                        <div class="harga">Rp ${item.sellPrice.toLocaleString('id-ID')}</div>
+                        <p style="color: gray; font-size: 13px; margin: 5px 0;">Stok: ${item.stock}</p>
+                    </div>
+                    <button class="btn" onclick="tambahKeKeranjang(${dataItem})">Tambah</button>
+                `;
+                wadah.appendChild(kartu);
+            });
+        }
+
+        // 3. Fungsi Memasukkan Kue ke Keranjang
+        function tambahKeKeranjang(item) {
+            if(item.stock <= 0) {
+                alert('Maaf, stok barang habis!');
+                return;
+            }
+
+            // Cek apakah barang sudah ada di keranjang sebelumnya
+            const index = keranjang.findIndex(k => k.id === item.id);
+            if (index !== -1) {
+                if (keranjang[index].qty < item.stock) {
+                    keranjang[index].qty += 1;
+                } else {
+                    alert('Tidak bisa menambah, batas stok tercapai!');
+                }
+            } else {
+                keranjang.push({ ...item, qty: 1 });
+            }
+            
+            renderKeranjang();
+        }
+
+        // 4. Fungsi Mengatur Tombol (+) dan (-) di Keranjang
+        function ubahQty(id, jumlah) {
+            const index = keranjang.findIndex(k => k.id === id);
+            if (index !== -1) {
+                const qtyBaru = keranjang[index].qty + jumlah;
+                
+                if (qtyBaru > 0 && qtyBaru <= keranjang[index].stock) {
+                    keranjang[index].qty = qtyBaru;
+                } else if (qtyBaru === 0) {
+                    keranjang.splice(index, 1); // Buang jika jumlahnya 0
+                } else if (qtyBaru > keranjang[index].stock) {
+                    alert('Melebihi batas stok!');
+                }
+            }
+            renderKeranjang();
+        }
+
+        // 5. Fungsi Menampilkan Keranjang di Layar Kanan
+        function renderKeranjang() {
+            const wadah = document.getElementById('isi-keranjang');
+            const teksTotal = document.getElementById('total-harga');
+            const btnBayar = document.getElementById('btn-bayar');
+            
+            wadah.innerHTML = ''; 
+            let total = 0;
+
+            if (keranjang.length === 0) {
+                wadah.innerHTML = '<p style="color: gray; text-align: center;">Keranjang masih kosong</p>';
+                btnBayar.disabled = true;
+            } else {
+                btnBayar.disabled = false;
+                keranjang.forEach(item => {
+                    const subtotal = item.price * item.qty;
+                    total += subtotal;
+
+                    const baris = document.createElement('div');
+                    baris.className = 'item-keranjang';
+                    baris.innerHTML = `
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold;">${item.name}</div>
+                            <div style="color: #2ed573; font-size: 14px;">Rp ${item.price.toLocaleString('id-ID')}</div>
+                        </div>
+                        <div class="item-controls">
+                            <button class="btn-kecil" onclick="ubahQty(${item.id}, -1)">-</button>
+                            <span style="min-width: 20px; text-align: center; font-weight: bold;">${item.qty}</span>
+                            <button class="btn-kecil" onclick="ubahQty(${item.id}, 1)">+</button>
+                        </div>
+                    `;
+                    wadah.appendChild(baris);
+                });
+            }
+
+            teksTotal.innerText = 'Rp ' + total.toLocaleString('id-ID');
+        }
+
+        // 6. Fungsi Utama: Mengirim Transaksi ke Server
+        async function prosesPembayaran() {
+            if(keranjang.length === 0) return;
+
+            const btnBayar = document.getElementById('btn-bayar');
+            btnBayar.disabled = true;
+            btnBayar.innerText = 'Memproses... ⏳';
+
+            const totalAmount = keranjang.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            // Format data yang diminta oleh file server.js Anda
+            const dataTransaksi = {
+                cart: keranjang,
+                paymentMethod: "Tunai",
+                cashReceived: totalAmount, 
+                totalAmount: totalAmount
+            };
+
+            try {
+                const respons = await fetch(`${SERVER_URL}/api/checkout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataTransaksi)
+                });
+                
+                const hasil = await respons.json();
+                
+                if (hasil.success) {
+                    alert('✅ Berhasil! Transaksi tersimpan dan stok otomatis dipotong.');
+                    keranjang = []; // Kosongkan layar keranjang
+                    renderKeranjang();
+                    ambilKatalog(); // Muat ulang layar untuk melihat sisa stok terbaru
+                } else {
+                    alert('❌ Gagal: ' + hasil.message);
+                }
+            } catch (error) {
+                alert('❌ Gagal menghubungi server saat pembayaran.');
+                console.error(error);
+            } finally {
+                btnBayar.innerText = 'Bayar Sekarang';
+            }
+        }
+
+        // Jalankan perintah ambil data saat aplikasi pertama kali dibuka
+        ambilKatalog();
+    </script>
+</body>
+</html>
