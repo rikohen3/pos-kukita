@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POS Kukita</title>
     
-    <!-- KODE AJAIB UNTUK FULL SCREEN & SHORTCUT ANDROID/IOS -->
+    <!-- KODE AJAIB UNTUK FULL SCREEN & SHORTCUT -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,11 +26,27 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         body { -webkit-user-select: none; user-select: none; }
         input, select, textarea { -webkit-user-select: auto; user-select: auto; }
+
+        /* --- PENGATURAN KHUSUS UNTUK PRINTER STRUK --- */
+        #print-area { display: none; }
+        @media print {
+            body > *:not(#print-area) { display: none !important; }
+            #print-area { 
+                display: block !important; 
+                width: 58mm; /* Ukuran kertas kasir standar */
+                font-family: monospace; 
+                font-size: 12px; 
+                color: black; 
+                margin: 0; 
+                padding: 0;
+            }
+            @page { margin: 0; } /* Hilangkan margin kertas bawaan browser */
+        }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800" x-data="posApp()">
 
-    <!-- Sidebar Kiri (Menu Utama) -->
+    <!-- Sidebar Kiri -->
     <aside class="w-20 lg:w-64 flex-shrink-0 bg-white border-r flex flex-col shadow-sm hidden md:flex transition-all z-20">
         <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b text-brand-brown font-bold text-xl">
             <i data-lucide="store" class="w-8 h-8 lg:mr-2 text-brand-orange"></i>
@@ -76,7 +92,6 @@
         </header>
 
         <div class="flex flex-1 overflow-hidden relative">
-            <!-- Area Daftar Produk -->
             <div class="flex-1 flex flex-col min-w-0"> 
                 <div class="p-4 bg-white border-b flex gap-3 overflow-x-auto">
                     <template x-for="cat in categories" :key="cat">
@@ -116,10 +131,8 @@
                 </div>
             </div>
 
-            <!-- Backdrop Layar Gelap (Hanya Muncul di Mode Potrait/HP) -->
             <div x-show="showMobileCart" @click="showMobileCart = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" style="display: none;"></div>
 
-            <!-- Sidebar Keranjang (Muncul Permanen di Mode Landscape) -->
             <aside :class="showMobileCart ? 'fixed inset-y-0 right-0 z-50 flex w-full max-w-sm' : 'hidden md:flex w-80 lg:w-96'" class="flex-shrink-0 bg-white border-l flex-col shadow-xl transition-all duration-300">
                 <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white">
                     <div class="flex items-center font-bold text-lg">
@@ -169,7 +182,6 @@
                 </div>
             </aside>
             
-            <!-- Tombol Keranjang Mengambang (Hanya Muncul di Mode Potrait/HP) -->
             <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart">
                 <div class="relative">
                     <i data-lucide="shopping-bag" class="w-6 h-6"></i>
@@ -326,19 +338,116 @@
         <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="bar-chart-3" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
     </nav>
 
-    <!-- Modal Pembayaran -->
+    <!-- Modal Pembayaran (Sekarang Dengan Tampilan Kembalian & Cetak Struk) -->
     <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
-            <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg">Pembayaran</h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
+            <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
+                <h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2>
+                <button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
+            </div>
+            
             <div class="p-6">
-                <div class="text-center mb-6"><p class="text-gray-500 text-sm">Total Tagihan</p><p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p></div>
-                <div class="mb-4"><div class="grid grid-cols-2 gap-2"><button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">Tunai</button><button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">QRIS</button></div></div>
-                <div x-show="paymentMethod === 'Tunai'" class="mb-6"><input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0"><div class="grid grid-cols-4 gap-2 mt-2"><button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button><button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button><button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button></div><div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50"><span class="font-semibold text-gray-600">Kembalian</span><span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span></div></div>
-                <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50"><i data-lucide="check-circle" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span></button>
+                <!-- TAHAP 1: INPUT PEMBAYARAN -->
+                <div x-show="paymentStep === 'input'">
+                    <div class="text-center mb-6">
+                        <p class="text-gray-500 text-sm">Total Tagihan</p>
+                        <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
+                    </div>
+                    <div class="mb-4">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">Tunai</button>
+                            <button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">QRIS</button>
+                        </div>
+                    </div>
+                    <div x-show="paymentMethod === 'Tunai'" class="mb-6">
+                        <input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0">
+                        <div class="grid grid-cols-4 gap-2 mt-2">
+                            <button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button>
+                            <button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button>
+                            <button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50">
+                            <span class="font-semibold text-gray-600">Kembalian</span>
+                            <span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span>
+                        </div>
+                    </div>
+                    <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50">
+                        <i data-lucide="check-circle" x-show="!isProcessing"></i>
+                        <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
+                        <span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span>
+                    </button>
+                </div>
+
+                <!-- TAHAP 2: LAYAR KEMBALIAN & CETAK STRUK -->
+                <div x-show="paymentStep === 'success'" style="display: none;" class="text-center">
+                    <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                    <p class="text-gray-500">Uang Kembalian</p>
+                    <p class="text-5xl font-bold text-brand-green my-2" x-text="formatRupiah(lastTx ? lastTx.change : 0)"></p>
+                    
+                    <div class="mt-8 flex gap-3">
+                        <button @click="printReceipt()" class="flex-1 bg-brand-brown text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-orange-800 transition">
+                            <i data-lucide="printer" class="w-5 h-5"></i> Cetak Struk
+                        </button>
+                        <button @click="resetCart()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition">
+                            Selesai
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
     
+    <!-- FORMAT STRUK YANG AKAN DICETAK (TERSEMBUNYI DARI LAYAR) -->
+    <div id="print-area">
+        <template x-if="lastTx">
+            <div style="padding: 10px;">
+                <div style="text-align: center; font-weight: bold; margin-bottom: 15px;">
+                    <div style="font-size: 16px;">POS KUKITA</div>
+                    <div style="font-weight: normal;">Struk Pembelian</div>
+                    <div style="font-weight: normal;">------------------------</div>
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <div>No : <span x-text="lastTx.invoice"></span></div>
+                    <div>Tgl: <span x-text="lastTx.date"></span></div>
+                    <div>------------------------</div>
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <template x-for="item in lastTx.cart">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div>
+                            <div x-text="formatRupiah(item.price * item.qty)"></div>
+                        </div>
+                    </template>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div>------------------------</div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px;">
+                        <div>Total:</div>
+                        <div x-text="formatRupiah(lastTx.total)"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                        <div>Tunai:</div>
+                        <div x-text="formatRupiah(lastTx.cash)"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                        <div>Kembali:</div>
+                        <div x-text="formatRupiah(lastTx.change)"></div>
+                    </div>
+                    <div>------------------------</div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <div>Terima Kasih</div>
+                    <div>Selamat Menikmati!</div>
+                </div>
+            </div>
+        </template>
+    </div>
+
     <script>
         const SERVER_URL = 'https://pos-kukita-production.up.railway.app';
 
@@ -346,11 +455,22 @@
             return {
                 currentTab: 'pos', 
                 categories: ['Semua'], selectedCategory: 'Semua', searchQuery: '', cart: [], products: [], 
-                showMobileCart: false, showPaymentModal: false, paymentMethod: 'Tunai', cashReceived: '', isProcessing: false, isLoading: true,
+                
+                // Variabel Layar & Pembayaran
+                showMobileCart: false, 
+                showPaymentModal: false, 
+                paymentStep: 'input', // Bisa 'input' atau 'success'
+                paymentMethod: 'Tunai', 
+                cashReceived: '', 
+                isProcessing: false, 
+                isLoading: true,
+                
+                // Menyimpan data transaksi terakhir untuk dicetak
+                lastTx: null, 
+
                 currentTime: new Date().toLocaleString('id-ID'),
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '',
                 reportData: { revenue: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0 }, itemReports: [],
-                
                 reportPeriod: 'today', startDate: '', endDate: '',
 
                 async init() {
@@ -358,6 +478,7 @@
                     setInterval(() => { this.currentTime = new Date().toLocaleString('id-ID'); }, 1000);
                     this.$watch('currentTab', () => { setTimeout(() => { lucide.createIcons(); }, 50); });
                     this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
+                    this.$watch('paymentStep', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     await this.fetchCatalog();
                 },
 
@@ -418,19 +539,56 @@
                 get change() { return (parseFloat(this.cashReceived) || 0) - this.total; },
                 formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); },
                 setCustomPrice() { if (this.cart.length === 0) return alert('Keranjang masih kosong!'); const currentTotal = this.total; const customTotalStr = prompt(`UBAH TOTAL HARGA\n\nTotal saat ini: ${this.formatRupiah(currentTotal)}\nMasukkan harga baru:`, currentTotal); if (customTotalStr === null || customTotalStr.trim() === "") return; const newTotal = parseFloat(customTotalStr); if (isNaN(newTotal) || newTotal < 0) return alert('Harga tidak valid!'); if (currentTotal === 0) return; const ratio = newTotal / currentTotal; let runningTotal = 0; for (let i = 0; i < this.cart.length; i++) { if (i === this.cart.length - 1) { const remaining = newTotal - runningTotal; this.cart[i].price = remaining / this.cart[i].qty; } else { const newPrice = Math.round(this.cart[i].price * ratio); this.cart[i].price = newPrice; runningTotal += (newPrice * this.cart[i].qty); } } },
-                openPayment() { this.cashReceived = ''; this.paymentMethod = 'Tunai'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
-                closePayment() { this.showPaymentModal = false; },
+                
+                openPayment() { this.cashReceived = ''; this.paymentMethod = 'Tunai'; this.paymentStep = 'input'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
+                
+                closePayment() { 
+                    if (this.paymentStep === 'success') {
+                        this.resetCart();
+                    } else {
+                        this.showPaymentModal = false; 
+                    }
+                },
                 
                 async processTransaction() {
                     this.isProcessing = true;
                     const payload = { cart: this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price })), paymentMethod: this.paymentMethod, cashReceived: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : 0, totalAmount: this.total };
+                    
                     try {
                         const response = await fetch(`${SERVER_URL}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await response.json();
-                        if (result.success) { alert('Transaksi Sukses!'); this.cart = []; this.closePayment(); this.showMobileCart = false; await this.fetchCatalog(); } 
+                        
+                        if (result.success) { 
+                            // Simpan data transaksi ini untuk dicetak ke struk
+                            this.lastTx = {
+                                invoice: result.data.invoice,
+                                date: new Date().toLocaleString('id-ID'),
+                                cart: JSON.parse(JSON.stringify(this.cart)),
+                                total: this.total,
+                                cash: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : this.total,
+                                change: this.paymentMethod === 'Tunai' ? this.change : 0
+                            };
+                            
+                            // Tampilkan layar kembalian dan cetak struk
+                            this.paymentStep = 'success';
+                        } 
                         else { alert('Gagal: ' + result.message); }
                     } catch (error) { alert('Koneksi ke server terputus.'); } 
                     finally { this.isProcessing = false; }
+                },
+
+                // Menjalankan perintah print browser
+                printReceipt() {
+                    window.print();
+                },
+
+                // Menutup pembayaran dan mengosongkan keranjang
+                resetCart() {
+                    this.cart = []; 
+                    this.showPaymentModal = false; 
+                    this.paymentStep = 'input';
+                    this.showMobileCart = false; 
+                    this.fetchCatalog();
                 },
 
                 async submitExpense() {
