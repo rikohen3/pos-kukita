@@ -2,8 +2,17 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS Kukita - Live System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POS Kukita</title>
+    
+    <!-- KODE AJAIB UNTUK FULL SCREEN & SHORTCUT ANDROID/IOS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#A0522D">
+    <link rel="icon" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { brand: { brown: '#A0522D', orange: '#F97316', green: '#22C55E', gray: '#F3F4F6', red: '#EF4444', blue: '#3B82F6' } } } } }
@@ -15,11 +24,14 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Mencegah text tersorot saat di-tap berkali-kali di tablet */
+        body { -webkit-user-select: none; user-select: none; }
+        input, select, textarea { -webkit-user-select: auto; user-select: auto; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800" x-data="posApp()">
 
-    <!-- Sidebar -->
+    <!-- Sidebar Kiri -->
     <aside class="w-20 lg:w-64 flex-shrink-0 bg-white border-r flex flex-col shadow-sm hidden md:flex transition-all z-20">
         <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b text-brand-brown font-bold text-xl">
             <i data-lucide="store" class="w-8 h-8 lg:mr-2 text-brand-orange"></i>
@@ -219,7 +231,7 @@
                             <option>Perlengkapan (Kotak, Kresek)</option>
                             <option>Biaya Operasional (Listrik, WiFi)</option>
                             <option>Transportasi / Ongkir</option>
-                            <option>Biaya Gaji Karyawan</option> <!-- TAMBAHAN KATEGORI BARU -->
+                            <option>Biaya Gaji Karyawan</option>
                         </select>
                     </div>
                     <div class="md:col-span-2">
@@ -247,15 +259,13 @@
             <h1 class="text-lg font-bold text-gray-800 md:hidden">Laporan</h1>
             
             <div class="flex flex-wrap items-center gap-2 md:gap-3">
-                <!-- Dropdown Pilihan Periode -->
                 <select x-model="reportPeriod" @change="if(reportPeriod !== 'custom') fetchReport()" class="bg-gray-50 border border-gray-200 text-gray-700 font-medium text-sm rounded-lg focus:ring-brand-brown focus:border-brand-brown block p-2 outline-none">
                     <option value="today">Hari Ini</option>
                     <option value="month">Bulan Ini</option>
                     <option value="all">Semua Waktu</option>
-                    <option value="custom">Pilih Tanggal...</option> <!-- TAMBAHAN PILIHAN TANGGAL -->
+                    <option value="custom">Pilih Tanggal...</option>
                 </select>
 
-                <!-- Kotak Kalender (Hanya Muncul Jika Pilih "Pilih Tanggal...") -->
                 <div x-show="reportPeriod === 'custom'" class="flex items-center gap-2" style="display: none;">
                     <input type="date" x-model="startDate" class="p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-brown text-gray-600">
                     <span class="text-sm font-bold text-gray-400">s/d</span>
@@ -337,10 +347,7 @@
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '',
                 reportData: { revenue: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0 }, itemReports: [],
                 
-                // Variabel Tanggal Filter
-                reportPeriod: 'today', 
-                startDate: '', // Menyimpan tanggal awal
-                endDate: '',   // Menyimpan tanggal akhir
+                reportPeriod: 'today', startDate: '', endDate: '',
 
                 async init() {
                     setTimeout(() => { lucide.createIcons(); }, 100);
@@ -382,8 +389,6 @@
                 async fetchReport() {
                     try {
                         let queryParam = `?period=${this.reportPeriod}`;
-                        
-                        // Cek jika menggunakan tanggal kustom
                         if (this.reportPeriod === 'custom') {
                             if (!this.startDate || !this.endDate) return alert('Mohon isi Tanggal Awal dan Akhir terlebih dahulu!');
                             if (new Date(this.startDate) > new Date(this.endDate)) return alert('Tanggal Awal tidak boleh melewati Tanggal Akhir!');
