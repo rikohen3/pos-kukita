@@ -32,6 +32,7 @@ model Product {
   buyPrice    Int           
   sellPrice   Int           
   stock       Int           @default(0)
+  imageUrl    String?  @default("https://cdn-icons-png.flaticon.com/512/3081/3081840.png")
   packageItems PackageItem[]
   saleItems    SaleItem[]
 }

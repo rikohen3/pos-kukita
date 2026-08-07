@@ -100,11 +100,16 @@
                     type: 'product'
                 }).replace(/"/g, '&quot;');
 
-                const kartu = document.createElement('div');
-                kartu.className = 'kartu-produk';
-                kartu.innerHTML = `
-                    <div>
-                        <h3 style="margin: 5px 0;">${item.name}</h3>
+             const kartu = document.createElement('div');
+        kartu.className = 'kartu-produk';
+        
+        // Tentukan gambar: pakai gambar asli jika ada, jika tidak pakai gambar default
+        const linkGambar = item.imageUrl || 'https://cdn-icons-png.flaticon.com/512/3081/3081840.png';
+
+        kartu.innerHTML = `
+            <div>
+                <img src="${linkGambar}" alt="${item.name}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;">
+                <h3 style="margin: 5px 0; font-size: 16px;">${item.name}</h3>
                         <div class="harga">Rp ${item.sellPrice.toLocaleString('id-ID')}</div>
                         <p style="color: gray; font-size: 13px; margin: 5px 0;">Stok: ${item.stock}</p>
                     </div>
