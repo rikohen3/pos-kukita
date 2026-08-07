@@ -24,14 +24,13 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        /* Mencegah text tersorot saat di-tap berkali-kali di tablet */
         body { -webkit-user-select: none; user-select: none; }
         input, select, textarea { -webkit-user-select: auto; user-select: auto; }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800" x-data="posApp()">
 
-    <!-- Sidebar Kiri -->
+    <!-- Sidebar Kiri (Menu Utama) -->
     <aside class="w-20 lg:w-64 flex-shrink-0 bg-white border-r flex flex-col shadow-sm hidden md:flex transition-all z-20">
         <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b text-brand-brown font-bold text-xl">
             <i data-lucide="store" class="w-8 h-8 lg:mr-2 text-brand-orange"></i>
@@ -77,6 +76,7 @@
         </header>
 
         <div class="flex flex-1 overflow-hidden relative">
+            <!-- Area Daftar Produk -->
             <div class="flex-1 flex flex-col min-w-0"> 
                 <div class="p-4 bg-white border-b flex gap-3 overflow-x-auto">
                     <template x-for="cat in categories" :key="cat">
@@ -116,16 +116,18 @@
                 </div>
             </div>
 
-            <div x-show="showMobileCart" @click="showMobileCart = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" style="display: none;"></div>
+            <!-- Backdrop Layar Gelap (Hanya Muncul di Mode Potrait/HP) -->
+            <div x-show="showMobileCart" @click="showMobileCart = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" style="display: none;"></div>
 
-            <aside :class="showMobileCart ? 'fixed inset-y-0 right-0 z-50 flex w-full max-w-sm' : 'hidden lg:flex w-96'" class="flex-shrink-0 bg-white border-l flex-col shadow-xl transition-all duration-300">
+            <!-- Sidebar Keranjang (Muncul Permanen di Mode Landscape) -->
+            <aside :class="showMobileCart ? 'fixed inset-y-0 right-0 z-50 flex w-full max-w-sm' : 'hidden md:flex w-80 lg:w-96'" class="flex-shrink-0 bg-white border-l flex-col shadow-xl transition-all duration-300">
                 <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white">
                     <div class="flex items-center font-bold text-lg">
                         <i data-lucide="shopping-cart" class="mr-2"></i> Keranjang
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="bg-white text-brand-brown text-xs font-bold px-2 py-1 rounded-full" x-text="cart.length + ' Item'"></span>
-                        <button @click="showMobileCart = false" class="lg:hidden p-1 bg-white bg-opacity-20 rounded-md hover:bg-opacity-40" x-show="showMobileCart">
+                        <button @click="showMobileCart = false" class="md:hidden p-1 bg-white bg-opacity-20 rounded-md hover:bg-opacity-40" x-show="showMobileCart">
                             <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
@@ -145,11 +147,11 @@
                             </div>
                             <div class="flex items-center gap-2 md:gap-3">
                                 <div class="flex items-center bg-gray-100 rounded-lg">
-                                    <button @click="decreaseQty(index)" class="w-7 h-7 md:w-8 md:h-8 hover:bg-gray-200 rounded-l-lg">-</button>
+                                    <button @click="decreaseQty(index)" class="w-7 h-7 md:w-8 hover:bg-gray-200 rounded-l-lg">-</button>
                                     <span class="w-6 text-center text-sm font-bold" x-text="item.qty"></span>
-                                    <button @click="increaseQty(index)" class="w-7 h-7 md:w-8 md:h-8 hover:bg-gray-200 rounded-r-lg">+</button>
+                                    <button @click="increaseQty(index)" class="w-7 h-7 md:w-8 hover:bg-gray-200 rounded-r-lg">+</button>
                                 </div>
-                                <button @click="removeFromCart(index)" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4 md:w-5 md:h-5"></i></button>
+                                <button @click="removeFromCart(index)" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4 md:w-5"></i></button>
                             </div>
                         </div>
                     </template>
@@ -167,7 +169,8 @@
                 </div>
             </aside>
             
-            <button @click="showMobileCart = true" class="lg:hidden fixed bottom-24 md:bottom-8 right-4 md:right-8 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart">
+            <!-- Tombol Keranjang Mengambang (Hanya Muncul di Mode Potrait/HP) -->
+            <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart">
                 <div class="relative">
                     <i data-lucide="shopping-bag" class="w-6 h-6"></i>
                     <span x-show="cart.length > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full" x-text="cart.length"></span>
@@ -179,8 +182,9 @@
 
     <!-- TAB 2: MASTER PRODUK -->
     <main x-show="currentTab === 'produk'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-        <header class="h-16 bg-white border-b flex items-center px-6">
+        <header class="h-16 bg-white border-b flex items-center px-4 md:px-6">
             <h1 class="text-xl font-bold text-gray-800">Master Produk</h1>
+            <p class="ml-4 text-sm text-gray-500 hidden md:block">Gunakan tombol "Edit Stok" untuk menambah stok kue yang baru datang pagi ini.</p>
         </header>
         <div class="p-4 md:p-6 overflow-y-auto pb-24">
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6">
@@ -219,7 +223,7 @@
 
     <!-- TAB 3: PENGELUARAN -->
     <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-        <header class="h-16 bg-white border-b flex items-center px-6">
+        <header class="h-16 bg-white border-b flex items-center px-4 md:px-6">
             <h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran</h1>
         </header>
         <div class="p-4 md:p-6 overflow-y-auto pb-24">
