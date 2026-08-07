@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POS Kukita</title>
     
-    <!-- KODE AJAIB UNTUK FULL SCREEN & SHORTCUT -->
+    <!-- KODE AJAIB UNTUK FULL SCREEN (DITAMBAH MANIFEST KHUSUS CHROME) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#A0522D">
     <link rel="icon" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22POS%20Kukita%22%2C%22short_name%22%3A%22POS%20Kukita%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%2F%22%2C%22background_color%22%3A%22%23f9fafb%22%2C%22theme_color%22%3A%22%23A0522D%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F3081%2F3081840.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,20 +28,20 @@
         body { -webkit-user-select: none; user-select: none; }
         input, select, textarea { -webkit-user-select: auto; user-select: auto; }
 
-        /* --- PENGATURAN KHUSUS UNTUK PRINTER STRUK --- */
+        /* PENGATURAN PRINTER STRUK */
         #print-area { display: none; }
         @media print {
             body > *:not(#print-area) { display: none !important; }
             #print-area { 
                 display: block !important; 
-                width: 58mm; /* Ukuran kertas kasir standar */
+                width: 58mm; 
                 font-family: monospace; 
                 font-size: 12px; 
                 color: black; 
                 margin: 0; 
                 padding: 0;
             }
-            @page { margin: 0; } /* Hilangkan margin kertas bawaan browser */
+            @page { margin: 0; }
         }
     </style>
 </head>
@@ -105,7 +106,8 @@
                     <div x-show="isLoading" class="flex justify-center items-center h-full text-brand-brown">
                         <i data-lucide="loader-2" class="w-10 h-10 animate-spin"></i>
                     </div>
-                    <div x-show="!isLoading" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                    <!-- PERBAIKAN: md:grid-cols-3 dihapus, diubah menjadi lg:grid-cols-3 agar tablet tidak sesak -->
+                    <div x-show="!isLoading" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                         <template x-for="product in filteredProducts" :key="product.id + product.type">
                             <div @click="addToCart(product)" class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:border-brand-brown cursor-pointer transition flex flex-col group relative">
                                 <template x-if="product.type === 'package'">
@@ -133,7 +135,8 @@
 
             <div x-show="showMobileCart" @click="showMobileCart = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" style="display: none;"></div>
 
-            <aside :class="showMobileCart ? 'fixed inset-y-0 right-0 z-50 flex w-full max-w-sm' : 'hidden md:flex w-80 lg:w-96'" class="flex-shrink-0 bg-white border-l flex-col shadow-xl transition-all duration-300">
+            <!-- PERBAIKAN: w-80 diubah menjadi w-72 agar keranjang tidak menyundul keluar batas kanan layar tablet -->
+            <aside :class="showMobileCart ? 'fixed inset-y-0 right-0 z-50 flex w-full max-w-sm' : 'hidden md:flex w-72 lg:w-80 xl:w-96'" class="flex-shrink-0 bg-white border-l flex-col shadow-xl transition-all duration-300">
                 <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white">
                     <div class="flex items-center font-bold text-lg">
                         <i data-lucide="shopping-cart" class="mr-2"></i> Keranjang
@@ -158,7 +161,7 @@
                                 <h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4>
                                 <p class="text-brand-brown text-sm" x-text="formatRupiah(item.price)"></p>
                             </div>
-                            <div class="flex items-center gap-2 md:gap-3">
+                            <div class="flex items-center gap-1 md:gap-2">
                                 <div class="flex items-center bg-gray-100 rounded-lg">
                                     <button @click="decreaseQty(index)" class="w-7 h-7 md:w-8 hover:bg-gray-200 rounded-l-lg">-</button>
                                     <span class="w-6 text-center text-sm font-bold" x-text="item.qty"></span>
@@ -338,7 +341,7 @@
         <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="bar-chart-3" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
     </nav>
 
-    <!-- Modal Pembayaran (Sekarang Dengan Tampilan Kembalian & Cetak Struk) -->
+    <!-- Modal Pembayaran (Dengan Layar Sukses & Cetak) -->
     <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
             <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
@@ -347,7 +350,7 @@
             </div>
             
             <div class="p-6">
-                <!-- TAHAP 1: INPUT PEMBAYARAN -->
+                <!-- TAHAP 1 -->
                 <div x-show="paymentStep === 'input'">
                     <div class="text-center mb-6">
                         <p class="text-gray-500 text-sm">Total Tagihan</p>
@@ -378,7 +381,7 @@
                     </button>
                 </div>
 
-                <!-- TAHAP 2: LAYAR KEMBALIAN & CETAK STRUK -->
+                <!-- TAHAP 2 (SUKSES) -->
                 <div x-show="paymentStep === 'success'" style="display: none;" class="text-center">
                     <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
                     <p class="text-gray-500">Uang Kembalian</p>
@@ -398,7 +401,7 @@
         </div>
     </div>
     
-    <!-- FORMAT STRUK YANG AKAN DICETAK (TERSEMBUNYI DARI LAYAR) -->
+    <!-- FORMAT STRUK UNTUK PRINTER KASIR (TERSEMBUNYI) -->
     <div id="print-area">
         <template x-if="lastTx">
             <div style="padding: 10px;">
@@ -456,16 +459,14 @@
                 currentTab: 'pos', 
                 categories: ['Semua'], selectedCategory: 'Semua', searchQuery: '', cart: [], products: [], 
                 
-                // Variabel Layar & Pembayaran
                 showMobileCart: false, 
                 showPaymentModal: false, 
-                paymentStep: 'input', // Bisa 'input' atau 'success'
+                paymentStep: 'input',
                 paymentMethod: 'Tunai', 
                 cashReceived: '', 
                 isProcessing: false, 
                 isLoading: true,
                 
-                // Menyimpan data transaksi terakhir untuk dicetak
                 lastTx: null, 
 
                 currentTime: new Date().toLocaleString('id-ID'),
@@ -559,7 +560,6 @@
                         const result = await response.json();
                         
                         if (result.success) { 
-                            // Simpan data transaksi ini untuk dicetak ke struk
                             this.lastTx = {
                                 invoice: result.data.invoice,
                                 date: new Date().toLocaleString('id-ID'),
@@ -568,8 +568,6 @@
                                 cash: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : this.total,
                                 change: this.paymentMethod === 'Tunai' ? this.change : 0
                             };
-                            
-                            // Tampilkan layar kembalian dan cetak struk
                             this.paymentStep = 'success';
                         } 
                         else { alert('Gagal: ' + result.message); }
@@ -577,12 +575,10 @@
                     finally { this.isProcessing = false; }
                 },
 
-                // Menjalankan perintah print browser
                 printReceipt() {
                     window.print();
                 },
 
-                // Menutup pembayaran dan mengosongkan keranjang
                 resetCart() {
                     this.cart = []; 
                     this.showPaymentModal = false; 
