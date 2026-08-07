@@ -106,7 +106,8 @@
                     <div x-show="isLoading" class="flex justify-center items-center h-full text-brand-brown">
                         <i data-lucide="loader-2" class="w-10 h-10 animate-spin"></i>
                     </div>
-                    <div x-show="!isLoading" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                    <!-- PERBAIKAN: md:grid-cols-3 dikembalikan agar tampil 3 kolom pada tablet -->
+                    <div x-show="!isLoading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                         <template x-for="product in filteredProducts" :key="product.id + product.type">
                             <div @click="addToCart(product)" class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:border-brand-brown cursor-pointer transition flex flex-col group relative">
                                 <template x-if="product.type === 'package'">
@@ -339,7 +340,7 @@
         <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="bar-chart-3" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
     </nav>
 
-    <!-- Modal Pembayaran -->
+    <!-- Modal Pembayaran (Dengan Layar Sukses & Cetak) -->
     <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
             <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
