@@ -141,18 +141,22 @@ app.post('/api/expenses', async (req, res) => {
 // [MODUL LAPORAN & ANALITIK]
 // 4. Endpoint Laporan Global (Pendapatan, Pengeluaran, Laba)
 app.get('/api/reports', async (req, res) => {
-  const { period } = req.query;
+  const { period, start, end } = req.query; // Menangkap parameter tanggal dari frontend
   let dateFilter = {};
 
-  // Filter Tanggal
+  // Logika Filter Tanggal (Hari Ini, Bulan Ini, atau Custom)
   if (period === 'today') {
-    const start = new Date(); start.setHours(0,0,0,0);
-    const end = new Date(); end.setHours(23,59,59,999);
-    dateFilter = { createdAt: { gte: start, lte: end } };
+    const startDate = new Date(); startDate.setHours(0,0,0,0);
+    const endDate = new Date(); endDate.setHours(23,59,59,999);
+    dateFilter = { createdAt: { gte: startDate, lte: endDate } };
   } else if (period === 'month') {
-    const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
-    const end = new Date(); end.setMonth(end.getMonth() + 1); end.setDate(0); end.setHours(23,59,59,999);
-    dateFilter = { createdAt: { gte: start, lte: end } };
+    const startDate = new Date(); startDate.setDate(1); startDate.setHours(0,0,0,0);
+    const endDate = new Date(); endDate.setMonth(endDate.getMonth() + 1); endDate.setDate(0); endDate.setHours(23,59,59,999);
+    dateFilter = { createdAt: { gte: startDate, lte: endDate } };
+  } else if (period === 'custom' && start && end) {
+    const startDate = new Date(start); startDate.setHours(0,0,0,0);
+    const endDate = new Date(end); endDate.setHours(23,59,59,999);
+    dateFilter = { createdAt: { gte: startDate, lte: endDate } };
   }
 
   try {
@@ -178,17 +182,22 @@ app.get('/api/reports', async (req, res) => {
 
 // 5. Endpoint untuk Laporan Detail per Item (PEMISAHAN BIJIAN & KARDUS)
 app.get('/api/reports/items', async (req, res) => {
-  const { period } = req.query;
+  const { period, start, end } = req.query;
   let dateFilter = {};
 
+  // Logika Filter Tanggal yang sama untuk detail item
   if (period === 'today') {
-    const start = new Date(); start.setHours(0,0,0,0);
-    const end = new Date(); end.setHours(23,59,59,999);
-    dateFilter = { createdAt: { gte: start, lte: end } }; 
+    const startDate = new Date(); startDate.setHours(0,0,0,0);
+    const endDate = new Date(); endDate.setHours(23,59,59,999);
+    dateFilter = { createdAt: { gte: startDate, lte: endDate } }; 
   } else if (period === 'month') {
-    const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
-    const end = new Date(); end.setMonth(end.getMonth() + 1); end.setDate(0); end.setHours(23,59,59,999);
-    dateFilter = { createdAt: { gte: start, lte: end } };
+    const startDate = new Date(); startDate.setDate(1); startDate.setHours(0,0,0,0);
+    const endDate = new Date(); endDate.setMonth(endDate.getMonth() + 1); endDate.setDate(0); endDate.setHours(23,59,59,999);
+    dateFilter = { createdAt: { gte: startDate, lte: endDate } };
+  } else if (period === 'custom' && start && end) {
+    const startDate = new Date(start); startDate.setHours(0,0,0,0);
+    const endDate = new Date(end); endDate.setHours(23,59,59,999);
+    dateFilter = { createdAt: { gte: startDate, lte: endDate } };
   }
 
   try {
