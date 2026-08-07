@@ -1,0 +1,21 @@
+{
+  "name": "POS Kukita",
+  "short_name": "Kasir",
+  "description": "Aplikasi Mesin Kasir POS Kukita",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#A0522D",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
