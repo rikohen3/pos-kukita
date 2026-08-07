@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Penjualan - POS Kukita</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; border-bottom: 2px solid #ff4757; padding-bottom: 10px; }
+        .total-box { background: #ff4757; color: white; padding: 15px; border-radius: 6px; margin: 20px 0; font-size: 20px; font-weight: bold; text-align: right; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; color: #333; }
+        tr:hover { background-color: #f1f2f6; }
+        .kembali-btn { display: inline-block; padding: 10px 15px; background: #57606f; color: white; text-decoration: none; border-radius: 4px; margin-bottom: 10px; }
+        .detail-barang { font-size: 13px; color: #555; margin: 0; padding-left: 15px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="kembali-btn">⬅ Kembali ke Kasir</a>
+        <h1>📊 Laporan Penjualan Harian</h1>
+
+        <div class="total-box">
+            Total Pendapatan: <span id="total-pendapatan">Rp 0</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Waktu Transaksi</th>
+                    <th>No. Invoice</th>
+                    <th>Detail Barang</th>
+                    <th>Pembayaran</th>
+                    <th>Total (Rp)</th>
+                </tr>
+            </thead>
+            <tbody id="tabel-penjualan">
+                <tr><td colspan="5" style="text-align:center;">Memuat data dari server...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // PASTIKAN LINK INI SAMA DENGAN LINK RAILWAY DI index.html ANDA!
+    const URL_BACKEND = 'https://pos-kukita-production.up.railway.app/api/sales';
+
+        async function muatData() {
+            try {
+                const response = await fetch(URL_BACKEND);
+                const data = await response.json();
+                
+                const tbody = document.getElementById('tabel-penjualan');
+                tbody.innerHTML = ''; // Kosongkan tulisan "Memuat data..."
+                let totalPendapatan = 0;
+
+                data.forEach(transaksi => {
+                    // Hitung total semua transaksi
+                    totalPendapatan += transaksi.totalAmount;
+
+                    // Format tanggal dan jam
+                    const tanggal = new Date(transaksi.createdAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+                    // Format daftar barang yang dibeli
+                    let listBarang = '';
+                    transaksi.items.forEach(item => {
+                        const namaBarang = item.product ? item.product.name : (item.package ? item.package.name : 'Barang Terhapus');
+                        listBarang += `<li>${namaBarang} (x${item.qty})</li>`;
+                    });
+
+                    // Buat baris tabel baru
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${tanggal}</td>
+                        <td><strong>${transaksi.invoice}</strong></td>
+                        <td><ul class="detail-barang">${listBarang}</ul></td>
+                        <td>${transaksi.paymentMethod}</td>
+                        <td style="font-weight: bold;">Rp ${transaksi.totalAmount.toLocaleString('id-ID')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Tampilkan total pendapatan di kotak atas
+                document.getElementById('total-pendapatan').innerText = 'Rp ' + totalPendapatan.toLocaleString('id-ID');
+
+            } catch (error) {
+                console.error("Gagal memuat:", error);
+                document.getElementById('tabel-penjualan').innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Gagal terhubung ke server Railway.</td></tr>';
+            }
+        }
+
+        muatData();
+    </script>
+</body>
+</html>

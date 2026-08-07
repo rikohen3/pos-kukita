@@ -258,6 +258,27 @@ app.get('/', (req, res) => {
   res.send('<h1>Server POS Kukita Berjalan Normal! 🚀</h1><p>Backend API siap digunakan oleh aplikasi kasir.</p>');
 });
 
+// --- ENDPOINT LAPORAN PENJUALAN ---
+app.get('/api/sales', async (req, res) => {
+  try {
+    const sales = await prisma.sale.findMany({
+      orderBy: { createdAt: 'desc' }, // Urutkan dari transaksi terbaru
+      include: {
+        items: {
+          include: {
+            product: true,
+            package: true
+          }
+        }
+      }
+    });
+    res.json(sales);
+  } catch (error) {
+    console.error('Error mengambil data penjualan:', error);
+    res.status(500).json({ error: 'Gagal mengambil data penjualan' });
+  }
+});
+
 // --- MENJALANKAN SERVER ---
 app.listen(PORT, () => {
   console.log(`🚀 POS Kukita Backend (Dapur Utama) mendengarkan di: http://localhost:${PORT}`);
