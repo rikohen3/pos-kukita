@@ -4,7 +4,6 @@ import { PrismaClient } from '@prisma/client';
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = 5000; 
 
 app.use(cors()); 
 app.use(express.json()); 
@@ -162,4 +161,6 @@ app.get('/api/reports/items', async (req, res) => {
 });
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
-app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
+
+// FORMAT YANG BENAR UNTUK VERCEL SERVERLESS:
+export default app;
