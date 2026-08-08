@@ -4,10 +4,12 @@ import { PrismaClient } from '@prisma/client';
 
 const app = express();
 const prisma = new PrismaClient();
+const PORT = 5000; 
 
 app.use(cors()); 
 app.use(express.json()); 
 
+// 1. ENDPOINT: KATALOG KASIR
 app.get('/api/catalog', async (req, res) => {
   try {
     const products = await prisma.product.findMany({ include: { category: true, supplier: true } });
@@ -16,11 +18,12 @@ app.get('/api/catalog', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, message: 'Gagal mengambil katalog' }); }
 });
 
+// 2. ENDPOINT: CHECKOUT / TRANSAKSI
 app.post('/api/checkout', async (req, res) => {
   const { cart, paymentMethod, cashReceived, totalAmount, isPackage } = req.body;
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // TRIK CERDAS: JIKA PAKET, UBAH NOMOR INVOICE JADI PKT-
+      // LOGIKA PKT-: Jika paket, invoice pakai PKT-, jika bukan pakai INV-
       const prefix = isPackage ? 'PKT-' : 'INV-';
       const sale = await tx.sale.create({
         data: { invoice: `${prefix}${Date.now()}`, totalAmount, paymentMethod, cashReceived: cashReceived || 0 }
@@ -44,6 +47,7 @@ app.post('/api/checkout', async (req, res) => {
   } catch (error) { res.status(400).json({ success: false, error: error.message }); }
 });
 
+// 3. ENDPOINT: PENGELUARAN
 app.post('/api/expenses', async (req, res) => {
   const { category, description, amount } = req.body;
   try {
@@ -52,6 +56,7 @@ app.post('/api/expenses', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// 4. ENDPOINT: OPSI KATEGORI & SUPPLIER 
 app.get('/api/options', async (req, res) => {
   try {
     const categories = await prisma.category.findMany();
@@ -60,6 +65,7 @@ app.get('/api/options', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// 5. ENDPOINT: TAMBAH PRODUK DENGAN HARGA BELI
 app.post('/api/products', async (req, res) => {
   const { name, categoryId, supplierId, buyPrice, sellPrice, stock } = req.body;
   try {
@@ -77,6 +83,7 @@ app.post('/api/products', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, message: 'Gagal menyimpan produk' }); }
 });
 
+// 6. ENDPOINT: UPDATE STOK
 app.put('/api/products/:id/stock', async (req, res) => {
   try {
     const updated = await prisma.product.update({ where: { id: parseInt(req.params.id) }, data: { stock: parseInt(req.body.newStock) } });
@@ -84,6 +91,7 @@ app.put('/api/products/:id/stock', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// 7. ENDPOINT: LAPORAN GLOBAL & RIWAYAT STRUK
 app.get('/api/reports', async (req, res) => {
   const { period, start, end } = req.query;
   let dateFilter = {};
@@ -129,6 +137,7 @@ app.get('/api/reports', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// 8. ENDPOINT: LAPORAN ITEM TERJUAL
 app.get('/api/reports/items', async (req, res) => {
   const { period, start, end } = req.query;
   let dateFilter = {};
@@ -153,5 +162,4 @@ app.get('/api/reports/items', async (req, res) => {
 });
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
-
-export default app;
+app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
