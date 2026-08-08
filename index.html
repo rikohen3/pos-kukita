@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>POS Kukita</title>
     
-    <!-- KODE SERTIFIKAT APLIKASI (PWA) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,101 +27,50 @@
         body { -webkit-user-select: none; user-select: none; }
         input, select, textarea { -webkit-user-select: auto; user-select: auto; }
 
-        /* PENGATURAN PRINTER STRUK */
         #print-area { display: none; }
         @media print {
             body > *:not(#print-area) { display: none !important; }
-            #print-area { 
-                display: block !important; 
-                width: 58mm; 
-                font-family: monospace; 
-                font-size: 12px; 
-                color: black; 
-                margin: 0; 
-                padding: 0;
-            }
+            #print-area { display: block !important; width: 58mm; font-family: monospace; font-size: 12px; color: black; margin: 0; padding: 0; }
             @page { margin: 0; }
         }
     </style>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden text-gray-800" x-data="posApp()">
 
-    <!-- Sidebar Kiri -->
+    <!-- Sidebar -->
     <aside class="w-20 lg:w-64 flex-shrink-0 bg-white border-r flex flex-col shadow-sm hidden md:flex transition-all z-20">
         <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b text-brand-brown font-bold text-xl">
-            <i data-lucide="store" class="w-8 h-8 lg:mr-2 text-brand-orange"></i>
-            <span class="hidden lg:block">POS Kukita</span>
+            <i data-lucide="store" class="w-8 h-8 lg:mr-2 text-brand-orange"></i><span class="hidden lg:block">POS Kukita</span>
         </div>
         <nav class="flex-1 py-4 flex flex-col gap-2 px-3 overflow-y-auto">
-            <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left">
-                <i data-lucide="layout-dashboard" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">POS Kasir</span>
-            </button>
-            <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left">
-                <i data-lucide="package" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Master Produk</span>
-            </button>
-            <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left">
-                <i data-lucide="wallet" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Pengeluaran</span>
-            </button>
-            <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left">
-                <i data-lucide="bar-chart-3" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Laporan & Analitik</span>
-            </button>
+            <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="layout-dashboard" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">POS Kasir</span></button>
+            <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="package" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Master Produk</span></button>
+            <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="wallet" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Pengeluaran</span></button>
+            <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="bar-chart-3" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Laporan & Analitik</span></button>
         </nav>
-        <div class="p-4 border-t flex items-center justify-center lg:justify-start">
-            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold">
-                <i data-lucide="wifi" class="w-5 h-5"></i>
-            </div>
-            <div class="hidden lg:block ml-3">
-                <p class="text-sm font-bold text-green-600">Server Online</p>
-                <p class="text-xs text-gray-500">Terkoneksi ke DB</p>
-            </div>
-        </div>
+        <div class="p-4 border-t flex items-center justify-center lg:justify-start"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold"><i data-lucide="wifi" class="w-5 h-5"></i></div><div class="hidden lg:block ml-3"><p class="text-sm font-bold text-green-600">Server Online</p><p class="text-xs text-gray-500">Terkoneksi ke DB</p></div></div>
     </aside>
 
     <!-- TAB 1: POS KASIR -->
     <main x-show="currentTab === 'pos'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden relative">
         <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
-            <div class="flex items-center w-full max-w-xl relative">
-                <i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i>
-                <input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50">
-            </div>
-            <div class="ml-4 flex items-center gap-4">
-                <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center gap-1 text-sm font-bold">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span class="hidden md:inline">Refresh</span>
-                </button>
-            </div>
+            <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
+            <div class="ml-4 flex items-center gap-4"><button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center gap-1 text-sm font-bold"><i data-lucide="refresh-cw" class="w-4 h-4"></i> <span class="hidden md:inline">Refresh</span></button></div>
         </header>
 
         <div class="flex flex-1 overflow-hidden relative">
             <div class="flex-1 flex flex-col min-w-0"> 
                 <div class="p-4 bg-white border-b flex gap-3 overflow-x-auto">
-                    <template x-for="cat in categories" :key="cat">
-                        <button @click="selectedCategory = cat" 
-                                :class="selectedCategory === cat ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'"
-                                class="px-5 py-2 rounded-full font-medium whitespace-nowrap transition-colors"
-                                x-text="cat"></button>
-                    </template>
+                    <template x-for="cat in categories" :key="cat"><button @click="selectedCategory = cat" :class="selectedCategory === cat ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="px-5 py-2 rounded-full font-medium whitespace-nowrap transition-colors" x-text="cat"></button></template>
                 </div>
                 <div class="flex-1 p-4 md:p-6 overflow-y-auto pb-32">
-                    <div x-show="isLoading" class="flex justify-center items-center h-full text-brand-brown">
-                        <i data-lucide="loader-2" class="w-10 h-10 animate-spin"></i>
-                    </div>
-                    <!-- PERBAIKAN: md:grid-cols-3 dikembalikan agar tampil 3 kolom pada tablet -->
+                    <div x-show="isLoading" class="flex justify-center items-center h-full text-brand-brown"><i data-lucide="loader-2" class="w-10 h-10 animate-spin"></i></div>
                     <div x-show="!isLoading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                         <template x-for="product in filteredProducts" :key="product.id + product.type">
                             <div @click="addToCart(product)" class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:border-brand-brown cursor-pointer transition flex flex-col group relative">
-                                <template x-if="product.type === 'package'">
-                                    <span class="absolute top-2 right-2 bg-brand-orange text-white text-xs font-bold px-2 py-1 rounded-full z-10">Paket</span>
-                                </template>
-                                <template x-if="product.image">
-                                    <div class="h-24 md:h-28 rounded-lg bg-gray-100 mb-3 overflow-hidden group-hover:scale-105 transition">
-                                        <img :src="product.image" class="w-full h-full object-cover" alt="Foto Produk">
-                                    </div>
-                                </template>
-                                <template x-if="!product.image">
-                                    <div class="h-24 md:h-28 rounded-lg bg-orange-50 mb-3 flex items-center justify-center text-4xl group-hover:scale-105 transition">
-                                        <span x-text="product.icon"></span>
-                                    </div>
-                                </template>
+                                <template x-if="product.type === 'package'"><span class="absolute top-2 right-2 bg-brand-orange text-white text-xs font-bold px-2 py-1 rounded-full z-10">Paket</span></template>
+                                <template x-if="product.image"><div class="h-24 md:h-28 rounded-lg bg-gray-100 mb-3 overflow-hidden group-hover:scale-105 transition"><img :src="product.image" class="w-full h-full object-cover"></div></template>
+                                <template x-if="!product.image"><div class="h-24 md:h-28 rounded-lg bg-orange-50 mb-3 flex items-center justify-center text-4xl group-hover:scale-105 transition"><span x-text="product.icon"></span></div></template>
                                 <h3 class="font-bold text-sm text-gray-800 line-clamp-2" x-text="product.name"></h3>
                                 <p class="text-xs text-gray-500 mt-1 line-clamp-1" x-text="'Dari: ' + product.supplier"></p>
                                 <p class="text-brand-brown font-bold mt-2" x-text="formatRupiah(product.price)"></p>
@@ -136,83 +84,48 @@
             <div x-show="showMobileCart" @click="showMobileCart = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" style="display: none;"></div>
 
             <aside :class="showMobileCart ? 'fixed inset-y-0 right-0 z-50 flex w-full max-w-sm' : 'hidden md:flex w-72 lg:w-80 xl:w-96'" class="flex-shrink-0 bg-white border-l flex-col shadow-xl transition-all duration-300">
-                <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white">
-                    <div class="flex items-center font-bold text-lg">
-                        <i data-lucide="shopping-cart" class="mr-2"></i> Keranjang
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="bg-white text-brand-brown text-xs font-bold px-2 py-1 rounded-full" x-text="cart.length + ' Item'"></span>
-                        <button @click="showMobileCart = false" class="md:hidden p-1 bg-white bg-opacity-20 rounded-md hover:bg-opacity-40" x-show="showMobileCart">
-                            <i data-lucide="x" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
+                <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white"><div class="flex items-center font-bold text-lg"><i data-lucide="shopping-cart" class="mr-2"></i> Keranjang</div><div class="flex items-center gap-2"><span class="bg-white text-brand-brown text-xs font-bold px-2 py-1 rounded-full" x-text="cart.length + ' Item'"></span><button @click="showMobileCart = false" class="md:hidden p-1 bg-white bg-opacity-20 rounded-md hover:bg-opacity-40" x-show="showMobileCart"><i data-lucide="x" class="w-5 h-5"></i></button></div></div>
                 <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-                    <template x-if="cart.length === 0">
-                        <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                            <i data-lucide="shopping-bag" class="w-12 h-12 mb-3 opacity-20"></i>
-                            <p>Keranjang kosong</p>
-                        </div>
-                    </template>
+                    <template x-if="cart.length === 0"><div class="flex flex-col items-center justify-center h-full text-gray-400"><i data-lucide="shopping-bag" class="w-12 h-12 mb-3 opacity-20"></i><p>Keranjang kosong</p></div></template>
                     <template x-for="(item, index) in cart" :key="index">
                         <div class="flex items-center justify-between p-3 border rounded-lg">
-                            <div class="flex-1">
-                                <h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4>
-                                <p class="text-brand-brown text-sm" x-text="formatRupiah(item.price)"></p>
-                            </div>
+                            <div class="flex-1"><h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4><p class="text-brand-brown text-sm" x-text="formatRupiah(item.price)"></p></div>
                             <div class="flex items-center gap-1 md:gap-2">
-                                <div class="flex items-center bg-gray-100 rounded-lg">
-                                    <button @click="decreaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-l-lg">-</button>
-                                    <span class="w-6 text-center text-sm font-bold" x-text="item.qty"></span>
-                                    <button @click="increaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-r-lg">+</button>
-                                </div>
+                                <div class="flex items-center bg-gray-100 rounded-lg"><button @click="decreaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-l-lg">-</button><span class="w-6 text-center text-sm font-bold" x-text="item.qty"></span><button @click="increaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-r-lg">+</button></div>
                                 <button @click="removeFromCart(index)" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4 md:w-5"></i></button>
                             </div>
                         </div>
                     </template>
                 </div>
-                
                 <div class="p-5 border-t bg-gray-50">
-                    <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full mb-4 bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-2 text-sm">
-                        <i data-lucide="edit-3" class="w-4 h-4"></i> Set Harga Paket
-                    </button>
+                    <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full mb-4 bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-2 text-sm"><i data-lucide="edit-3" class="w-4 h-4"></i> Set Harga Paket</button>
                     <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Subtotal</span><span class="font-semibold" x-text="formatRupiah(total)"></span></div>
                     <div class="flex justify-between mt-2 mb-6"><span class="text-lg font-bold">Total</span><span class="text-2xl font-bold text-brand-orange" x-text="formatRupiah(total)"></span></div>
-                    <button @click="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2">
-                        <i data-lucide="credit-card"></i> BAYAR SEKARANG
-                    </button>
+                    <button @click="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2"><i data-lucide="credit-card"></i> BAYAR SEKARANG</button>
                 </div>
             </aside>
-            
-            <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart">
-                <div class="relative">
-                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
-                    <span x-show="cart.length > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full" x-text="cart.length"></span>
-                </div>
-                <span class="font-bold border-l border-orange-400 pl-3" x-show="cart.length > 0" x-text="formatRupiah(total)"></span>
-            </button>
+            <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart"><div class="relative"><i data-lucide="shopping-bag" class="w-6 h-6"></i><span x-show="cart.length > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full" x-text="cart.length"></span></div><span class="font-bold border-l border-orange-400 pl-3" x-show="cart.length > 0" x-text="formatRupiah(total)"></span></button>
         </div>
     </main>
 
     <!-- TAB 2: MASTER PRODUK -->
     <main x-show="currentTab === 'produk'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-        <header class="h-16 bg-white border-b flex items-center px-4 md:px-6">
-            <h1 class="text-xl font-bold text-gray-800">Master Produk</h1>
-            <p class="ml-4 text-sm text-gray-500 hidden md:block">Gunakan tombol "Edit Stok" untuk menambah stok kue yang baru datang pagi ini.</p>
+        <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">Master Produk</h1>
+                <p class="text-sm text-gray-500 hidden md:block">Gunakan tombol Edit Stok saat penerimaan barang.</p>
+            </div>
+            <!-- TOMBOL TAMBAH PRODUK BARU -->
+            <button @click="openAddProduct()" class="bg-brand-brown hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> <span class="hidden md:inline">Tambah Produk</span>
+            </button>
         </header>
         <div class="p-4 md:p-6 overflow-y-auto pb-24">
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse min-w-max">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-600 text-sm border-b">
-                                <th class="p-3 w-16">Foto</th>
-                                <th class="p-3">Nama Produk</th>
-                                <th class="p-3">Supplier Asal</th>
-                                <th class="p-3">Harga Jual</th>
-                                <th class="p-3">Stok Saat Ini</th>
-                                <th class="p-3">Aksi</th>
-                            </tr>
+                            <tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3 w-16">Foto</th><th class="p-3">Nama Produk</th><th class="p-3">Supplier Asal</th><th class="p-3">Harga Jual</th><th class="p-3">Stok Saat Ini</th><th class="p-3">Aksi</th></tr>
                         </thead>
                         <tbody>
                             <template x-for="product in products" :key="product.id + product.type">
@@ -237,35 +150,15 @@
 
     <!-- TAB 3: PENGELUARAN -->
     <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-        <header class="h-16 bg-white border-b flex items-center px-4 md:px-6">
-            <h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran</h1>
-        </header>
+        <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran</h1></header>
         <div class="p-4 md:p-6 overflow-y-auto pb-24">
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
-                        <select x-model="expCat" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                            <option>Perlengkapan (Kotak, Kresek)</option>
-                            <option>Biaya Operasional (Listrik, WiFi)</option>
-                            <option>Transportasi / Ongkir</option>
-                            <option>Biaya Gaji Karyawan</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Keterangan</label>
-                        <input type="text" x-model="expDesc" placeholder="Cth: Gaji Mba Yanti Minggu Ini" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nominal (Rp)</label>
-                        <input type="number" x-model="expAmount" placeholder="0" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                    </div>
+                    <div><label class="block text-sm font-semibold text-gray-700 mb-2">Kategori</label><select x-model="expCat" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"><option>Perlengkapan (Kotak, Kresek)</option><option>Biaya Operasional (Listrik, WiFi)</option><option>Transportasi / Ongkir</option><option>Biaya Gaji Karyawan</option></select></div>
+                    <div class="md:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-2">Keterangan</label><input type="text" x-model="expDesc" placeholder="Cth: Gaji Mba Yanti Minggu Ini" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"></div>
+                    <div><label class="block text-sm font-semibold text-gray-700 mb-2">Nominal (Rp)</label><input type="number" x-model="expAmount" placeholder="0" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"></div>
                 </div>
-                <div class="mt-4 flex justify-end">
-                    <button @click="submitExpense()" class="w-full md:w-auto bg-red-500 text-white px-6 py-3 md:py-2 rounded-lg font-bold hover:bg-red-600 flex items-center justify-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> Catat Pengeluaran
-                    </button>
-                </div>
+                <div class="mt-4 flex justify-end"><button @click="submitExpense()" class="w-full md:w-auto bg-red-500 text-white px-6 py-3 md:py-2 rounded-lg font-bold hover:bg-red-600 flex items-center justify-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Catat Pengeluaran</button></div>
             </div>
         </div>
     </main>
@@ -275,7 +168,6 @@
         <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
             <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
             <h1 class="text-lg font-bold text-gray-800 md:hidden">Laporan</h1>
-            
             <div class="flex flex-wrap items-center gap-2 md:gap-3">
                 <select x-model="reportPeriod" @change="if(reportPeriod !== 'custom') fetchReport()" class="bg-gray-50 border border-gray-200 text-gray-700 font-medium text-sm rounded-lg focus:ring-brand-brown focus:border-brand-brown block p-2 outline-none">
                     <option value="today">Hari Ini</option>
@@ -283,16 +175,8 @@
                     <option value="all">Semua Waktu</option>
                     <option value="custom">Pilih Tanggal...</option>
                 </select>
-
-                <div x-show="reportPeriod === 'custom'" class="flex items-center gap-2" style="display: none;">
-                    <input type="date" x-model="startDate" class="p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-brown text-gray-600">
-                    <span class="text-sm font-bold text-gray-400">s/d</span>
-                    <input type="date" x-model="endDate" class="p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-brown text-gray-600">
-                </div>
-
-                <button @click="fetchReport()" class="text-brand-brown hover:text-orange-600 flex items-center gap-1 text-sm font-bold bg-orange-50 px-3 py-2 rounded-lg transition">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span class="hidden md:inline">Refresh</span>
-                </button>
+                <div x-show="reportPeriod === 'custom'" class="flex items-center gap-2" style="display: none;"><input type="date" x-model="startDate" class="p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-brown text-gray-600"><span class="text-sm font-bold text-gray-400">s/d</span><input type="date" x-model="endDate" class="p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-brown text-gray-600"></div>
+                <button @click="fetchReport()" class="text-brand-brown hover:text-orange-600 flex items-center gap-1 text-sm font-bold bg-orange-50 px-3 py-2 rounded-lg transition"><i data-lucide="refresh-cw" class="w-4 h-4"></i> <span class="hidden md:inline">Refresh</span></button>
             </div>
         </header>
         
@@ -303,28 +187,44 @@
                 <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden"><div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div><div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Laba Operasional</p></div><p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit)"></p></div>
                 <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col"><div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div><p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p></div>
             </div>
+
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual </h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse mt-4 min-w-max">
+                        <thead><tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3">Nama Produk</th><th class="p-3">Supplier</th><th class="p-3 text-center">Terjual (Qty)</th><th class="p-3 text-right">Total Omset</th></tr></thead>
+                        <tbody>
+                            <template x-for="item in itemReports" :key="item.id"><tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium text-gray-800" x-text="item.name"></td><td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td><td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td><td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td></tr></template>
+                            <tr x-show="itemReports.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada data penjualan tercatat.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- BAGIAN BARU: RIWAYAT TRANSAKSI PER STRUK -->
+            <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-orange"></i> Riwayat Transaksi (Struk) </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse mt-4 min-w-max">
                         <thead>
                             <tr class="bg-gray-100 text-gray-600 text-sm border-b">
-                                <th class="p-3">Nama Produk</th>
-                                <th class="p-3">Supplier</th>
-                                <th class="p-3 text-center">Terjual (Qty)</th>
-                                <th class="p-3 text-right">Total Omset</th>
+                                <th class="p-3">Waktu & No. Struk</th>
+                                <th class="p-3">Daftar Belanjaan</th>
+                                <th class="p-3 text-right">Total Transaksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <template x-for="item in itemReports" :key="item.id">
+                            <template x-for="tx in reportData.salesHistory" :key="tx.invoice">
                                 <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-3 font-medium text-gray-800" x-text="item.name"></td>
-                                    <td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td>
-                                    <td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td>
-                                    <td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td>
+                                    <td class="p-3 text-sm">
+                                        <div class="font-bold text-brand-brown" x-text="tx.invoice"></div>
+                                        <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-600 max-w-xs" x-text="tx.items"></td>
+                                    <td class="p-3 text-right font-bold text-green-600" x-text="formatRupiah(tx.total)"></td>
                                 </tr>
                             </template>
-                            <tr x-show="itemReports.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada data penjualan tercatat untuk periode ini.</td></tr>
+                            <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="3" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -340,59 +240,68 @@
         <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="bar-chart-3" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
     </nav>
 
-    <!-- Modal Pembayaran (Dengan Layar Sukses & Cetak) -->
+    <!-- Modal Pembayaran & Cetak Struk -->
     <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
-            <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
-                <h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2>
-                <button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
-            </div>
-            
+            <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
             <div class="p-6">
                 <div x-show="paymentStep === 'input'">
-                    <div class="text-center mb-6">
-                        <p class="text-gray-500 text-sm">Total Tagihan</p>
-                        <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
-                    </div>
-                    <div class="mb-4">
-                        <div class="grid grid-cols-2 gap-2">
-                            <button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">Tunai</button>
-                            <button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">QRIS</button>
-                        </div>
-                    </div>
-                    <div x-show="paymentMethod === 'Tunai'" class="mb-6">
-                        <input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0">
-                        <div class="grid grid-cols-4 gap-2 mt-2">
-                            <button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button>
-                            <button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button>
-                            <button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button>
-                        </div>
-                        <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50">
-                            <span class="font-semibold text-gray-600">Kembalian</span>
-                            <span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span>
-                        </div>
-                    </div>
-                    <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50">
-                        <i data-lucide="check-circle" x-show="!isProcessing"></i>
-                        <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
-                        <span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span>
-                    </button>
+                    <div class="text-center mb-6"><p class="text-gray-500 text-sm">Total Tagihan</p><p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p></div>
+                    <div class="mb-4"><div class="grid grid-cols-2 gap-2"><button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">Tunai</button><button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">QRIS</button></div></div>
+                    <div x-show="paymentMethod === 'Tunai'" class="mb-6"><input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0"><div class="grid grid-cols-4 gap-2 mt-2"><button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button><button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button><button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button></div><div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50"><span class="font-semibold text-gray-600">Kembalian</span><span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span></div></div>
+                    <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50"><i data-lucide="check-circle" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span></button>
                 </div>
-
                 <div x-show="paymentStep === 'success'" style="display: none;" class="text-center">
-                    <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
-                    <p class="text-gray-500">Uang Kembalian</p>
-                    <p class="text-5xl font-bold text-brand-green my-2" x-text="formatRupiah(lastTx ? lastTx.change : 0)"></p>
-                    
-                    <div class="mt-8 flex gap-3">
-                        <button @click="printReceipt()" class="flex-1 bg-brand-brown text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-orange-800 transition">
-                            <i data-lucide="printer" class="w-5 h-5"></i> Cetak Struk
-                        </button>
-                        <button @click="resetCart()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition">
-                            Selesai
-                        </button>
+                    <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i><p class="text-gray-500">Uang Kembalian</p><p class="text-5xl font-bold text-brand-green my-2" x-text="formatRupiah(lastTx ? lastTx.change : 0)"></p>
+                    <div class="mt-8 flex gap-3"><button @click="printReceipt()" class="flex-1 bg-brand-brown text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-orange-800 transition"><i data-lucide="printer" class="w-5 h-5"></i> Cetak Struk</button><button @click="resetCart()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition">Selesai</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BARU: TAMBAH PRODUK DARI TABLET -->
+    <div x-show="showAddProductModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showAddProductModal = false">
+            <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
+                <h2 class="font-bold text-lg">Tambah Kue / Produk</h2>
+                <button @click="showAddProductModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[80vh]">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kue</label>
+                        <input type="text" x-model="newProduct.name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="Cth: Donat Coklat">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Jual (Rp)</label>
+                            <input type="number" x-model="newProduct.sellPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Stok Awal</label>
+                            <input type="number" x-model="newProduct.stock" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Kategori</label>
+                        <select x-model="newProduct.categoryId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
+                            <option value="">-- Pilih Kategori --</option>
+                            <template x-for="cat in options.categories" :key="cat.id"><option :value="cat.id" x-text="cat.name"></option></template>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Supplier Asal</label>
+                        <select x-model="newProduct.supplierId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
+                            <option value="">-- Pilih Supplier --</option>
+                            <template x-for="sup in options.suppliers" :key="sup.id"><option :value="sup.id" x-text="sup.name"></option></template>
+                        </select>
                     </div>
                 </div>
+                <button @click="submitNewProduct()" :disabled="isProcessing" class="w-full mt-6 bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50">
+                    <i data-lucide="save" x-show="!isProcessing"></i>
+                    <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
+                    <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PRODUK'"></span>
+                </button>
             </div>
         </div>
     </div>
@@ -401,44 +310,13 @@
     <div id="print-area">
         <template x-if="lastTx">
             <div style="padding: 10px;">
-                <div style="text-align: center; font-weight: bold; margin-bottom: 15px;">
-                    <div style="font-size: 16px;">POS KUKITA</div>
-                    <div style="font-weight: normal;">Struk Pembelian</div>
-                    <div style="font-weight: normal;">------------------------</div>
-                </div>
+                <div style="text-align: center; font-weight: bold; margin-bottom: 15px;"><div style="font-size: 16px;">POS KUKITA</div><div style="font-weight: normal;">Struk Pembelian</div><div style="font-weight: normal;">------------------------</div></div>
+                <div style="margin-bottom: 10px;"><div>No : <span x-text="lastTx.invoice"></span></div><div>Tgl: <span x-text="lastTx.date"></span></div><div>------------------------</div></div>
                 <div style="margin-bottom: 10px;">
-                    <div>No : <span x-text="lastTx.invoice"></span></div>
-                    <div>Tgl: <span x-text="lastTx.date"></span></div>
-                    <div>------------------------</div>
+                    <template x-for="item in lastTx.cart"><div style="display: flex; justify-content: space-between; margin-bottom: 3px;"><div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div><div x-text="formatRupiah(item.price * item.qty)"></div></div></template>
                 </div>
-                <div style="margin-bottom: 10px;">
-                    <template x-for="item in lastTx.cart">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                            <div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div>
-                            <div x-text="formatRupiah(item.price * item.qty)"></div>
-                        </div>
-                    </template>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <div>------------------------</div>
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px;">
-                        <div>Total:</div>
-                        <div x-text="formatRupiah(lastTx.total)"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                        <div>Tunai:</div>
-                        <div x-text="formatRupiah(lastTx.cash)"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                        <div>Kembali:</div>
-                        <div x-text="formatRupiah(lastTx.change)"></div>
-                    </div>
-                    <div>------------------------</div>
-                </div>
-                <div style="text-align: center;">
-                    <div>Terima Kasih</div>
-                    <div>Selamat Menikmati!</div>
-                </div>
+                <div style="margin-bottom: 15px;"><div>------------------------</div><div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px;"><div>Total:</div><div x-text="formatRupiah(lastTx.total)"></div></div><div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div><div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div><div>------------------------</div></div>
+                <div style="text-align: center;"><div>Terima Kasih</div><div>Selamat Menikmati!</div></div>
             </div>
         </template>
     </div>
@@ -452,8 +330,13 @@
                 showMobileCart: false, showPaymentModal: false, paymentStep: 'input', paymentMethod: 'Tunai', cashReceived: '', isProcessing: false, isLoading: true, lastTx: null, 
                 currentTime: new Date().toLocaleString('id-ID'),
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '',
-                reportData: { revenue: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0 }, itemReports: [],
+                reportData: { revenue: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [] }, itemReports: [],
                 reportPeriod: 'today', startDate: '', endDate: '',
+                
+                // Variabel Formulir Produk Baru
+                showAddProductModal: false,
+                options: { categories: [], suppliers: [] },
+                newProduct: { name: '', categoryId: '', supplierId: '', sellPrice: '', stock: '' },
 
                 async init() {
                     setTimeout(() => { lucide.createIcons(); }, 100);
@@ -461,6 +344,7 @@
                     this.$watch('currentTab', () => { setTimeout(() => { lucide.createIcons(); }, 50); });
                     this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
                     this.$watch('paymentStep', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
+                    this.$watch('showAddProductModal', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     await this.fetchCatalog();
                 },
 
@@ -480,8 +364,37 @@
                     finally { this.isLoading = false; setTimeout(() => { lucide.createIcons(); }, 10); }
                 },
 
+                async openAddProduct() {
+                    if (this.options.categories.length === 0) {
+                        try {
+                            const res = await fetch(`${SERVER_URL}/api/options`);
+                            const data = await res.json();
+                            if(data.success) this.options = data.data;
+                        } catch(e) { console.error("Gagal memuat opsi"); }
+                    }
+                    this.showAddProductModal = true;
+                },
+
+                async submitNewProduct() {
+                    if(!this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.supplierId || !this.newProduct.sellPrice || !this.newProduct.stock) {
+                        return alert('Mohon lengkapi semua isian!');
+                    }
+                    this.isProcessing = true;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/products`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.newProduct) });
+                        const result = await res.json();
+                        if(result.success) {
+                            alert('Produk baru berhasil ditambahkan! 🍰');
+                            this.showAddProductModal = false;
+                            this.newProduct = { name: '', categoryId: '', supplierId: '', sellPrice: '', stock: '' };
+                            await this.fetchCatalog();
+                        } else { alert('Gagal menambahkan: ' + result.message); }
+                    } catch(e) { alert('Koneksi ke server bermasalah'); }
+                    finally { this.isProcessing = false; }
+                },
+
                 async updateStock(product) {
-                    const newStockStr = prompt(`Penerimaan Barang Pagi 📦\n\nMasukkan jumlah STOK BARU (Total) untuk kue:\n${product.name}\n\nStok saat ini: ${product.stock}`, product.stock);
+                    const newStockStr = prompt(`Edit Stok Manual 📦\n\nMasukkan jumlah STOK BARU (Total) untuk:\n${product.name}\n\nStok saat ini: ${product.stock}`, product.stock);
                     if (newStockStr === null || newStockStr.trim() === "") return; 
                     const newStock = parseInt(newStockStr);
                     if (isNaN(newStock) || newStock < 0) return alert('Input dibatalkan: Jumlah stok tidak valid!');
