@@ -213,8 +213,8 @@
                                         <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                     </td>
                                     <td class="p-3 text-sm text-gray-600 max-w-xs">
-                                        <!-- LABEL OTOMATIS MUNCUL JIKA ADA TANDA [PAKET] DI DATA LAPORAN -->
-                                        <template x-if="tx.items.includes('[PAKET]')">
+                                        <!-- DETEKSI PKT- : JIKA NOMOR INVOICE AWALNYA PKT-, TAMPILKAN LABEL PAKET -->
+                                        <template x-if="tx.invoice.startsWith('PKT-')">
                                             <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
                                         </template>
                                         <span x-text="tx.items"></span>
@@ -454,10 +454,15 @@
                             if (new Date(this.startDate) > new Date(this.endDate)) return alert('Tanggal Awal tidak boleh melewati Tanggal Akhir!');
                             queryParam += `&start=${this.startDate}&end=${this.endDate}`;
                         }
-                        const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}`);
+                        
+                        // ANTI CACHE BROWSER: AGAR DATA SELALU BARU
+                        const antiCache = `&_t=${Date.now()}`;
+                        
+                        const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}${antiCache}`);
                         const dataGlobal = await resGlobal.json();
                         if(dataGlobal.success) this.reportData = dataGlobal.data;
-                        const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`);
+                        
+                        const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}${antiCache}`);
                         const dataItems = await resItems.json();
                         if(dataItems.success) this.itemReports = dataItems.data;
                     } catch (error) { console.error('Error fetching reports:', error); }
@@ -466,6 +471,7 @@
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
                 
                 addToCart(product) { 
+                    this.isCustomPackage = false; 
                     if (product.type === 'product' && product.stock <= 0) return alert('Stok gudang habis!'); 
                     const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; 
                     const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); 
@@ -478,17 +484,20 @@
                 },
                 
                 increaseQty(index) { 
+                    this.isCustomPackage = false; 
                     const item = this.cart[index]; 
                     const product = this.products.find(p => p.id === item.id && p.type === item.type); 
                     if (product.type === 'package' || item.qty < product.stock) item.qty++; 
                 },
                 
                 decreaseQty(index) { 
+                    this.isCustomPackage = false; 
                     if (this.cart[index].qty > 1) this.cart[index].qty--; 
                     else this.removeFromCart(index); 
                 },
                 
                 removeFromCart(index) { 
+                    this.isCustomPackage = false; 
                     this.cart.splice(index, 1); 
                 },
                 
@@ -506,7 +515,6 @@
                     if (isNaN(newTotal) || newTotal < 0) return alert('Harga tidak valid!'); 
                     if (currentTotal === 0) return; 
                     
-                    // OTOMATIS TANDAI SEBAGAI PAKET KARENA MENGGUNAKAN UBAH HARGA
                     this.isCustomPackage = true; 
 
                     const ratio = newTotal / currentTotal; 
@@ -529,14 +537,7 @@
                 async processTransaction() {
                     this.isProcessing = true;
                     
-                    let cartToSend = JSON.parse(JSON.stringify(this.cart));
-                    
-                    // JIKA INI TRANSAKSI PAKET (DIUBAH HARGINYA), KITA SISIPKAN KATA [PAKET] PADA NAMA BARANG PERTAMA
-                    if (this.isCustomPackage && cartToSend.length > 0) {
-                        cartToSend[0].name = "[PAKET] " + cartToSend[0].name;
-                    }
-
-                    let mappedCart = cartToSend.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
+                    let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
                     
                     const payload = { 
                         cart: mappedCart, 
