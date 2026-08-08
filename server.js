@@ -23,7 +23,7 @@ app.post('/api/checkout', async (req, res) => {
   const { cart, paymentMethod, cashReceived, totalAmount, isPackage } = req.body;
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // LOGIKA PKT-: Jika paket, invoice pakai PKT-, jika bukan pakai INV-
+      // LOGIKA PKT-: Jika isPackage true dari kasir, jadikan PKT-, jika tidak jadikan INV-
       const prefix = isPackage ? 'PKT-' : 'INV-';
       const sale = await tx.sale.create({
         data: { invoice: `${prefix}${Date.now()}`, totalAmount, paymentMethod, cashReceived: cashReceived || 0 }
@@ -120,18 +120,14 @@ app.get('/api/reports', async (req, res) => {
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     
-    const salesHistory = sales.map(s => {
-      // Deteksi awalan PKT- untuk menampilkan label khusus di laporan
-      const isCustomPackage = s.invoice.startsWith('PKT-');
-      return {
-        invoice: s.invoice,
-        time: s.createdAt,
-        paymentMethod: s.paymentMethod,
-        total: s.totalAmount,
-        // Tambahkan teks [PAKET] di awal daftar barang agar terbaca sistem frontend
-        items: (isCustomPackage ? '[PAKET] ' : '') + s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
-      };
-    });
+    // VERSI ORIGINAL 100% AMAN
+    const salesHistory = sales.map(s => ({
+      invoice: s.invoice,
+      time: s.createdAt,
+      paymentMethod: s.paymentMethod,
+      total: s.totalAmount,
+      items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
+    }));
 
     res.json({
       success: true,
@@ -165,6 +161,4 @@ app.get('/api/reports/items', async (req, res) => {
 });
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
-
-// SAKELAR SERVER DIKEMBALIKAN KE VERSI ASLI
 app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });

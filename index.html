@@ -213,8 +213,8 @@
                                         <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                     </td>
                                     <td class="p-3 text-sm text-gray-600 max-w-xs">
-                                        <!-- DETEKSI PKT- : JIKA NOMOR INVOICE AWALNYA PKT-, TAMPILKAN LABEL PAKET -->
-                                        <template x-if="tx.invoice.startsWith('PKT-')">
+                                        <!-- DETEKSI NOMOR INVOICE PKT- -->
+                                        <template x-if="tx.invoice && tx.invoice.startsWith('PKT-')">
                                             <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
                                         </template>
                                         <span x-text="tx.items"></span>
@@ -454,15 +454,10 @@
                             if (new Date(this.startDate) > new Date(this.endDate)) return alert('Tanggal Awal tidak boleh melewati Tanggal Akhir!');
                             queryParam += `&start=${this.startDate}&end=${this.endDate}`;
                         }
-                        
-                        // ANTI CACHE BROWSER: AGAR DATA SELALU BARU
-                        const antiCache = `&_t=${Date.now()}`;
-                        
-                        const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}${antiCache}`);
+                        const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}`);
                         const dataGlobal = await resGlobal.json();
                         if(dataGlobal.success) this.reportData = dataGlobal.data;
-                        
-                        const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}${antiCache}`);
+                        const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`);
                         const dataItems = await resItems.json();
                         if(dataItems.success) this.itemReports = dataItems.data;
                     } catch (error) { console.error('Error fetching reports:', error); }
