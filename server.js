@@ -54,7 +54,7 @@ app.post('/api/expenses', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 4. ENDPOINT BARU: OPSI KATEGORI & SUPPLIER (Untuk Form Tambah Produk)
+// 4. ENDPOINT: OPSI KATEGORI & SUPPLIER 
 app.get('/api/options', async (req, res) => {
   try {
     const categories = await prisma.category.findMany();
@@ -63,15 +63,17 @@ app.get('/api/options', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 5. ENDPOINT BARU: TAMBAH PRODUK DARI TABLET
+// 5. ENDPOINT: TAMBAH PRODUK DENGAN HARGA BELI
 app.post('/api/products', async (req, res) => {
-  const { name, categoryId, supplierId, sellPrice, stock } = req.body;
+  // Menangkap buyPrice dari form frontend
+  const { name, categoryId, supplierId, buyPrice, sellPrice, stock } = req.body;
   try {
     const newProduct = await prisma.product.create({
       data: { 
         name, 
         categoryId: parseInt(categoryId), 
         supplierId: parseInt(supplierId), 
+        buyPrice: parseInt(buyPrice), // Memasukkan harga beli ke database
         sellPrice: parseInt(sellPrice), 
         stock: parseInt(stock) 
       }
@@ -108,7 +110,6 @@ app.get('/api/reports', async (req, res) => {
   }
 
   try {
-    // Ambil Data Transaksi Lengkap
     const sales = await prisma.sale.findMany({ 
       where: dateFilter, orderBy: { createdAt: 'desc' },
       include: { items: { include: { product: true, package: true } } }
@@ -118,7 +119,6 @@ app.get('/api/reports', async (req, res) => {
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     
-    // Susun Riwayat Struk
     const salesHistory = sales.map(s => ({
       invoice: s.invoice,
       time: s.createdAt,
