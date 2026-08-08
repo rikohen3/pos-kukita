@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 
 const app = express();
 const prisma = new PrismaClient();
+const PORT = 5000; 
 
 app.use(cors()); 
 app.use(express.json()); 
@@ -120,12 +121,15 @@ app.get('/api/reports', async (req, res) => {
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     
     const salesHistory = sales.map(s => {
+      // Deteksi awalan PKT- untuk menampilkan label khusus di laporan
+      const isCustomPackage = s.invoice.startsWith('PKT-');
       return {
         invoice: s.invoice,
         time: s.createdAt,
         paymentMethod: s.paymentMethod,
         total: s.totalAmount,
-        items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
+        // Tambahkan teks [PAKET] di awal daftar barang agar terbaca sistem frontend
+        items: (isCustomPackage ? '[PAKET] ' : '') + s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
       };
     });
 
@@ -162,5 +166,5 @@ app.get('/api/reports/items', async (req, res) => {
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
 
-// FORMAT YANG BENAR UNTUK VERCEL SERVERLESS:
-export default app;
+// SAKELAR SERVER DIKEMBALIKAN KE VERSI ASLI
+app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
