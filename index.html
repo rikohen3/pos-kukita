@@ -212,7 +212,13 @@
                                         <div class="font-bold text-brand-brown" x-text="tx.invoice"></div>
                                         <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                     </td>
-                                    <td class="p-3 text-sm text-gray-600 max-w-xs" x-text="tx.items"></td>
+                                    <td class="p-3 text-sm text-gray-600 max-w-xs">
+                                        <!-- LABEL OTOMATIS MUNCUL JIKA ADA TANDA [PAKET] DI DATA LAPORAN -->
+                                        <template x-if="tx.items.includes('[PAKET]')">
+                                            <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
+                                        </template>
+                                        <span x-text="tx.items"></span>
+                                    </td>
                                     <td class="p-3 text-right font-bold text-green-600" x-text="formatRupiah(tx.total)"></td>
                                 </tr>
                             </template>
@@ -232,7 +238,7 @@
         <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="bar-chart-3" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
     </nav>
 
-    <!-- Modal Pembayaran & Cetak Struk -->
+    <!-- Modal Pembayaran & Cetak Struk (BERSIH UNTUK PEMBELI) -->
     <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
             <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
@@ -265,7 +271,6 @@
                         <input type="text" x-model="newProduct.name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="Cth: Donat Coklat">
                     </div>
                     
-                    <!-- PERUBAHAN: Tiga Kolom (Harga Modal, Jual, dan Stok) -->
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1">Hrg Modal</label>
@@ -305,15 +310,39 @@
         </div>
     </div>
     
-    <!-- FORMAT STRUK UNTUK PRINTER KASIR -->
+    <!-- FORMAT STRUK PEMBELI (BERSIH SEPERTI SEMULA) -->
     <div id="print-area">
         <template x-if="lastTx">
             <div style="padding: 10px;">
                 <div style="text-align: center; font-weight: bold; margin-bottom: 15px;"><div style="font-size: 16px;">POS KUKITA</div><div style="font-weight: normal;">Struk Pembelian</div><div style="font-weight: normal;">------------------------</div></div>
                 <div style="margin-bottom: 10px;"><div>No : <span x-text="lastTx.invoice"></span></div><div>Tgl: <span x-text="lastTx.date"></span></div><div>------------------------</div></div>
+                
                 <div style="margin-bottom: 10px;">
-                    <template x-for="item in lastTx.cart"><div style="display: flex; justify-content: space-between; margin-bottom: 3px;"><div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div><div x-text="formatRupiah(item.price * item.qty)"></div></div></template>
+                    <template x-if="lastTx.isPackage">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-weight: bold;">
+                                <div>Paket Custom</div>
+                                <div x-text="formatRupiah(lastTx.total)"></div>
+                            </div>
+                            <div style="font-size: 11px; margin-bottom: 3px; border-bottom: 1px dashed #ccc; display: inline-block;">Rincian Isi Paket:</div>
+                            <template x-for="item in lastTx.cart">
+                                <div style="font-size: 11px; padding-left: 5px; color: #333;" x-text="'- ' + item.name + ' (x' + item.qty + ')'"></div>
+                            </template>
+                        </div>
+                    </template>
+                    
+                    <template x-if="!lastTx.isPackage">
+                        <div>
+                            <template x-for="item in lastTx.cart">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                    <div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div>
+                                    <div x-text="formatRupiah(item.price * item.qty)"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
                 </div>
+
                 <div style="margin-bottom: 15px;"><div>------------------------</div><div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px;"><div>Total:</div><div x-text="formatRupiah(lastTx.total)"></div></div><div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div><div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div><div>------------------------</div></div>
                 <div style="text-align: center;"><div>Terima Kasih</div><div>Selamat Menikmati!</div></div>
             </div>
@@ -321,12 +350,13 @@
     </div>
 
     <script>
-        const SERVER_URL = 'https://pos-kukita-production.up.railway.app';
+        const SERVER_URL = 'https://pos-kukita.vercel.app';
 
         function posApp() {
             return {
                 currentTab: 'pos', categories: ['Semua'], selectedCategory: 'Semua', searchQuery: '', cart: [], products: [], 
                 showMobileCart: false, showPaymentModal: false, paymentStep: 'input', paymentMethod: 'Tunai', cashReceived: '', isProcessing: false, isLoading: true, lastTx: null, 
+                isCustomPackage: false, 
                 currentTime: new Date().toLocaleString('id-ID'),
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '',
                 reportData: { revenue: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [] }, itemReports: [],
@@ -334,7 +364,7 @@
                 
                 showAddProductModal: false,
                 options: { categories: [], suppliers: [] },
-                newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' }, // Menambahkan buyPrice
+                newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' },
 
                 async init() {
                     setTimeout(() => { lucide.createIcons(); }, 100);
@@ -352,8 +382,8 @@
                         const response = await fetch(`${SERVER_URL}/api/catalog`);
                         const result = await response.json();
                         if(result.success) {
-                            const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, price: p.sellPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '🍹' : '🍰', type: 'product' }));
-                            const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', price: p.sellPrice, stock: 999, image: p.image || null, icon: '🍱', type: 'package' }));
+                            const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, price: p.sellPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '沙' : '魂', type: 'product' }));
+                            const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', price: p.sellPrice, stock: 999, image: p.image || null, icon: '些', type: 'package' }));
                             this.products = [...prodList, ...pkgList];
                             const cats = new Set(this.products.map(p => p.category));
                             this.categories = ['Semua', ...Array.from(cats)];
@@ -363,6 +393,12 @@
                 },
 
                 async openAddProduct() {
+                    const sandi = prompt("🔒 Masukkan PIN/Password Admin:");
+                    if (sandi !== "123456") {
+                        alert("❌ Akses ditolak! Password salah.");
+                        return;
+                    }
+
                     if (this.options.categories.length === 0) {
                         try {
                             const res = await fetch(`${SERVER_URL}/api/options`);
@@ -382,7 +418,7 @@
                         const res = await fetch(`${SERVER_URL}/api/products`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.newProduct) });
                         const result = await res.json();
                         if(result.success) {
-                            alert('Produk baru berhasil ditambahkan! 🍰');
+                            alert('Produk baru berhasil ditambahkan! 魂');
                             this.showAddProductModal = false;
                             this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' };
                             await this.fetchCatalog();
@@ -392,7 +428,13 @@
                 },
 
                 async updateStock(product) {
-                    const newStockStr = prompt(`Edit Stok Manual 📦\n\nMasukkan jumlah STOK BARU (Total) untuk:\n${product.name}\n\nStok saat ini: ${product.stock}`, product.stock);
+                    const sandi = prompt("🔒 Masukkan PIN/Password Admin untuk Edit Stok:");
+                    if (sandi !== "123456") {
+                        alert("❌ Akses ditolak! Password salah.");
+                        return;
+                    }
+
+                    const newStockStr = prompt(`Edit Stok Manual 逃\n\nMasukkan jumlah STOK BARU (Total) untuk:\n${product.name}\n\nStok saat ini: ${product.stock}`, product.stock);
                     if (newStockStr === null || newStockStr.trim() === "") return; 
                     const newStock = parseInt(newStockStr);
                     if (isNaN(newStock) || newStock < 0) return alert('Input dibatalkan: Jumlah stok tidak valid!');
@@ -422,26 +464,101 @@
                 },
 
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
-                addToCart(product) { if (product.type === 'product' && product.stock <= 0) return alert('Stok gudang habis!'); const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); if (existing) { if (product.type === 'package' || existing.qty < product.stock) existing.qty++; else alert('Maksimal stok tercapai!'); } else { this.cart.unshift(itemToAdd); } },
-                increaseQty(index) { const item = this.cart[index]; const product = this.products.find(p => p.id === item.id && p.type === item.type); if (product.type === 'package' || item.qty < product.stock) item.qty++; },
-                decreaseQty(index) { if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
-                removeFromCart(index) { this.cart.splice(index, 1); },
+                
+                addToCart(product) { 
+                    if (product.type === 'product' && product.stock <= 0) return alert('Stok gudang habis!'); 
+                    const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; 
+                    const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); 
+                    if (existing) { 
+                        if (product.type === 'package' || existing.qty < product.stock) existing.qty++; 
+                        else alert('Maksimal stok tercapai!'); 
+                    } else { 
+                        this.cart.unshift(itemToAdd); 
+                    } 
+                },
+                
+                increaseQty(index) { 
+                    const item = this.cart[index]; 
+                    const product = this.products.find(p => p.id === item.id && p.type === item.type); 
+                    if (product.type === 'package' || item.qty < product.stock) item.qty++; 
+                },
+                
+                decreaseQty(index) { 
+                    if (this.cart[index].qty > 1) this.cart[index].qty--; 
+                    else this.removeFromCart(index); 
+                },
+                
+                removeFromCart(index) { 
+                    this.cart.splice(index, 1); 
+                },
+                
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 get change() { return (parseFloat(this.cashReceived) || 0) - this.total; },
                 formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); },
-                setCustomPrice() { if (this.cart.length === 0) return alert('Keranjang masih kosong!'); const currentTotal = this.total; const customTotalStr = prompt(`UBAH TOTAL HARGA\n\nTotal saat ini: ${this.formatRupiah(currentTotal)}\nMasukkan harga baru:`, currentTotal); if (customTotalStr === null || customTotalStr.trim() === "") return; const newTotal = parseFloat(customTotalStr); if (isNaN(newTotal) || newTotal < 0) return alert('Harga tidak valid!'); if (currentTotal === 0) return; const ratio = newTotal / currentTotal; let runningTotal = 0; for (let i = 0; i < this.cart.length; i++) { if (i === this.cart.length - 1) { const remaining = newTotal - runningTotal; this.cart[i].price = remaining / this.cart[i].qty; } else { const newPrice = Math.round(this.cart[i].price * ratio); this.cart[i].price = newPrice; runningTotal += (newPrice * this.cart[i].qty); } } },
+                
+                setCustomPrice() { 
+                    if (this.cart.length === 0) return alert('Keranjang masih kosong!'); 
+                    const currentTotal = this.total; 
+                    const customTotalStr = prompt(`UBAH TOTAL HARGA\n\nTotal saat ini: ${this.formatRupiah(currentTotal)}\nMasukkan harga baru paket:`, currentTotal); 
+                    if (customTotalStr === null || customTotalStr.trim() === "") return; 
+                    
+                    const newTotal = parseFloat(customTotalStr); 
+                    if (isNaN(newTotal) || newTotal < 0) return alert('Harga tidak valid!'); 
+                    if (currentTotal === 0) return; 
+                    
+                    // OTOMATIS TANDAI SEBAGAI PAKET KARENA MENGGUNAKAN UBAH HARGA
+                    this.isCustomPackage = true; 
+
+                    const ratio = newTotal / currentTotal; 
+                    let runningTotal = 0; 
+                    for (let i = 0; i < this.cart.length; i++) { 
+                        if (i === this.cart.length - 1) { 
+                            const remaining = newTotal - runningTotal; 
+                            this.cart[i].price = remaining / this.cart[i].qty; 
+                        } else { 
+                            const newPrice = Math.round(this.cart[i].price * ratio); 
+                            this.cart[i].price = newPrice; 
+                            runningTotal += (newPrice * this.cart[i].qty); 
+                        } 
+                    } 
+                },
                 
                 openPayment() { this.cashReceived = ''; this.paymentMethod = 'Tunai'; this.paymentStep = 'input'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
                 closePayment() { if (this.paymentStep === 'success') { this.resetCart(); } else { this.showPaymentModal = false; } },
                 
                 async processTransaction() {
                     this.isProcessing = true;
-                    const payload = { cart: this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price })), paymentMethod: this.paymentMethod, cashReceived: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : 0, totalAmount: this.total };
+                    
+                    let cartToSend = JSON.parse(JSON.stringify(this.cart));
+                    
+                    // JIKA INI TRANSAKSI PAKET (DIUBAH HARGINYA), KITA SISIPKAN KATA [PAKET] PADA NAMA BARANG PERTAMA
+                    if (this.isCustomPackage && cartToSend.length > 0) {
+                        cartToSend[0].name = "[PAKET] " + cartToSend[0].name;
+                    }
+
+                    let mappedCart = cartToSend.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
+                    
+                    const payload = { 
+                        cart: mappedCart, 
+                        paymentMethod: this.paymentMethod, 
+                        cashReceived: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : 0, 
+                        totalAmount: this.total,
+                        isPackage: this.isCustomPackage 
+                    };
+
                     try {
                         const response = await fetch(`${SERVER_URL}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await response.json();
                         if (result.success) { 
-                            this.lastTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), cart: JSON.parse(JSON.stringify(this.cart)), total: this.total, cash: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : this.total, change: this.paymentMethod === 'Tunai' ? this.change : 0 };
+                            this.lastTx = { 
+                                invoice: result.data.invoice, 
+                                date: new Date().toLocaleString('id-ID'), 
+                                cart: JSON.parse(JSON.stringify(this.cart)), 
+                                total: this.total, 
+                                cash: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : this.total, 
+                                change: this.paymentMethod === 'Tunai' ? this.change : 0,
+                                isPackage: this.isCustomPackage 
+                            };
                             this.paymentStep = 'success';
                         } else { alert('Gagal: ' + result.message); }
                     } catch (error) { alert('Koneksi ke server terputus.'); } 
@@ -449,7 +566,15 @@
                 },
 
                 printReceipt() { window.print(); },
-                resetCart() { this.cart = []; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; this.fetchCatalog(); },
+                
+                resetCart() { 
+                    this.cart = []; 
+                    this.isCustomPackage = false; 
+                    this.showPaymentModal = false; 
+                    this.paymentStep = 'input'; 
+                    this.showMobileCart = false; 
+                    this.fetchCatalog(); 
+                },
 
                 async submitExpense() {
                     if(!this.expDesc || !this.expAmount) return alert('Mohon isi keterangan dan nominal pengeluaran');

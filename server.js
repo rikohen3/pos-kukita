@@ -65,7 +65,6 @@ app.get('/api/options', async (req, res) => {
 
 // 5. ENDPOINT: TAMBAH PRODUK DENGAN HARGA BELI
 app.post('/api/products', async (req, res) => {
-  // Menangkap buyPrice dari form frontend
   const { name, categoryId, supplierId, buyPrice, sellPrice, stock } = req.body;
   try {
     const newProduct = await prisma.product.create({
@@ -73,7 +72,7 @@ app.post('/api/products', async (req, res) => {
         name, 
         categoryId: parseInt(categoryId), 
         supplierId: parseInt(supplierId), 
-        buyPrice: parseInt(buyPrice), // Memasukkan harga beli ke database
+        buyPrice: parseInt(buyPrice),
         sellPrice: parseInt(sellPrice), 
         stock: parseInt(stock) 
       }
@@ -119,13 +118,19 @@ app.get('/api/reports', async (req, res) => {
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     
-    const salesHistory = sales.map(s => ({
-      invoice: s.invoice,
-      time: s.createdAt,
-      paymentMethod: s.paymentMethod,
-      total: s.totalAmount,
-      items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
-    }));
+    const salesHistory = sales.map(s => {
+      // Deteksi apakah transaksi ini mengandung produk dengan harga yang berbeda dari harga aslinya (Paket Custom)
+      const isCustomPackage = s.items.some(i => i.product && i.price !== i.product.sellPrice);
+      
+      return {
+        invoice: s.invoice,
+        time: s.createdAt,
+        paymentMethod: s.paymentMethod,
+        total: s.totalAmount,
+        // Sisipkan teks [PAKET CUSTOM] jika terdeteksi sebagai paket
+        items: (isCustomPackage ? '[PAKET CUSTOM] ' : '') + s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
+      };
+    });
 
     res.json({
       success: true,
@@ -159,4 +164,4 @@ app.get('/api/reports/items', async (req, res) => {
 });
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
-app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
+export default app;
