@@ -127,8 +127,8 @@ app.get('/api/reports', async (req, res) => {
         time: s.createdAt,
         paymentMethod: s.paymentMethod,
         total: s.totalAmount,
-        // Sisipkan teks [PAKET CUSTOM] jika terdeteksi sebagai paket
-        items: (isCustomPackage ? '[PAKET CUSTOM] ' : '') + s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
+        // Sisipkan teks [PAKET] di laporan khusus transaksi paket
+        items: (isCustomPackage ? '[PAKET] ' : '') + s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
       };
     });
 
@@ -164,4 +164,4 @@ app.get('/api/reports/items', async (req, res) => {
 });
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
-export default app;
+app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
