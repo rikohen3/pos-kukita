@@ -115,7 +115,7 @@ app.get('/api/reports', async (req, res) => {
       where: dateFilter, orderBy: { createdAt: 'desc' },
       include: { items: { include: { product: true, package: true } } }
     });
-    const expenses = await prisma.expense.findMany({ where: dateFilter });
+    const expenses = await prisma.expense.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } }); // Ditambahkan orderBy agar yang terbaru di atas
     
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -131,7 +131,14 @@ app.get('/api/reports', async (req, res) => {
 
     res.json({
       success: true,
-      data: { revenue: totalRevenue, expenses: totalExpenses, netProfit: totalRevenue - totalExpenses, transactions: sales.length, salesHistory }
+      data: { 
+        revenue: totalRevenue, 
+        expenses: totalExpenses, 
+        netProfit: totalRevenue - totalExpenses, 
+        transactions: sales.length, 
+        salesHistory,
+        expenseHistory: expenses // Data ini yang akan dibaca oleh index.html
+      }
     });
   } catch (error) { res.status(500).json({ success: false }); }
 });

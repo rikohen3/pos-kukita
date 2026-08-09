@@ -241,6 +241,35 @@
                     </table>
                 </div>
             </div>
+
+            <!-- TABEL BARU: RINCIAN PENGELUARAN -->
+            <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse mt-4 min-w-max">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                <th class="p-3">Waktu</th>
+                                <th class="p-3">Kategori</th>
+                                <th class="p-3">Keterangan</th>
+                                <th class="p-3 text-right">Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="exp in reportData.expenseHistory" :key="exp.id">
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3 text-sm text-gray-500" x-text="new Date(exp.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td>
+                                    <td class="p-3 text-sm font-bold text-gray-700" x-text="exp.category"></td>
+                                    <td class="p-3 text-sm text-gray-600" x-text="exp.description"></td>
+                                    <td class="p-3 text-right font-bold text-red-500" x-text="formatRupiah(exp.amount)"></td>
+                                </tr>
+                            </template>
+                            <tr x-show="!reportData.expenseHistory || reportData.expenseHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada pengeluaran tercatat di periode ini.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
         </div>
     </main>
 
