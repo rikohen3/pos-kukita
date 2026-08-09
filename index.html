@@ -238,7 +238,7 @@
         <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="bar-chart-3" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
     </nav>
 
-    <!-- Modal Pembayaran & Cetak Struk (BERSIH UNTUK PEMBELI) -->
+    <!-- Modal Pembayaran & Cetak Struk -->
     <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
             <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
@@ -310,7 +310,7 @@
         </div>
     </div>
     
-    <!-- FORMAT STRUK PEMBELI (BERSIH SEPERTI SEMULA) -->
+    <!-- FORMAT STRUK PEMBELI (DENGAN LABEL QRIS) -->
     <div id="print-area">
         <template x-if="lastTx">
             <div style="padding: 10px;">
@@ -343,7 +343,25 @@
                     </template>
                 </div>
 
-                <div style="margin-bottom: 15px;"><div>------------------------</div><div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px;"><div>Total:</div><div x-text="formatRupiah(lastTx.total)"></div></div><div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div><div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div><div>------------------------</div></div>
+                <!-- Bagian Penutup Struk dengan Pilihan Metode Bayar -->
+                <div style="margin-bottom: 15px;">
+                    <div>------------------------</div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px;"><div>Total:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
+                    
+                    <!-- Label QRIS atau Tunai -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Metode:</div><div style="font-weight: bold;" x-text="lastTx.method"></div></div>
+                    
+                    <!-- Uang cash dan kembalian HANYA muncul kalau bayar Tunai -->
+                    <template x-if="lastTx.method === 'Tunai'">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div>
+                        </div>
+                    </template>
+                    
+                    <div>------------------------</div>
+                </div>
+                
                 <div style="text-align: center;"><div>Terima Kasih</div><div>Selamat Menikmati!</div></div>
             </div>
         </template>
@@ -382,8 +400,8 @@
                         const response = await fetch(`${SERVER_URL}/api/catalog`);
                         const result = await response.json();
                         if(result.success) {
-                            const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, price: p.sellPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '沙' : '魂', type: 'product' }));
-                            const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', price: p.sellPrice, stock: 999, image: p.image || null, icon: '些', type: 'package' }));
+                            const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, price: p.sellPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product' }));
+                            const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', price: p.sellPrice, stock: 999, image: p.image || null, icon: '🎁', type: 'package' }));
                             this.products = [...prodList, ...pkgList];
                             const cats = new Set(this.products.map(p => p.category));
                             this.categories = ['Semua', ...Array.from(cats)];
@@ -394,7 +412,7 @@
 
                 async openAddProduct() {
                     const sandi = prompt("🔒 Masukkan PIN/Password Admin:");
-                    if (sandi !== "123456") {
+                    if (sandi !== "100515") {
                         alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
@@ -418,7 +436,7 @@
                         const res = await fetch(`${SERVER_URL}/api/products`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.newProduct) });
                         const result = await res.json();
                         if(result.success) {
-                            alert('Produk baru berhasil ditambahkan! 魂');
+                            alert('Produk baru berhasil ditambahkan! 🍩');
                             this.showAddProductModal = false;
                             this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' };
                             await this.fetchCatalog();
@@ -429,12 +447,12 @@
 
                 async updateStock(product) {
                     const sandi = prompt("🔒 Masukkan PIN/Password Admin untuk Edit Stok:");
-                    if (sandi !== "123456") {
+                    if (sandi !== "100515") {
                         alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
 
-                    const newStockStr = prompt(`Edit Stok Manual 逃\n\nMasukkan jumlah STOK BARU (Total) untuk:\n${product.name}\n\nStok saat ini: ${product.stock}`, product.stock);
+                    const newStockStr = prompt(`Edit Stok Manual 📦\n\nMasukkan jumlah STOK BARU (Total) untuk:\n${product.name}\n\nStok saat ini: ${product.stock}`, product.stock);
                     if (newStockStr === null || newStockStr.trim() === "") return; 
                     const newStock = parseInt(newStockStr);
                     if (isNaN(newStock) || newStock < 0) return alert('Input dibatalkan: Jumlah stok tidak valid!');
@@ -553,7 +571,8 @@
                                 total: this.total, 
                                 cash: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : this.total, 
                                 change: this.paymentMethod === 'Tunai' ? this.change : 0,
-                                isPackage: this.isCustomPackage 
+                                isPackage: this.isCustomPackage,
+                                method: this.paymentMethod
                             };
                             this.paymentStep = 'success';
                         } else { alert('Gagal: ' + result.message); }
