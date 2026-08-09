@@ -204,7 +204,14 @@
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-orange"></i> Riwayat Transaksi (Struk) </h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse mt-4 min-w-max">
-                        <thead><tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3">Waktu & No. Struk</th><th class="p-3">Daftar Belanjaan</th><th class="p-3 text-right">Total Transaksi</th></tr></thead>
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                <th class="p-3">Waktu & No. Struk</th>
+                                <th class="p-3">Daftar Belanjaan</th>
+                                <th class="p-3 text-center">Metode Bayar</th>
+                                <th class="p-3 text-right">Total Transaksi</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <template x-for="tx in reportData.salesHistory" :key="tx.invoice">
                                 <tr class="border-b hover:bg-gray-50">
@@ -219,10 +226,17 @@
                                         </template>
                                         <span x-text="tx.items"></span>
                                     </td>
+                                    <td class="p-3 text-center">
+                                        <!-- Menampilkan Label Metode Bayar (Biru untuk QRIS, Hijau untuk Tunai) -->
+                                        <span :class="tx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'" 
+                                              class="px-2 py-1 rounded text-xs font-bold" 
+                                              x-text="tx.paymentMethod || 'Tunai'">
+                                        </span>
+                                    </td>
                                     <td class="p-3 text-right font-bold text-green-600" x-text="formatRupiah(tx.total)"></td>
                                 </tr>
                             </template>
-                            <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="3" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
+                            <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -310,7 +324,7 @@
         </div>
     </div>
     
-    <!-- FORMAT STRUK PEMBELI (DENGAN LABEL QRIS) -->
+    <!-- FORMAT STRUK PEMBELI -->
     <div id="print-area">
         <template x-if="lastTx">
             <div style="padding: 10px;">
@@ -343,15 +357,12 @@
                     </template>
                 </div>
 
-                <!-- Bagian Penutup Struk dengan Pilihan Metode Bayar -->
                 <div style="margin-bottom: 15px;">
                     <div>------------------------</div>
                     <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 5px;"><div>Total:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
                     
-                    <!-- Label QRIS atau Tunai -->
                     <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Metode:</div><div style="font-weight: bold;" x-text="lastTx.method"></div></div>
                     
-                    <!-- Uang cash dan kembalian HANYA muncul kalau bayar Tunai -->
                     <template x-if="lastTx.method === 'Tunai'">
                         <div>
                             <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div>
