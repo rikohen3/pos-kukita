@@ -115,7 +115,7 @@ app.get('/api/reports', async (req, res) => {
       where: dateFilter, orderBy: { createdAt: 'desc' },
       include: { items: { include: { product: true, package: true } } }
     });
-    const expenses = await prisma.expense.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } }); // Ditambahkan orderBy agar yang terbaru di atas
+    const expenses = await prisma.expense.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } }); 
     
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -137,7 +137,7 @@ app.get('/api/reports', async (req, res) => {
         netProfit: totalRevenue - totalExpenses, 
         transactions: sales.length, 
         salesHistory,
-        expenseHistory: expenses // Data ini yang akan dibaca oleh index.html
+        expenseHistory: expenses 
       }
     });
   } catch (error) { res.status(500).json({ success: false }); }
@@ -165,6 +165,36 @@ app.get('/api/reports/items', async (req, res) => {
     });
     res.json({ success: true, data: Object.values(itemSummary).sort((a, b) => b.qtySold - a.qtySold) });
   } catch (error) { res.status(500).json({ success: false }); }
+});
+
+// 9. ENDPOINT BARU: HAPUS STRUK & KEMBALIKAN STOK
+app.delete('/api/sales/:invoice', async (req, res) => {
+  const invoice = req.params.invoice;
+  try {
+    const sale = await prisma.sale.findFirst({ where: { invoice: invoice }, include: { items: true } });
+    if (!sale) return res.status(404).json({ success: false, message: 'Struk tidak ditemukan' });
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Kembalikan stok barang ke gudang
+      for (const item of sale.items) {
+        if (item.productId) {
+          await tx.product.update({ where: { id: item.productId }, data: { stock: { increment: item.qty } } });
+        } else if (item.packageId) {
+          const pkg = await tx.package.findUnique({ where: { id: item.packageId }, include: { items: true } });
+          if (pkg) {
+            for (const pkgItem of pkg.items) {
+              await tx.product.update({ where: { id: pkgItem.productId }, data: { stock: { increment: pkgItem.qty * item.qty } } });
+            }
+          }
+        }
+      }
+      // 2. Hapus Rincian Belanjaan (SaleItem)
+      await tx.saleItem.deleteMany({ where: { saleId: sale.id } });
+      // 3. Hapus Nota Utama (Sale)
+      await tx.sale.delete({ where: { id: sale.id } });
+    });
+    res.json({ success: true, message: 'Struk dihapus & stok telah dikembalikan!' });
+  } catch (error) { res.status(500).json({ success: false, message: 'Gagal menghapus struk' }); }
 });
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });

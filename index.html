@@ -200,6 +200,7 @@
                 </div>
             </div>
 
+            <!-- TABEL RIWAYAT TRANSAKSI (DENGAN TOMBOL HAPUS) -->
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-orange"></i> Riwayat Transaksi (Struk) </h2>
                 <div class="overflow-x-auto">
@@ -210,6 +211,7 @@
                                 <th class="p-3">Daftar Belanjaan</th>
                                 <th class="p-3 text-center">Metode Bayar</th>
                                 <th class="p-3 text-right">Total Transaksi</th>
+                                <th class="p-3 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -220,29 +222,32 @@
                                         <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                     </td>
                                     <td class="p-3 text-sm text-gray-600 max-w-xs">
-                                        <!-- DETEKSI NOMOR INVOICE PKT- -->
                                         <template x-if="tx.invoice && tx.invoice.startsWith('PKT-')">
                                             <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
                                         </template>
                                         <span x-text="tx.items"></span>
                                     </td>
                                     <td class="p-3 text-center">
-                                        <!-- Menampilkan Label Metode Bayar (Biru untuk QRIS, Hijau untuk Tunai) -->
                                         <span :class="tx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'" 
                                               class="px-2 py-1 rounded text-xs font-bold" 
                                               x-text="tx.paymentMethod || 'Tunai'">
                                         </span>
                                     </td>
                                     <td class="p-3 text-right font-bold text-green-600" x-text="formatRupiah(tx.total)"></td>
+                                    <td class="p-3 text-center">
+                                        <button @click="deleteSale(tx.invoice)" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition" title="Hapus Struk Ini">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                        </button>
+                                    </td>
                                 </tr>
                             </template>
-                            <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
+                            <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- TABEL BARU: RINCIAN PENGELUARAN -->
+            <!-- TABEL RINCIAN PENGELUARAN -->
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran </h2>
                 <div class="overflow-x-auto">
@@ -519,6 +524,34 @@
                         const dataItems = await resItems.json();
                         if(dataItems.success) this.itemReports = dataItems.data;
                     } catch (error) { console.error('Error fetching reports:', error); }
+                },
+
+                // FUNGSI BARU: Hapus Struk
+                async deleteSale(invoice) {
+                    const sandi = prompt(`🔒 Masukkan PIN/Password Admin untuk MENGHAPUS struk ${invoice}:`);
+                    if (sandi !== "100515") {
+                        alert("❌ Akses ditolak! Password salah.");
+                        return;
+                    }
+
+                    const confirmDelete = confirm(`⚠️ PERINGATAN!\n\nApakah Anda yakin ingin menghapus struk ${invoice} secara permanen?\n\n(Stok barang yang ada di struk ini akan otomatis dikembalikan ke gudang)`);
+                    
+                    if (!confirmDelete) return;
+
+                    try {
+                        const response = await fetch(`${SERVER_URL}/api/sales/${invoice}`, { method: 'DELETE' });
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert("✅ Berhasil: " + result.message);
+                            await this.fetchReport(); 
+                            await this.fetchCatalog(); 
+                        } else {
+                            alert("❌ Gagal: " + result.message);
+                        }
+                    } catch (error) {
+                        alert("❌ Koneksi ke server terputus.");
+                    }
                 },
 
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
