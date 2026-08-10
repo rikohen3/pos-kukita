@@ -84,7 +84,14 @@
             <div x-show="showMobileCart" @click="showMobileCart = false" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" style="display: none;"></div>
 
             <aside :class="showMobileCart ? 'fixed inset-y-0 right-0 z-50 flex w-full max-w-sm' : 'hidden md:flex w-72 lg:w-80 xl:w-96'" class="flex-shrink-0 bg-white border-l flex-col shadow-xl transition-all duration-300">
-                <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white"><div class="flex items-center font-bold text-lg"><i data-lucide="shopping-cart" class="mr-2"></i> Keranjang</div><div class="flex items-center gap-2"><span class="bg-white text-brand-brown text-xs font-bold px-2 py-1 rounded-full" x-text="cart.length + ' Item'"></span><button @click="showMobileCart = false" class="md:hidden p-1 bg-white bg-opacity-20 rounded-md hover:bg-opacity-40" x-show="showMobileCart"><i data-lucide="x" class="w-5 h-5"></i></button></div></div>
+                <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white">
+                    <div class="flex items-center font-bold text-lg"><i data-lucide="shopping-cart" class="mr-2"></i> Keranjang</div>
+                    <div class="flex items-center gap-2">
+                        <!-- UBAH: Badge atas diganti menjadi Total Pcs -->
+                        <span class="bg-white text-brand-brown text-xs font-bold px-2 py-1 rounded-full" x-text="totalQty + ' Pcs'"></span>
+                        <button @click="showMobileCart = false" class="md:hidden p-1 bg-white bg-opacity-20 rounded-md hover:bg-opacity-40" x-show="showMobileCart"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
+                </div>
                 <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
                     <template x-if="cart.length === 0"><div class="flex flex-col items-center justify-center h-full text-gray-400"><i data-lucide="shopping-bag" class="w-12 h-12 mb-3 opacity-20"></i><p>Keranjang kosong</p></div></template>
                     <template x-for="(item, index) in cart" :key="index">
@@ -99,12 +106,23 @@
                 </div>
                 <div class="p-5 border-t bg-gray-50">
                     <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full mb-4 bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-2 text-sm"><i data-lucide="edit-3" class="w-4 h-4"></i> Set Harga Paket</button>
+                    
+                    <!-- UBAH: Tambahan informasi Total Barang (Pcs) di atas Subtotal -->
+                    <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Total Barang</span><span class="font-semibold text-brand-brown" x-text="totalQty + ' Pcs'"></span></div>
+                    
                     <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Subtotal</span><span class="font-semibold" x-text="formatRupiah(total)"></span></div>
                     <div class="flex justify-between mt-2 mb-6"><span class="text-lg font-bold">Total</span><span class="text-2xl font-bold text-brand-orange" x-text="formatRupiah(total)"></span></div>
                     <button @click="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2"><i data-lucide="credit-card"></i> BAYAR SEKARANG</button>
                 </div>
             </aside>
-            <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart"><div class="relative"><i data-lucide="shopping-bag" class="w-6 h-6"></i><span x-show="cart.length > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full" x-text="cart.length"></span></div><span class="font-bold border-l border-orange-400 pl-3" x-show="cart.length > 0" x-text="formatRupiah(total)"></span></button>
+            <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart">
+                <div class="relative">
+                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                    <!-- UBAH: Ikon badge HP diganti jadi Total Qty -->
+                    <span x-show="cart.length > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full" x-text="totalQty"></span>
+                </div>
+                <span class="font-bold border-l border-orange-400 pl-3" x-show="cart.length > 0" x-text="formatRupiah(total)"></span>
+            </button>
         </div>
     </main>
 
@@ -200,7 +218,6 @@
                 </div>
             </div>
 
-            <!-- TABEL RIWAYAT TRANSAKSI (DENGAN TOMBOL HAPUS) -->
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-orange"></i> Riwayat Transaksi (Struk) </h2>
                 <div class="overflow-x-auto">
@@ -211,7 +228,6 @@
                                 <th class="p-3">Daftar Belanjaan</th>
                                 <th class="p-3 text-center">Metode Bayar</th>
                                 <th class="p-3 text-right">Total Transaksi</th>
-                                <th class="p-3 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -222,6 +238,7 @@
                                         <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                     </td>
                                     <td class="p-3 text-sm text-gray-600 max-w-xs">
+                                        <!-- DETEKSI NOMOR INVOICE PKT- -->
                                         <template x-if="tx.invoice && tx.invoice.startsWith('PKT-')">
                                             <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
                                         </template>
@@ -234,20 +251,15 @@
                                         </span>
                                     </td>
                                     <td class="p-3 text-right font-bold text-green-600" x-text="formatRupiah(tx.total)"></td>
-                                    <td class="p-3 text-center">
-                                        <button @click="deleteSale(tx.invoice)" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition" title="Hapus Struk Ini">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                        </button>
-                                    </td>
                                 </tr>
                             </template>
-                            <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
+                            <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- TABEL RINCIAN PENGELUARAN -->
+            <!-- TABEL BARU: RINCIAN PENGELUARAN -->
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran </h2>
                 <div class="overflow-x-auto">
@@ -292,7 +304,13 @@
             <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
             <div class="p-6">
                 <div x-show="paymentStep === 'input'">
-                    <div class="text-center mb-6"><p class="text-gray-500 text-sm">Total Tagihan</p><p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p></div>
+                    
+                    <!-- UBAH: Tambahan info Pcs di layar Pop-up -->
+                    <div class="text-center mb-6">
+                        <p class="text-gray-500 text-sm">Total Tagihan (<span x-text="totalQty"></span> Pcs)</p>
+                        <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
+                    </div>
+                    
                     <div class="mb-4"><div class="grid grid-cols-2 gap-2"><button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">Tunai</button><button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">QRIS</button></div></div>
                     <div x-show="paymentMethod === 'Tunai'" class="mb-6"><input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0"><div class="grid grid-cols-4 gap-2 mt-2"><button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button><button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button><button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button></div><div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50"><span class="font-semibold text-gray-600">Kembalian</span><span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span></div></div>
                     <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50"><i data-lucide="check-circle" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span></button>
@@ -526,34 +544,6 @@
                     } catch (error) { console.error('Error fetching reports:', error); }
                 },
 
-                // FUNGSI BARU: Hapus Struk
-                async deleteSale(invoice) {
-                    const sandi = prompt(`🔒 Masukkan PIN/Password Admin untuk MENGHAPUS struk ${invoice}:`);
-                    if (sandi !== "100515") {
-                        alert("❌ Akses ditolak! Password salah.");
-                        return;
-                    }
-
-                    const confirmDelete = confirm(`⚠️ PERINGATAN!\n\nApakah Anda yakin ingin menghapus struk ${invoice} secara permanen?\n\n(Stok barang yang ada di struk ini akan otomatis dikembalikan ke gudang)`);
-                    
-                    if (!confirmDelete) return;
-
-                    try {
-                        const response = await fetch(`${SERVER_URL}/api/sales/${invoice}`, { method: 'DELETE' });
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            alert("✅ Berhasil: " + result.message);
-                            await this.fetchReport(); 
-                            await this.fetchCatalog(); 
-                        } else {
-                            alert("❌ Gagal: " + result.message);
-                        }
-                    } catch (error) {
-                        alert("❌ Koneksi ke server terputus.");
-                    }
-                },
-
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
                 
                 addToCart(product) { 
@@ -588,7 +578,10 @@
                 },
                 
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
-                get change() { return (parseFloat(this.cashReceived) || 0) - this.total; },
+                
+                // KODE BARU: Menghitung Total Pcs Fisik Barang
+                get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
+                
                 formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); },
                 
                 setCustomPrice() { 
