@@ -246,8 +246,6 @@
                                               x-text="tx.paymentMethod || 'Tunai'">
                                         </span>
                                     </td>
-                                    
-                                    <!-- FITUR BARU: TOMBOL HAPUS STRUK DI SINI -->
                                     <td class="p-3 text-right">
                                         <div class="font-bold text-green-600 mb-2" x-text="formatRupiah(tx.total)"></div>
                                         <button @click="deleteTransaction(tx.invoice)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition">
@@ -478,7 +476,7 @@
 
                 async openAddProduct() {
                     const sandi = prompt("🔒 Masukkan PIN/Password Admin:");
-                    if (sandi !== "100515") {
+                    if (sandi !== "030388") {
                         alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
@@ -513,7 +511,7 @@
 
                 async updateStock(product) {
                     const sandi = prompt("🔒 Masukkan PIN/Password Admin untuk Edit Stok:");
-                    if (sandi !== "100515") {
+                    if (sandi !== "030388") {
                         alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
@@ -547,10 +545,9 @@
                     } catch (error) { console.error('Error fetching reports:', error); }
                 },
 
-                // FITUR BARU: LOGIKA PEMBATALAN STRUK
                 async deleteTransaction(invoice) {
                     const sandi = prompt(`🔒 MENGHAPUS STRUK ${invoice}\n\nMasukkan PIN Admin Anda:\n(Perhatian: Stok barang di nota ini akan otomatis dikembalikan ke gudang)`);
-                    if (sandi !== "100515") {
+                    if (sandi !== "030388") {
                         if (sandi !== null) alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
@@ -566,8 +563,8 @@
                         
                         if (result.success) {
                             alert(`✅ Berhasil! Struk dihapus dan stok barang telah dikembalikan.`);
-                            this.fetchReport(); // Refresh data laporan
-                            this.fetchCatalog(); // Refresh data stok di layar depan
+                            this.fetchReport(); 
+                            this.fetchCatalog(); 
                         } else {
                             alert('Gagal menghapus struk: ' + (result.message || 'Pastikan backend server.js sudah diperbarui.'));
                         }
@@ -611,7 +608,6 @@
                 
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 
-                // Menghitung Total Pcs Fisik Barang
                 get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
                 
                 formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); },
