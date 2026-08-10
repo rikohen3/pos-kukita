@@ -197,5 +197,46 @@ app.delete('/api/sales/:invoice', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, message: 'Gagal menghapus struk' }); }
 });
 
+// ==========================================
+// API UNTUK MENGHAPUS STRUK & KEMBALIKAN STOK
+// ==========================================
+app.delete('/api/transactions/:invoice', async (req, res) => {
+    const { invoice } = req.params;
+    try {
+        // 1. Cari data struk beserta isi keranjangnya
+        const sale = await prisma.sale.findUnique({
+            where: { invoice: invoice },
+            include: { items: true } // Pastikan 'items' ini sama dengan nama relasi di schema.prisma Anda
+        });
+
+        if (!sale) return res.status(404).json({ success: false, message: 'Struk tidak ditemukan' });
+
+        // 2. Gunakan $transaction agar aman (Jika satu gagal, semua batal)
+        await prisma.$transaction(async (tx) => {
+            // a. Kembalikan stok barang satu per satu secara otomatis
+            for (const item of sale.items) {
+                // Hanya proses jika barang tersebut punya ID produk fisik
+                if (item.productId) {
+                    await tx.product.update({
+                        where: { id: item.productId },
+                        data: { stock: { increment: item.qty } } // Tambahkan kembali stok sesuai yang terhapus
+                    });
+                }
+            }
+            
+            // b. Hapus rincian struk (SaleItem)
+            await tx.saleItem.deleteMany({ where: { saleId: sale.id } });
+            
+            // c. Hapus struk utama (Sale)
+            await tx.sale.delete({ where: { id: sale.id } });
+        });
+
+        res.json({ success: true, message: 'Transaksi dibatalkan & stok otomatis dikembalikan.' });
+    } catch (error) {
+        console.error('Error delete transaction:', error);
+        res.status(500).json({ success: false, message: 'Terjadi kesalahan sistem saat membatalkan struk.' });
+    }
+});
+
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
 app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
