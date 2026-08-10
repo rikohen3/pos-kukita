@@ -107,7 +107,6 @@
                     <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full mb-4 bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-2 text-sm"><i data-lucide="edit-3" class="w-4 h-4"></i> Set Harga Paket</button>
                     
                     <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Total Barang</span><span class="font-semibold text-brand-brown" x-text="totalQty + ' Pcs'"></span></div>
-                    
                     <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Subtotal</span><span class="font-semibold" x-text="formatRupiah(total)"></span></div>
                     <div class="flex justify-between mt-2 mb-6"><span class="text-lg font-bold">Total</span><span class="text-2xl font-bold text-brand-orange" x-text="formatRupiah(total)"></span></div>
                     <button @click="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2"><i data-lucide="credit-card"></i> BAYAR SEKARANG</button>
@@ -135,6 +134,24 @@
             </button>
         </header>
         <div class="p-4 md:p-6 overflow-y-auto pb-24">
+            
+            <!-- WIDGET BARU: INFO NILAI STOK ASET -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                    <p class="text-sm font-bold text-gray-500 mb-1 flex items-center gap-1"><i data-lucide="layers" class="w-4 h-4"></i> Macam Produk</p>
+                    <p class="text-2xl font-bold text-gray-800" x-text="totalProductTypes + ' Item'"></p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                    <p class="text-sm font-bold text-gray-500 mb-1 flex items-center gap-1"><i data-lucide="boxes" class="w-4 h-4"></i> Total Fisik Stok</p>
+                    <p class="text-2xl font-bold text-gray-800" x-text="totalPhysicalStock + ' Pcs'"></p>
+                </div>
+                <div class="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200 shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
+                    <i data-lucide="banknote" class="w-16 h-16 absolute -right-4 -bottom-4 text-orange-200 opacity-50"></i>
+                    <p class="text-sm font-bold text-brand-orange mb-1 relative z-10">Estimasi Nilai Stok (Omset)</p>
+                    <p class="text-2xl font-bold text-brand-brown relative z-10" x-text="formatRupiah(totalStockValue)"></p>
+                </div>
+            </div>
+
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse min-w-max">
@@ -246,6 +263,7 @@
                                               x-text="tx.paymentMethod || 'Tunai'">
                                         </span>
                                     </td>
+                                    
                                     <td class="p-3 text-right">
                                         <div class="font-bold text-green-600 mb-2" x-text="formatRupiah(tx.total)"></div>
                                         <button @click="deleteTransaction(tx.invoice)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition">
@@ -474,9 +492,21 @@
                     finally { this.isLoading = false; setTimeout(() => { lucide.createIcons(); }, 10); }
                 },
 
+                // FITUR BARU: Menghitung 3 nilai penting untuk Dashboard Aset
+                get totalProductTypes() {
+                    return this.products.filter(p => p.type === 'product').length;
+                },
+                get totalPhysicalStock() {
+                    return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.stock > 0 ? p.stock : 0), 0);
+                },
+                get totalStockValue() {
+                    // Menghitung potensi omset (Berdasarkan harga jual saat ini)
+                    return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.price * (p.stock > 0 ? p.stock : 0)), 0);
+                },
+
                 async openAddProduct() {
                     const sandi = prompt("🔒 Masukkan PIN/Password Admin:");
-                    if (sandi !== "030388") {
+                    if (sandi !== "100515") {
                         alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
@@ -511,7 +541,7 @@
 
                 async updateStock(product) {
                     const sandi = prompt("🔒 Masukkan PIN/Password Admin untuk Edit Stok:");
-                    if (sandi !== "030388") {
+                    if (sandi !== "100515") {
                         alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
@@ -547,7 +577,7 @@
 
                 async deleteTransaction(invoice) {
                     const sandi = prompt(`🔒 MENGHAPUS STRUK ${invoice}\n\nMasukkan PIN Admin Anda:\n(Perhatian: Stok barang di nota ini akan otomatis dikembalikan ke gudang)`);
-                    if (sandi !== "030388") {
+                    if (sandi !== "100515") {
                         if (sandi !== null) alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
@@ -563,8 +593,8 @@
                         
                         if (result.success) {
                             alert(`✅ Berhasil! Struk dihapus dan stok barang telah dikembalikan.`);
-                            this.fetchReport(); 
-                            this.fetchCatalog(); 
+                            this.fetchReport();
+                            this.fetchCatalog();
                         } else {
                             alert('Gagal menghapus struk: ' + (result.message || 'Pastikan backend server.js sudah diperbarui.'));
                         }
