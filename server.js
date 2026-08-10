@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 
+process.env.TZ = "Asia/Makassar";
+
 const app = express();
 const prisma = new PrismaClient();
 const PORT = 5000; 
