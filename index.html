@@ -87,7 +87,6 @@
                 <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white">
                     <div class="flex items-center font-bold text-lg"><i data-lucide="shopping-cart" class="mr-2"></i> Keranjang</div>
                     <div class="flex items-center gap-2">
-                        <!-- Lencana atas menampilkan Item saja -->
                         <span class="bg-white text-brand-brown text-xs font-bold px-2 py-1 rounded-full" x-text="cart.length + ' Item'"></span>
                         <button @click="showMobileCart = false" class="md:hidden p-1 bg-white bg-opacity-20 rounded-md hover:bg-opacity-40" x-show="showMobileCart"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
@@ -107,7 +106,6 @@
                 <div class="p-5 border-t bg-gray-50">
                     <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full mb-4 bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-2 text-sm"><i data-lucide="edit-3" class="w-4 h-4"></i> Set Harga Paket</button>
                     
-                    <!-- UBAH: Hanya menampilkan Pcs saja pada baris Total Barang -->
                     <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Total Barang</span><span class="font-semibold text-brand-brown" x-text="totalQty + ' Pcs'"></span></div>
                     
                     <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Subtotal</span><span class="font-semibold" x-text="formatRupiah(total)"></span></div>
@@ -237,7 +235,6 @@
                                         <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                     </td>
                                     <td class="p-3 text-sm text-gray-600 max-w-xs">
-                                        <!-- DETEKSI NOMOR INVOICE PKT- -->
                                         <template x-if="tx.invoice && tx.invoice.startsWith('PKT-')">
                                             <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
                                         </template>
@@ -249,7 +246,14 @@
                                               x-text="tx.paymentMethod || 'Tunai'">
                                         </span>
                                     </td>
-                                    <td class="p-3 text-right font-bold text-green-600" x-text="formatRupiah(tx.total)"></td>
+                                    
+                                    <!-- FITUR BARU: TOMBOL HAPUS STRUK DI SINI -->
+                                    <td class="p-3 text-right">
+                                        <div class="font-bold text-green-600 mb-2" x-text="formatRupiah(tx.total)"></div>
+                                        <button @click="deleteTransaction(tx.invoice)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition">
+                                            <i data-lucide="trash-2" class="w-3 h-3"></i> Batal / Hapus
+                                        </button>
+                                    </td>
                                 </tr>
                             </template>
                             <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
@@ -258,7 +262,6 @@
                 </div>
             </div>
 
-            <!-- TABEL BARU: RINCIAN PENGELUARAN -->
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran </h2>
                 <div class="overflow-x-auto">
@@ -303,10 +306,8 @@
             <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
             <div class="p-6">
                 <div x-show="paymentStep === 'input'">
-                    
-                    <!-- UBAH: Layar konfirmasi pop-up juga hanya menampilkan Total Pcs -->
                     <div class="text-center mb-6">
-                        <p class="text-gray-500 text-sm">Total Tagihan (<span x-text="totalQty"></span> Pcs)</p>
+                        <p class="text-gray-500 text-sm">Total Tagihan (<span x-text="cart.length"></span> Item | <span x-text="totalQty"></span> Pcs)</p>
                         <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
                     </div>
                     
@@ -544,6 +545,35 @@
                         const dataItems = await resItems.json();
                         if(dataItems.success) this.itemReports = dataItems.data;
                     } catch (error) { console.error('Error fetching reports:', error); }
+                },
+
+                // FITUR BARU: LOGIKA PEMBATALAN STRUK
+                async deleteTransaction(invoice) {
+                    const sandi = prompt(`🔒 MENGHAPUS STRUK ${invoice}\n\nMasukkan PIN Admin Anda:\n(Perhatian: Stok barang di nota ini akan otomatis dikembalikan ke gudang)`);
+                    if (sandi !== "100515") {
+                        if (sandi !== null) alert("❌ Akses ditolak! Password salah.");
+                        return;
+                    }
+
+                    const confirmDelete = confirm(`⚠️ YAKIN INGIN MEMBATALKAN STRUK ${invoice}?\n\n- Data pendapatan akan dikurangi.\n- Stok barang akan otomatis dikembalikan.`);
+                    if (!confirmDelete) return;
+
+                    try {
+                        const response = await fetch(`${SERVER_URL}/api/transactions/${invoice}`, {
+                            method: 'DELETE'
+                        });
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert(`✅ Berhasil! Struk dihapus dan stok barang telah dikembalikan.`);
+                            this.fetchReport(); // Refresh data laporan
+                            this.fetchCatalog(); // Refresh data stok di layar depan
+                        } else {
+                            alert('Gagal menghapus struk: ' + (result.message || 'Pastikan backend server.js sudah diperbarui.'));
+                        }
+                    } catch (error) {
+                        alert('Koneksi ke server bermasalah saat mencoba membatalkan transaksi.');
+                    }
                 },
 
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
