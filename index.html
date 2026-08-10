@@ -87,7 +87,8 @@
                 <div class="h-16 flex items-center justify-between px-4 border-b bg-brand-brown text-white">
                     <div class="flex items-center font-bold text-lg"><i data-lucide="shopping-cart" class="mr-2"></i> Keranjang</div>
                     <div class="flex items-center gap-2">
-                        <span class="bg-white text-brand-brown text-xs font-bold px-2 py-1 rounded-full" x-text="cart.length + ' Item | ' + totalQty + ' Pcs'"></span>
+                        <!-- UBAH: Lencana atas dikembalikan agar hanya menampilkan Item saja -->
+                        <span class="bg-white text-brand-brown text-xs font-bold px-2 py-1 rounded-full" x-text="cart.length + ' Item'"></span>
                         <button @click="showMobileCart = false" class="md:hidden p-1 bg-white bg-opacity-20 rounded-md hover:bg-opacity-40" x-show="showMobileCart"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
                 </div>
@@ -106,6 +107,7 @@
                 <div class="p-5 border-t bg-gray-50">
                     <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full mb-4 bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-2 text-sm"><i data-lucide="edit-3" class="w-4 h-4"></i> Set Harga Paket</button>
                     
+                    <!-- UBAH: Informasi Total Item & Total Pcs tetap ada di bawah sini agar jelas sebelum klik Bayar -->
                     <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Total Barang</span><span class="font-semibold text-brand-brown" x-text="cart.length + ' Item (' + totalQty + ' Pcs)'"></span></div>
                     
                     <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Subtotal</span><span class="font-semibold" x-text="formatRupiah(total)"></span></div>
@@ -408,7 +410,6 @@
                 <div style="margin-bottom: 15px;">
                     <div>------------------------</div>
                     
-                    <!-- BARIS BARU: Menampilkan Total Pcs Fisik di Struk -->
                     <div style="display: flex; justify-content: space-between; margin-top: 5px;"><div>Total Barang:</div><div x-text="lastTx.totalQty + ' Pcs'"></div></div>
                     
                     <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;"><div>Total Harga:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
@@ -639,7 +640,7 @@
                                 change: this.paymentMethod === 'Tunai' ? this.change : 0,
                                 isPackage: this.isCustomPackage,
                                 method: this.paymentMethod,
-                                totalQty: this.totalQty // <--- MENYIMPAN JUMLAH PCS UNTUK STRUK
+                                totalQty: this.totalQty
                             };
                             this.paymentStep = 'success';
                         } else { alert('Gagal: ' + result.message); }
