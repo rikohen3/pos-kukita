@@ -336,5 +336,37 @@ app.get('/api/stock-history', async (req, res) => {
     }
 });
 
+// ==========================================
+// API BARU: HAPUS RIWAYAT & KEMBALIKAN STOK
+// ==========================================
+app.delete('/api/stock-history/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // 1. Cari data riwayat yang mau dihapus
+        const history = await prisma.stockHistory.findUnique({
+            where: { id: parseInt(id) }
+        });
+        if (!history) return res.status(404).json({ success: false, message: 'Data tidak ditemukan' });
+
+        // 2. Gunakan $transaction (Hapus riwayat sekaligus kurangi stok)
+        await prisma.$transaction(async (tx) => {
+            // a. Kurangi stok produk sejumlah yang salah input tadi
+            await tx.product.update({
+                where: { id: history.productId },
+                data: { stock: { decrement: history.qtyAdded } }
+            });
+            // b. Hapus catatan dari riwayat
+            await tx.stockHistory.delete({
+                where: { id: parseInt(id) }
+            });
+        });
+
+        res.json({ success: true, message: 'Riwayat dibatalkan, stok dikurangi.' });
+    } catch (error) {
+        console.error('Error delete stock history:', error);
+        res.status(500).json({ success: false, message: 'Gagal membatalkan riwayat' });
+    }
+});
+
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
 app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
