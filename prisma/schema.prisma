@@ -86,3 +86,9 @@ model Expense {
   amount      Int
   createdAt   DateTime @default(now())
 }
+
+model Setting {
+  id    Int    @id @default(1)
+  name  String @unique
+  value String
+}

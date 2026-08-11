@@ -240,5 +240,49 @@ app.delete('/api/transactions/:invoice', async (req, res) => {
     }
 });
 
+// ==========================================
+// API UNTUK PENGATURAN (PIN ADMIN)
+// ==========================================
+app.post('/api/settings/verify-pin', async (req, res) => {
+    const { pin } = req.body;
+    try {
+        const pinSetting = await prisma.setting.findUnique({ where: { name: 'admin_pin' } });
+        const validPin = pinSetting ? pinSetting.value : '030388'; // Default PIN yang diminta
+        
+        if (pin === validPin) {
+            res.json({ success: true });
+        } else {
+            res.json({ success: false, message: 'PIN Salah' });
+        }
+    } catch (error) {
+        console.error('Error verify pin:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+app.put('/api/settings/update-pin', async (req, res) => {
+    const { oldPin, newPin } = req.body;
+    try {
+        const pinSetting = await prisma.setting.findUnique({ where: { name: 'admin_pin' } });
+        const currentPin = pinSetting ? pinSetting.value : '030388';
+
+        if (oldPin !== currentPin) {
+            return res.json({ success: false, message: 'PIN Lama salah!' });
+        }
+
+        // Simpan PIN baru ke Database Neon
+        await prisma.setting.upsert({
+            where: { name: 'admin_pin' },
+            update: { value: newPin },
+            create: { id: 1, name: 'admin_pin', value: newPin }
+        });
+
+        res.json({ success: true, message: 'PIN berhasil diubah!' });
+    } catch (error) {
+        console.error('Error update pin:', error);
+        res.status(500).json({ success: false, message: 'Gagal mengubah PIN' });
+    }
+});
+
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
 app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
