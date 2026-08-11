@@ -284,5 +284,57 @@ app.put('/api/settings/update-pin', async (req, res) => {
     }
 });
 
+// ==========================================
+// API BARU: EDIT STOK & CATAT RIWAYAT MASUK
+// ==========================================
+app.put('/api/products/:id/stock-v2', async (req, res) => {
+    const { id } = req.params;
+    const { newStock } = req.body;
+    try {
+        const oldProduct = await prisma.product.findUnique({ where: { id: parseInt(id) } });
+        if (!oldProduct) return res.status(404).json({ success: false, message: 'Produk tidak ditemukan' });
+
+        // Hitung selisih: Berapa banyak barang yang baru masuk?
+        const qtyAdded = newStock - oldProduct.stock;
+        
+        const updatedProduct = await prisma.product.update({
+            where: { id: parseInt(id) },
+            data: { stock: newStock }
+        });
+
+        // Catat ke buku riwayat HANYA JIKA stok bertambah (barang masuk)
+        if (qtyAdded > 0) {
+            await prisma.stockHistory.create({
+                data: {
+                    productId: updatedProduct.id,
+                    productName: updatedProduct.name,
+                    qtyAdded: qtyAdded,
+                    newTotal: newStock
+                }
+            });
+        }
+        res.json({ success: true, data: updatedProduct });
+    } catch (error) {
+        console.error('Error update stock:', error);
+        res.status(500).json({ success: false, message: 'Gagal update stok' });
+    }
+});
+
+// ==========================================
+// API BARU: AMBIL DATA RIWAYAT STOK MASUK
+// ==========================================
+app.get('/api/stock-history', async (req, res) => {
+    try {
+        // Ambil 100 catatan stok masuk paling baru
+        const history = await prisma.stockHistory.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: 100
+        });
+        res.json({ success: true, data: history });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Gagal memuat riwayat stok' });
+    }
+});
+
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
 app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });

@@ -126,12 +126,19 @@
             <div>
                 <h1 class="text-xl font-bold text-gray-800">Master Produk</h1>
             </div>
-            <button @click="openAddProduct()" class="bg-brand-brown hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i> <span class="hidden md:inline">Tambah Produk</span>
-            </button>
-        </header>
-        <div class="p-4 md:p-6 overflow-y-auto pb-24">
             
+            <!-- TOMBOL BARU: RIWAYAT MASUK -->
+            <div class="flex items-center gap-2">
+                <button @click="openStockHistory()" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> <span class="hidden md:inline">Riwayat Masuk</span>
+                </button>
+                <button @click="openAddProduct()" class="bg-brand-brown hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> <span class="hidden md:inline">Tambah Produk</span>
+                </button>
+            </div>
+        </header>
+        
+        <div class="p-4 md:p-6 overflow-y-auto pb-24">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center"><p class="text-sm font-bold text-gray-500 mb-1 flex items-center gap-1"><i data-lucide="layers" class="w-4 h-4"></i> Macam Produk</p><p class="text-2xl font-bold text-gray-800" x-text="totalProductTypes + ' Item'"></p></div>
                 <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center"><p class="text-sm font-bold text-gray-500 mb-1 flex items-center gap-1"><i data-lucide="boxes" class="w-4 h-4"></i> Total Fisik Stok</p><p class="text-2xl font-bold text-gray-800" x-text="totalPhysicalStock + ' Pcs'"></p></div>
@@ -197,33 +204,19 @@
         <div class="p-4 md:p-6 overflow-y-auto pb-24">
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                
-                <!-- WIDGET 1: PENDAPATAN (DENGAN RINCIAN CASH/QRIS) -->
                 <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center mb-2">
-                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
-                            <p class="text-sm font-semibold text-gray-500">Total Pendapatan</p>
-                        </div>
+                        <div class="flex items-center mb-2"><div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-up" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Pendapatan</p></div>
                         <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.revenue)"></p>
                     </div>
-                    <!-- Pembagian Metode Bayar -->
                     <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between text-xs">
-                        <div>
-                            <span class="text-gray-400 block mb-0.5">Tunai / Cash</span>
-                            <span class="font-bold text-green-600 text-sm" x-text="formatRupiah(totalCashRevenue)"></span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-gray-400 block mb-0.5">QRIS / Transfer</span>
-                            <span class="font-bold text-blue-600 text-sm" x-text="formatRupiah(totalQrisRevenue)"></span>
-                        </div>
+                        <div><span class="text-gray-400 block mb-0.5">Tunai / Cash</span><span class="font-bold text-green-600 text-sm" x-text="formatRupiah(totalCashRevenue)"></span></div>
+                        <div class="text-right"><span class="text-gray-400 block mb-0.5">QRIS / Transfer</span><span class="font-bold text-blue-600 text-sm" x-text="formatRupiah(totalQrisRevenue)"></span></div>
                     </div>
                 </div>
 
                 <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col"><div class="flex items-center mb-2"><div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-down" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Pengeluaran</p></div><p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.expenses)"></p></div>
-                
                 <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden"><div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div><div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Laba Operasional</p></div><p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit)"></p></div>
-                
                 <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col"><div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div><p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p></div>
             </div>
 
@@ -312,6 +305,39 @@
         <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
         <button @click="currentTab = 'pengaturan'" :class="currentTab === 'pengaturan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="settings" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Setelan</span></button>
     </nav>
+
+    <!-- MODAL RIWAYAT STOK MASUK -->
+    <div x-show="showStockHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]" @click.away="showStockHistoryModal = false">
+            <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
+                <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="clipboard-list" class="w-5 h-5"></i> Riwayat Stok Masuk</h2>
+                <button @click="showStockHistoryModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <table class="w-full text-left border-collapse min-w-max">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                            <th class="p-3">Waktu Masuk</th>
+                            <th class="p-3">Nama Produk</th>
+                            <th class="p-3 text-center">Jml Masuk</th>
+                            <th class="p-3 text-center">Total Stok</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="hist in stockHistory" :key="hist.id">
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="p-3 text-sm text-gray-500" x-text="new Date(hist.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td>
+                                <td class="p-3 font-bold text-gray-700" x-text="hist.productName"></td>
+                                <td class="p-3 text-center font-bold text-green-600" x-text="'+ ' + hist.qtyAdded + ' Pcs'"></td>
+                                <td class="p-3 text-center text-sm font-semibold" x-text="hist.newTotal"></td>
+                            </tr>
+                        </template>
+                        <tr x-show="stockHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada riwayat penambahan stok hari ini.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL PEMBAYARAN -->
     <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
@@ -450,76 +476,47 @@
                 showMobileCart: false, showPaymentModal: false, paymentStep: 'input', paymentMethod: 'Tunai', cashReceived: '', isProcessing: false, isLoading: true, lastTx: null, isCustomPackage: false,
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '', reportData: { revenue: 0, expenses: 0, transactions: 0, netProfit: 0, salesHistory: [], expenseHistory: [] }, reportPeriod: 'today', startDate: '', endDate: '', itemReports: [],
                 
-                // Variabel untuk fitur Ganti PIN & Tambah Produk
-                settingOldPin: '', settingNewPin: '', showAddProductModal: false, options: { categories: [], suppliers: [] }, newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' },
+                // Variabel untuk fitur Stok History & PIN
+                settingOldPin: '', settingNewPin: '', showAddProductModal: false, showStockHistoryModal: false, stockHistory: [], options: { categories: [], suppliers: [] }, newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' },
 
                 async init() {
                     setTimeout(() => { lucide.createIcons(); }, 100);
                     this.$watch('currentTab', () => { setTimeout(() => { lucide.createIcons(); }, 50); });
                     this.$watch('showAddProductModal', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
+                    this.$watch('showStockHistoryModal', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     this.$watch('paymentStep', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     await this.fetchCatalog();
                 },
 
-                // FITUR: Perhitungan Cash vs QRIS Otomatis
-                get totalCashRevenue() {
-                    if (!this.reportData.salesHistory || this.reportData.salesHistory.length === 0) return 0;
-                    return this.reportData.salesHistory.reduce((sum, tx) => {
-                        return sum + ((tx.paymentMethod === 'Tunai' || !tx.paymentMethod) ? tx.total : 0);
-                    }, 0);
-                },
+                get totalCashRevenue() { if (!this.reportData.salesHistory || this.reportData.salesHistory.length === 0) return 0; return this.reportData.salesHistory.reduce((sum, tx) => { return sum + ((tx.paymentMethod === 'Tunai' || !tx.paymentMethod) ? tx.total : 0); }, 0); },
+                get totalQrisRevenue() { if (!this.reportData.salesHistory || this.reportData.salesHistory.length === 0) return 0; return this.reportData.salesHistory.reduce((sum, tx) => { return sum + (tx.paymentMethod === 'QRIS' ? tx.total : 0); }, 0); },
 
-                get totalQrisRevenue() {
-                    if (!this.reportData.salesHistory || this.reportData.salesHistory.length === 0) return 0;
-                    return this.reportData.salesHistory.reduce((sum, tx) => {
-                        return sum + (tx.paymentMethod === 'QRIS' ? tx.total : 0);
-                    }, 0);
-                },
-
-                // FITUR: Verifikasi PIN dari Server Database
                 async verifyAdminPin(pesanPrompt) {
                     const sandi = prompt(pesanPrompt);
                     if (!sandi) return false;
-                    
                     try {
-                        const response = await fetch(`${SERVER_URL}/api/settings/verify-pin`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ pin: sandi })
-                        });
-                        const data = await response.json();
-                        if (data.success) {
-                            return true;
-                        } else {
-                            alert("❌ Akses ditolak! Password salah.");
-                            return false;
-                        }
-                    } catch (error) {
-                        alert("Gagal menghubungi server database.");
-                        return false;
-                    }
+                        const response = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if ((await response.json()).success) { return true; } else { alert("❌ Akses ditolak! Password salah."); return false; }
+                    } catch (error) { alert("Gagal menghubungi server database."); return false; }
                 },
 
-                // FITUR: Ganti PIN
                 async changeAdminPin() {
                     if (!this.settingOldPin || !this.settingNewPin) return alert('Lengkapi isian PIN Lama dan Baru!');
                     try {
-                        const response = await fetch(`${SERVER_URL}/api/settings/update-pin`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ oldPin: this.settingOldPin, newPin: this.settingNewPin })
-                        });
+                        const response = await fetch(`${SERVER_URL}/api/settings/update-pin`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oldPin: this.settingOldPin, newPin: this.settingNewPin }) });
                         const data = await response.json();
-                        if (data.success) {
-                            alert('✅ PIN Berhasil Diubah! Silakan gunakan PIN baru Anda.');
-                            this.settingOldPin = '';
-                            this.settingNewPin = '';
-                        } else {
-                            alert('❌ Gagal: ' + data.message);
-                        }
-                    } catch (error) {
-                        alert("Terjadi kesalahan saat menyambung ke server.");
-                    }
+                        if (data.success) { alert('✅ PIN Berhasil Diubah! Silakan gunakan PIN baru Anda.'); this.settingOldPin = ''; this.settingNewPin = ''; } else { alert('❌ Gagal: ' + data.message); }
+                    } catch (error) { alert("Terjadi kesalahan saat menyambung ke server."); }
+                },
+
+                // FITUR BARU: Menampilkan Modal Riwayat
+                async openStockHistory() {
+                    this.showStockHistoryModal = true;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/stock-history`);
+                        const data = await res.json();
+                        if (data.success) { this.stockHistory = data.data; }
+                    } catch (e) { console.error("Gagal memuat riwayat stok"); }
                 },
 
                 async fetchCatalog() {
@@ -545,51 +542,38 @@
                 async openAddProduct() {
                     const isAuthorized = await this.verifyAdminPin("🔒 Masukkan PIN/Password Admin:");
                     if (!isAuthorized) return;
-
-                    if (this.options.categories.length === 0) {
-                        try {
-                            const res = await fetch(`${SERVER_URL}/api/options`);
-                            const data = await res.json();
-                            if(data.success) this.options = data.data;
-                        } catch(e) { console.error("Gagal memuat opsi"); }
-                    }
+                    if (this.options.categories.length === 0) { try { const res = await fetch(`${SERVER_URL}/api/options`); const data = await res.json(); if(data.success) this.options = data.data; } catch(e) {} }
                     this.showAddProductModal = true;
                 },
 
                 async submitNewProduct() {
-                    if(!this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.supplierId || !this.newProduct.buyPrice || !this.newProduct.sellPrice || !this.newProduct.stock) {
-                        return alert('Mohon lengkapi semua isian!');
-                    }
+                    if(!this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.supplierId || !this.newProduct.buyPrice || !this.newProduct.sellPrice || !this.newProduct.stock) { return alert('Mohon lengkapi semua isian!'); }
                     this.isProcessing = true;
                     try {
                         const res = await fetch(`${SERVER_URL}/api/products`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.newProduct) });
-                        const result = await res.json();
-                        if(result.success) {
-                            alert('Produk baru berhasil ditambahkan! 🍩');
-                            this.showAddProductModal = false;
-                            this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' };
-                            await this.fetchCatalog();
-                        } else { alert('Gagal menambahkan: ' + result.message); }
-                    } catch(e) { alert('Koneksi ke server bermasalah'); }
-                    finally { this.isProcessing = false; }
+                        if((await res.json()).success) { alert('Produk baru berhasil ditambahkan! 🍩'); this.showAddProductModal = false; this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' }; await this.fetchCatalog(); }
+                    } catch(e) { alert('Koneksi ke server bermasalah'); } finally { this.isProcessing = false; }
                 },
 
+                // FITUR UPDATE: Edit stok sekarang menembak ke URL versi baru (/stock-v2)
                 async updateStock(product) {
-                    const isAuthorized = await this.verifyAdminPin("🔒 Masukkan PIN/Password Admin untuk Edit Stok:");
+                    const isAuthorized = await this.verifyAdminPin("🔒 Masukkan PIN Admin untuk Edit Stok:");
                     if (!isAuthorized) return;
 
                     const newStockStr = prompt(`STOK BARU untuk:\n${product.name}`, product.stock);
                     if (!newStockStr) return; 
                     try {
-                        const response = await fetch(`${SERVER_URL}/api/products/${product.id}/stock`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: parseInt(newStockStr) }) });
-                        if ((await response.json()).success) { alert(`Berhasil!`); this.fetchCatalog(); } 
+                        // Perhatikan URL di bawah ini sudah saya ubah ke /stock-v2
+                        const response = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2`, { 
+                            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: parseInt(newStockStr) }) 
+                        });
+                        if ((await response.json()).success) { alert(`Berhasil dicatat!`); this.fetchCatalog(); } 
                     } catch (error) { alert('Gagal.'); }
                 },
 
                 async deleteTransaction(invoice) {
                     const isAuthorized = await this.verifyAdminPin(`🔒 MENGHAPUS STRUK ${invoice}\nMasukkan PIN:`);
                     if (!isAuthorized) return;
-
                     const confirmDelete = confirm(`⚠️ YAKIN HAPUS STRUK ${invoice}?`);
                     if (!confirmDelete) return;
                     try {
@@ -602,37 +586,27 @@
                     try {
                         let queryParam = `?period=${this.reportPeriod}`;
                         if (this.reportPeriod === 'custom') {
-                            if (!this.startDate || !this.endDate) return alert('Mohon isi Tanggal Awal dan Akhir terlebih dahulu!');
+                            if (!this.startDate || !this.endDate) return alert('Isi Tanggal Awal & Akhir!');
                             if (new Date(this.startDate) > new Date(this.endDate)) return alert('Tanggal Awal tidak boleh melewati Tanggal Akhir!');
                             queryParam += `&start=${this.startDate}&end=${this.endDate}`;
                         }
                         const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}`);
-                        const dataGlobal = await resGlobal.json();
-                        if(dataGlobal.success) this.reportData = dataGlobal.data;
-                        
+                        if((await resGlobal.clone().json()).success) this.reportData = (await resGlobal.json()).data;
                         const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`);
-                        const dataItems = await resItems.json();
-                        if(dataItems.success) this.itemReports = dataItems.data;
+                        if((await resItems.clone().json()).success) this.itemReports = (await resItems.json()).data;
                     } catch (error) { console.error('Error fetching reports:', error); }
                 },
 
                 async submitExpense() {
-                    if(!this.expDesc || !this.expAmount) return alert('Mohon isi keterangan dan nominal pengeluaran');
+                    if(!this.expDesc || !this.expAmount) return alert('Mohon isi keterangan dan nominal');
                     try {
                         const response = await fetch(`${SERVER_URL}/api/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category: this.expCat, description: this.expDesc, amount: this.expAmount }) });
-                        const result = await response.json();
-                        if(result.success) { alert('Pengeluaran berhasil dicatat!'); this.expDesc = ''; this.expAmount = ''; }
-                    } catch(error) { alert('Gagal mencatat pengeluaran.'); }
+                        if((await response.json()).success) { alert('Pengeluaran berhasil dicatat!'); this.expDesc = ''; this.expAmount = ''; }
+                    } catch(error) { alert('Gagal.'); }
                 },
 
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
-                
-                addToCart(product) { 
-                    this.isCustomPackage = false;
-                    if (product.type === 'product' && product.stock <= 0) return alert('Stok gudang habis!'); 
-                    const existing = this.cart.find(item => item.id === product.id); 
-                    if (existing) existing.qty++; else this.cart.unshift({ ...product, qty: 1 }); 
-                },
+                addToCart(product) { this.isCustomPackage = false; if (product.type === 'product' && product.stock <= 0) return alert('Stok gudang habis!'); const existing = this.cart.find(item => item.id === product.id); if (existing) existing.qty++; else this.cart.unshift({ ...product, qty: 1 }); },
                 increaseQty(index) { this.isCustomPackage = false; this.cart[index].qty++; },
                 decreaseQty(index) { this.isCustomPackage = false; if (this.cart[index].qty > 1) this.cart[index].qty--; else this.cart.splice(index, 1); },
                 removeFromCart(index) { this.isCustomPackage = false; this.cart.splice(index, 1); },
@@ -644,7 +618,6 @@
                     if (this.cart.length === 0) return;
                     const newTotal = parseFloat(prompt(`Ubah Total Akhir:`, this.total)); 
                     if (!newTotal || isNaN(newTotal)) return; 
-                    
                     this.isCustomPackage = true;
                     const ratio = newTotal / this.total; 
                     let runningTotal = 0; 
@@ -655,7 +628,6 @@
                 },
 
                 get change() { return this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived || 0) - this.total : 0; },
-                
                 openPayment() { this.cashReceived = ''; this.paymentMethod = 'Tunai'; this.paymentStep = 'input'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
                 closePayment() { if (this.paymentStep === 'success') { this.resetCart(); } else { this.showPaymentModal = false; } },
                 
@@ -663,7 +635,6 @@
                     this.isProcessing = true;
                     let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
                     const payload = { cart: mappedCart, paymentMethod: this.paymentMethod, cashReceived: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : 0, totalAmount: this.total, isPackage: this.isCustomPackage };
-
                     try {
                         const response = await fetch(`${SERVER_URL}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await response.json();
