@@ -118,11 +118,14 @@ app.get('/api/reports', async (req, res) => {
       include: { items: { include: { product: true, package: true } } }
     });
     const expenses = await prisma.expense.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } }); 
-    
-    // FITUR BARU: Tarik juga riwayat stok sesuai filter tanggal laporan
     const stockHistory = await prisma.stockHistory.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } });
 
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+    
+    // PENGEMBALIAN FITUR: Hitung pemisahan Tunai dan QRIS
+    const totalCash = sales.filter(s => s.paymentMethod === 'Tunai').reduce((sum, s) => sum + s.totalAmount, 0);
+    const totalQris = sales.filter(s => s.paymentMethod === 'QRIS').reduce((sum, s) => sum + s.totalAmount, 0);
+    
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     
     const salesHistory = sales.map(s => ({
@@ -137,12 +140,14 @@ app.get('/api/reports', async (req, res) => {
       success: true,
       data: { 
         revenue: totalRevenue, 
+        revenueCash: totalCash, // Dikirim ke layar
+        revenueQris: totalQris, // Dikirim ke layar
         expenses: totalExpenses, 
         netProfit: totalRevenue - totalExpenses, 
         transactions: sales.length, 
         salesHistory,
         expenseHistory: expenses,
-        stockHistory: stockHistory // <-- Data stok ditambahkan ke respon laporan
+        stockHistory: stockHistory
       }
     });
   } catch (error) { res.status(500).json({ success: false }); }
