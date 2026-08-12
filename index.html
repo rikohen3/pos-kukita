@@ -26,6 +26,8 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         body { -webkit-user-select: none; user-select: none; }
         input, select, textarea { -webkit-user-select: auto; user-select: auto; }
+        
+        /* Hapus Panah Naik Turun di Kolom Angka */
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
 
@@ -84,7 +86,6 @@
         <main x-show="currentTab === 'pos'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden relative">
             <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
-                
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
                     <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
                     <!-- TAMPILAN KASIR AKTIF -->
@@ -134,16 +135,19 @@
                         <template x-for="(item, index) in cart" :key="index">
                             <div class="flex items-center justify-between p-3 border rounded-lg">
                                 <div class="flex-1"><h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4><p class="text-brand-brown text-sm" x-text="formatRupiah(item.price)"></p></div>
+                                
+                                <!-- BAGIAN KUANTITAS KETIK & SVG PERMANEN -->
                                 <div class="flex items-center gap-1 md:gap-2">
-    <div class="flex items-center bg-gray-100 rounded-lg">
-        <button @click="decreaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-l-lg">-</button>
-        <input type="number" x-model.number="item.qty" @change="validateQty(index)" class="w-10 text-center text-sm font-bold bg-transparent outline-none p-0" min="1">
-        <button @click="increaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-r-lg">+</button>
-    </div>
-    <button @click="removeFromCart(index)" class="text-red-400 hover:text-red-600 p-1">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 md:w-5 md:h-5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-</button>
-</div>
+                                    <div class="flex items-center bg-gray-100 rounded-lg">
+                                        <button @click="decreaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-l-lg">-</button>
+                                        <input type="number" x-model.number="item.qty" @change="validateQty(index)" class="w-10 text-center text-sm font-bold bg-transparent outline-none p-0" min="1">
+                                        <button @click="increaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-r-lg">+</button>
+                                    </div>
+                                    <button @click="removeFromCart(index)" class="text-red-400 hover:text-red-600 p-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 md:w-5 md:h-5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </button>
+                                </div>
+
                             </div>
                         </template>
                     </div>
@@ -228,7 +232,7 @@
             </div>
         </main>
 
-        <!-- TAB 3: PENGELUARAN (SUDAH DENGAN DROPDOWN METODE) -->
+        <!-- TAB 3: PENGELUARAN -->
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
@@ -250,7 +254,7 @@
             </div>
         </main>
 
-        <!-- TAB 4: LAPORAN & ANALITIK (DENGAN LAPORAN KASIR) -->
+        <!-- TAB 4: LAPORAN & ANALITIK -->
         <main x-show="currentTab === 'laporan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
@@ -269,7 +273,6 @@
             
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 
-                <!-- DATA KEUANGAN DIPISAH -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
                         <div>
@@ -311,7 +314,6 @@
                     </div>
                 </div>
 
-                <!-- FITUR BARU: LAPORAN PERFORMA KASIR -->
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-purple-600"></i> Performa Kasir (Laporan Shift) </h2>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -481,7 +483,6 @@
                     </div>
                 </div>
 
-                <!-- FITUR BARU: MANAJEMEN KASIR -->
                 <div class="bg-white rounded-xl shadow-sm border p-6 w-full">
                     <h2 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
                         <i data-lucide="users" class="text-purple-600"></i> Manajemen Tim Kasir (Shift)
@@ -745,7 +746,7 @@
                 async login() {
                     if(!this.loginPin) return;
                     
-                    // 🔑 KUNCI MASTER DARURAT ANTI-BADAI (Bypass Server) - PIN 123456 Sudah Dihapus
+                    // 🔑 KUNCI MASTER DARURAT ANTI-BADAI
                     if (this.loginPin === '030388' || this.loginPin === '100515' || this.loginPin === '818283') {
                         this.activeCashier = 'Admin Toko'; 
                         this.loginPin = ''; 
@@ -812,7 +813,7 @@
                     return perf;
                 },
 
-                // JURUS CETAK ANDROID DENGAN PENANGKAL "BLANK PAGE" (Beri Waktu 3 Detik)
+                // JURUS CETAK ANDROID DENGAN PENANGKAL "BLANK PAGE"
                 printReceipt() { 
                     this.isPrintingReceipt = true; 
                     setTimeout(() => { 
@@ -981,23 +982,24 @@
                 increaseQty(index) { this.isCustomPackage = false; const item = this.cart[index]; const product = this.products.find(p => p.id === item.id && p.type === item.type); if (product.type === 'package' || item.qty < product.stock) item.qty++; },
                 decreaseQty(index) { this.isCustomPackage = false; if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
                 removeFromCart(index) { this.isCustomPackage = false; this.cart.splice(index, 1); },
+                
                 validateQty(index) {
-                 this.isCustomPackage = false;
-                 let item = this.cart[index];
-                 let val = parseInt(item.qty);
+                    this.isCustomPackage = false;
+                    let item = this.cart[index];
+                    let val = parseInt(item.qty);
 
-                 // Jika kasir salah ketik huruf atau angka minus, paksa jadi 1
-                 if (isNaN(val) || val < 1) val = 1;
+                    // Jika kasir salah ketik huruf atau angka minus, paksa jadi 1
+                    if (isNaN(val) || val < 1) val = 1;
 
-                 // Cek ketersediaan stok fisik gudang
-                 const product = this.products.find(p => p.id === item.id && p.type === item.type);
-                 if (product && product.type === 'product' && val > product.stock) {
-                     alert(`❌ Stok tidak mencukupi! Sisa stok ${product.name} tinggal ${product.stock} pcs.`);
-                     val = product.stock; // Paksa angka kembali ke batas maksimal stok
-                 }
+                    // Cek ketersediaan stok fisik gudang
+                    const product = this.products.find(p => p.id === item.id && p.type === item.type);
+                    if (product && product.type === 'product' && val > product.stock) {
+                        alert(`❌ Stok tidak mencukupi! Sisa stok ${product.name} tinggal ${product.stock} pcs.`);
+                        val = product.stock; // Paksa angka kembali ke batas maksimal stok
+                    }
 
-                 this.cart[index].qty = val;
-             },
+                    this.cart[index].qty = val;
+                },
 
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
