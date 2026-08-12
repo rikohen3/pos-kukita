@@ -22,13 +22,18 @@ app.get('/api/catalog', async (req, res) => {
 
 // 2. ENDPOINT: CHECKOUT / TRANSAKSI
 app.post('/api/checkout', async (req, res) => {
-  const { cart, paymentMethod, cashReceived, totalAmount, isPackage } = req.body;
+  const { cart, paymentMethod, cashReceived, totalAmount, isPackage, customerName } = req.body;
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // LOGIKA PKT-: Jika isPackage true dari kasir, jadikan PKT-, jika tidak jadikan INV-
       const prefix = isPackage ? 'PKT-' : 'INV-';
+      
+      // FITUR BARU: Sisipkan Nama Pembeli ke dalam Nomor Struk jika ada
+      const invoiceNumber = customerName 
+          ? `${prefix}${Date.now()} (${customerName})` 
+          : `${prefix}${Date.now()}`;
+
       const sale = await tx.sale.create({
-        data: { invoice: `${prefix}${Date.now()}`, totalAmount, paymentMethod, cashReceived: cashReceived || 0 }
+        data: { invoice: invoiceNumber, totalAmount, paymentMethod, cashReceived: cashReceived || 0 }
       });
 
       for (const item of cart) {

@@ -43,7 +43,7 @@
       }" 
       x-data="posApp()">
 
-    <!-- BUNGKUS APLIKASI UTAMA (Akan sembunyi otomatis saat mencetak katalog/struk) -->
+    <!-- BUNGKUS APLIKASI UTAMA -->
     <div x-show="!isPrintingCatalog && !isPrintingReceipt" class="flex w-full h-full">
 
         <!-- Sidebar -->
@@ -170,7 +170,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-max">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3 w-16">Foto</th><th class="p-3">Nama Produk</th><th class="p-3">Supplier Asal</th><th class="p-3">Harga Jual</th><th class="p-3">Stok Saat Ini</th><th class="p-3">Aksi</th></tr>
+                                <tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3 w-16">Foto</th><th class="p-3">Nama Produk</th><th class="p-3">Supplier Asal</th><th class="p-3">Harga Modal</th><th class="p-3">Harga Jual</th><th class="p-3">Stok</th><th class="p-3">Aksi</th></tr>
                             </thead>
                             <tbody>
                                 <template x-for="product in products" :key="product.id + product.type">
@@ -181,6 +181,7 @@
                                         </td>
                                         <td class="p-3 font-medium" x-text="product.name"></td>
                                         <td class="p-3 text-sm text-gray-500"><span x-text="product.supplier"></span></td>
+                                        <td class="p-3 text-sm font-semibold text-gray-400" x-text="product.buyPrice ? formatRupiah(product.buyPrice) : '-'"></td>
                                         <td class="p-3 text-sm font-bold" x-text="formatRupiah(product.price)"></td>
                                         <td class="p-3"><span x-show="product.type === 'product'" class="px-2 py-1 bg-green-100 text-green-700 rounded text-sm font-bold" x-text="product.stock + ' Pcs'"></span></td>
                                         <td class="p-3"><button x-show="product.type === 'product'" @click="updateStock(product)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-1 px-3 rounded text-sm flex items-center gap-1"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit Stok</button></td>
@@ -198,9 +199,13 @@
             <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                    <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                        <i data-lucide="info" class="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                        <p class="text-sm text-blue-800"><strong>PENTING:</strong> Catat di sini HANYA jika Anda mengambil uang tunai secara fisik dari laci kasir (misal: beli kresek, bayar parkir).</p>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                        <div><label class="block text-sm font-semibold text-gray-700 mb-2">Kategori</label><select x-model="expCat" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"><option>Perlengkapan (Kotak, Kresek)</option><option>Biaya Operasional (Listrik, WiFi)</option><option>Transportasi / Ongkir</option><option>Biaya Gaji Karyawan</option></select></div>
-                        <div class="md:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-2">Keterangan</label><input type="text" x-model="expDesc" placeholder="Cth: Gaji Mba Yanti Minggu Ini" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"></div>
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-2">Kategori</label><select x-model="expCat" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"><option>Perlengkapan (Kotak, Kresek)</option><option>Biaya Operasional (Listrik, WiFi)</option><option>Transportasi / Ongkir</option><option>Biaya Gaji Karyawan</option><option>Lain-lain</option></select></div>
+                        <div class="md:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-2">Keterangan</label><input type="text" x-model="expDesc" placeholder="Cth: Beli kresek hitam besar" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"></div>
                         <div><label class="block text-sm font-semibold text-gray-700 mb-2">Nominal (Rp)</label><input type="number" x-model="expAmount" placeholder="0" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"></div>
                     </div>
                     <div class="mt-4 flex justify-end"><button @click="submitExpense()" class="w-full md:w-auto bg-red-500 text-white px-6 py-3 md:py-2 rounded-lg font-bold hover:bg-red-600 flex items-center justify-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Catat Pengeluaran</button></div>
@@ -227,8 +232,6 @@
             
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    
-                    <!-- KARTU PENDAPATAN (TAMPILAN TUNAI & QRIS DIKEMBALIKAN) -->
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex items-center mb-2">
@@ -238,29 +241,20 @@
                             <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.revenue)"></p>
                         </div>
                         <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
-                            <div>
-                                <p class="text-[10px] text-gray-400 font-semibold uppercase">Tunai / Cash</p>
-                                <p class="text-sm font-bold text-green-600" x-text="formatRupiah(reportData.revenueCash || 0)"></p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[10px] text-gray-400 font-semibold uppercase">QRIS / Transfer</p>
-                                <p class="text-sm font-bold text-blue-600" x-text="formatRupiah(reportData.revenueQris || 0)"></p>
-                            </div>
+                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Tunai / Cash</p><p class="text-sm font-bold text-green-600" x-text="formatRupiah(reportData.revenueCash || 0)"></p></div>
+                            <div class="text-right"><p class="text-[10px] text-gray-400 font-semibold uppercase">QRIS / Transfer</p><p class="text-sm font-bold text-blue-600" x-text="formatRupiah(reportData.revenueQris || 0)"></p></div>
                         </div>
                     </div>
                     
-                    <!-- Kartu Pengeluaran -->
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
-                        <div class="flex items-center mb-2"><div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-down" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Pengeluaran</p></div>
+                        <div class="flex items-center mb-2"><div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-down" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Pengeluaran Kasir</p></div>
                         <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.expenses)"></p>
                     </div>
-                    <!-- Kartu Laba -->
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
                         <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
-                        <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Laba Operasional</p></div>
+                        <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Laci Kasir (Kotor)</p></div>
                         <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit)"></p>
                     </div>
-                    <!-- Kartu Transaksi -->
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
                         <div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div>
                         <p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p>
@@ -268,14 +262,14 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="package-plus" class="w-5 h-5 text-green-600"></i> Laporan Riwayat Stok Masuk </h2>
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="package-plus" class="w-5 h-5 text-green-600"></i> Laporan Kedatangan Barang (Stok Masuk) </h2>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse mt-4 min-w-max">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-600 text-sm border-b">
-                                    <th class="p-3">Waktu Masuk</th>
-                                    <th class="p-3">Nama Produk</th>
-                                    <th class="p-3 text-center">Jumlah Ditambahkan</th>
+                                    <th class="p-3">Waktu Datang</th>
+                                    <th class="p-3">Nama Produk / Kue</th>
+                                    <th class="p-3 text-center">Jumlah Diterima</th>
                                     <th class="p-3 text-right">Aksi</th>
                                 </tr>
                             </thead>
@@ -299,10 +293,10 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual </h2>
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual (Omset) </h2>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse mt-4 min-w-max">
-                            <thead><tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3">Nama Produk</th><th class="p-3">Supplier</th><th class="p-3 text-center">Terjual (Qty)</th><th class="p-3 text-right">Total Omset</th></tr></thead>
+                            <thead><tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3">Nama Produk</th><th class="p-3">Supplier</th><th class="p-3 text-center">Terjual (Qty)</th><th class="p-3 text-right">Total Uang Masuk</th></tr></thead>
                             <tbody>
                                 <template x-for="item in itemReports" :key="item.id"><tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium text-gray-800" x-text="item.name"></td><td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td><td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td><td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td></tr></template>
                                 <tr x-show="itemReports.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada data penjualan tercatat.</td></tr>
@@ -358,7 +352,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran </h2>
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran Laci Kasir </h2>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse mt-4 min-w-max">
                             <thead>
@@ -426,7 +420,7 @@
             <button @click="currentTab = 'pengaturan'" :class="currentTab === 'pengaturan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="settings" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Setelan</span></button>
         </nav>
 
-        <!-- Modal Pembayaran -->
+        <!-- Modal Pembayaran (ADA FITUR NAMA PEMBELI) -->
         <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
             <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
                 <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
@@ -437,6 +431,12 @@
                             <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
                         </div>
                         
+                        <!-- INPUT BARU: NAMA PEMBELI -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli (Opsional)</label>
+                            <input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Cth: Biro Umum / Ibu Siska">
+                        </div>
+
                         <div class="mb-4"><div class="grid grid-cols-2 gap-2"><button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">Tunai</button><button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">QRIS</button></div></div>
                         <div x-show="paymentMethod === 'Tunai'" class="mb-6"><input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0"><div class="grid grid-cols-4 gap-2 mt-2"><button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button><button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button><button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button></div><div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50"><span class="font-semibold text-gray-600">Kembalian</span><span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span></div></div>
                         <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50"><i data-lucide="check-circle" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span></button>
@@ -504,7 +504,6 @@
     </div>
     <!-- AKHIR BUNGKUS APLIKASI UTAMA -->
 
-    
     <!-- FORMAT 1: KATALOG PROMO EKSKLUSIF -->
     <div x-show="isPrintingCatalog" id="catalog-area" class="w-full max-w-4xl mx-auto p-4 md:p-8 bg-white" style="display: none;">
         <div class="text-center mb-10 border-b-4 border-brand-brown pb-6">
@@ -592,9 +591,10 @@
                 isCustomPackage: false, 
                 currentTime: new Date().toLocaleString('id-ID'),
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '',
-                
-                // STATE DIPERBARUI: Tambahkan revenueCash dan revenueQris
                 reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, 
+                
+                // STATE BARU: Untuk menyimpan nama pembeli
+                customerName: '',
                 
                 itemReports: [], reportPeriod: 'today', startDate: '', endDate: '',
                 oldPin: '', newPin: '',
@@ -634,7 +634,7 @@
                         const response = await fetch(`${SERVER_URL}/api/catalog`);
                         const result = await response.json();
                         if(result.success) {
-                            const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, price: p.sellPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product' }));
+                            const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, price: p.sellPrice, buyPrice: p.buyPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product' }));
                             const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', price: p.sellPrice, stock: 999, image: p.image || null, icon: '🎁', type: 'package' }));
                             this.products = [...prodList, ...pkgList];
                             const cats = new Set(this.products.map(p => p.category));
@@ -706,7 +706,9 @@
                         
                         const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`);
                         const dataItems = await resItems.json();
-                        if(dataItems.success) this.itemReports = dataItems.data;
+                        if(dataItems.success) {
+                            this.itemReports = dataItems.data;
+                        }
                     } catch (error) { console.error('Error fetching reports:', error); }
                 },
 
@@ -770,13 +772,31 @@
                     } 
                 },
                 
-                openPayment() { this.cashReceived = ''; this.paymentMethod = 'Tunai'; this.paymentStep = 'input'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
+                // MENGATUR RESET NAMA PEMBELI SETIAP BUKA PEMBAYARAN BARU
+                openPayment() { 
+                    this.cashReceived = ''; 
+                    this.paymentMethod = 'Tunai'; 
+                    this.customerName = ''; // Reset kotak isian nama pembeli
+                    this.paymentStep = 'input'; 
+                    this.showPaymentModal = true; 
+                    setTimeout(() => { lucide.createIcons(); }, 10); 
+                },
                 closePayment() { if (this.paymentStep === 'success') { this.resetCart(); } else { this.showPaymentModal = false; } },
                 
                 async processTransaction() {
                     this.isProcessing = true;
                     let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
-                    const payload = { cart: mappedCart, paymentMethod: this.paymentMethod, cashReceived: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : 0, totalAmount: this.total, isPackage: this.isCustomPackage };
+                    
+                    // MENYISIPKAN NAMA PEMBELI KE PAYLOAD SERVER
+                    const payload = { 
+                        cart: mappedCart, 
+                        paymentMethod: this.paymentMethod, 
+                        cashReceived: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : 0, 
+                        totalAmount: this.total, 
+                        isPackage: this.isCustomPackage,
+                        customerName: this.customerName 
+                    };
+                    
                     try {
                         const response = await fetch(`${SERVER_URL}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await response.json();
@@ -786,7 +806,7 @@
                     finally { this.isProcessing = false; }
                 },
                 
-                resetCart() { this.cart = []; this.isCustomPackage = false; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; this.fetchCatalog(); },
+                resetCart() { this.cart = []; this.isCustomPackage = false; this.customerName = ''; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; this.fetchCatalog(); },
                 
                 async submitExpense() {
                     if(!this.expDesc || !this.expAmount) return alert('Mohon isi keterangan dan nominal pengeluaran');
