@@ -47,6 +47,9 @@
             <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="package" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Master Produk</span></button>
             <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="wallet" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Pengeluaran</span></button>
             <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="bar-chart-3" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Laporan & Analitik</span></button>
+            
+            <!-- TOMBOL PENGATURAN DIKEMBALIKAN -->
+            <button @click="currentTab = 'pengaturan'" :class="currentTab === 'pengaturan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="settings" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Pengaturan</span></button>
         </nav>
         <div class="p-4 border-t flex items-center justify-center lg:justify-start"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold"><i data-lucide="wifi" class="w-5 h-5"></i></div><div class="hidden lg:block ml-3"><p class="text-sm font-bold text-green-600">Server Online</p><p class="text-xs text-gray-500">Terkoneksi ke DB</p></div></div>
     </aside>
@@ -135,7 +138,6 @@
         </header>
         <div class="p-4 md:p-6 overflow-y-auto pb-24">
             
-            <!-- WIDGET DASHBOARD ASET -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
                     <p class="text-sm font-bold text-gray-500 mb-1 flex items-center gap-1"><i data-lucide="layers" class="w-4 h-4"></i> Macam Produk</p>
@@ -194,7 +196,7 @@
         </div>
     </main>
 
-    <!-- TAB 4: LAPORAN & ANALITIK (DENGAN TAMBAHAN TABEL STOK MASUK) -->
+    <!-- TAB 4: LAPORAN & ANALITIK -->
     <main x-show="currentTab === 'laporan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
         <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
             <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
@@ -219,7 +221,6 @@
                 <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col"><div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div><p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p></div>
             </div>
 
-            <!-- BAGIAN BARU: RIWAYAT STOK MASUK -->
             <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                 <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="package-plus" class="w-5 h-5 text-green-600"></i> Laporan Riwayat Stok Masuk </h2>
                 <div class="overflow-x-auto">
@@ -336,16 +337,48 @@
                     </table>
                 </div>
             </div>
-            
+        </div>
+    </main>
+
+    <!-- TAB 5: PENGATURAN (PIN) -->
+    <main x-show="currentTab === 'pengaturan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
+        <header class="h-16 bg-white border-b flex items-center px-4 md:px-6">
+            <h1 class="text-xl font-bold text-gray-800">Pengaturan Toko</h1>
+        </header>
+        <div class="p-4 md:p-6 overflow-y-auto pb-24 flex justify-center">
+            <div class="bg-white rounded-xl shadow-sm border p-6 w-full max-w-md">
+                <h2 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <i data-lucide="lock" class="text-brand-brown"></i> Keamanan (Ganti PIN)
+                </h2>
+                <p class="text-sm text-gray-500 mb-6">Ganti PIN untuk fitur Hapus Struk, Tambah Produk, dan Edit Stok.</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">PIN Admin Lama</label>
+                        <input type="password" x-model="oldPin" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown tracking-widest text-center text-lg" placeholder="******">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">PIN Admin Baru</label>
+                        <input type="password" x-model="newPin" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown tracking-widest text-center text-lg" placeholder="Minimal 4 angka">
+                    </div>
+                    <button @click="changeAdminPin()" :disabled="isProcessing" class="w-full mt-4 bg-brand-brown text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-orange-800 disabled:opacity-50">
+                        <i data-lucide="save" x-show="!isProcessing"></i>
+                        <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
+                        <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PIN BARU'"></span>
+                    </button>
+                </div>
+            </div>
         </div>
     </main>
 
     <!-- Menu Bawah Khusus HP -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-        <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="layout-dashboard" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Kasir</span></button>
-        <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Produk</span></button>
-        <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="wallet" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Beban</span></button>
-        <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg"><i data-lucide="bar-chart-3" class="w-6 h-6"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-between px-2 py-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+        <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Kasir</span></button>
+        <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="package" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Produk</span></button>
+        <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Beban</span></button>
+        <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
+        <!-- TOMBOL PENGATURAN DI MENU BAWAH (HP) -->
+        <button @click="currentTab = 'pengaturan'" :class="currentTab === 'pengaturan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="settings" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Setelan</span></button>
     </nav>
 
     <!-- Modal Pembayaran & Cetak Struk -->
@@ -494,6 +527,9 @@
                 reportData: { revenue: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, itemReports: [],
                 reportPeriod: 'today', startDate: '', endDate: '',
                 
+                // Variabel Ganti PIN
+                oldPin: '', newPin: '',
+                
                 showAddProductModal: false,
                 options: { categories: [], suppliers: [] },
                 newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' },
@@ -506,6 +542,33 @@
                     this.$watch('paymentStep', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     this.$watch('showAddProductModal', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     await this.fetchCatalog();
+                },
+
+                // FUNGSI GANTI PIN 
+                async changeAdminPin() {
+                    if (!this.oldPin || !this.newPin) return alert('Silakan isi PIN Lama dan PIN Baru!');
+                    if (this.newPin.length < 4) return alert('PIN Baru minimal 4 angka!');
+                    
+                    this.isProcessing = true;
+                    try {
+                        const response = await fetch(`${SERVER_URL}/api/settings/update-pin`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ oldPin: this.oldPin, newPin: this.newPin })
+                        });
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert('✅ PIN Admin berhasil diubah!');
+                            this.oldPin = '';
+                            this.newPin = '';
+                        } else {
+                            alert('❌ Gagal: ' + result.message);
+                        }
+                    } catch (error) {
+                        alert('Koneksi ke server bermasalah.');
+                    }
+                    this.isProcessing = false;
                 },
 
                 async fetchCatalog() {
@@ -530,7 +593,18 @@
 
                 async openAddProduct() {
                     const sandi = prompt("🔒 Masukkan PIN/Password Admin:");
-                    if (sandi !== "100515") { alert("❌ Akses ditolak! Password salah."); return; }
+                    if (!sandi) return;
+                    
+                    // Cek PIN ke server
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi })
+                    });
+                    const dataPin = await resPin.json();
+                    
+                    if (!dataPin.success) {
+                        alert("❌ Akses ditolak! Password salah.");
+                        return;
+                    }
 
                     if (this.options.categories.length === 0) {
                         try {
@@ -562,7 +636,18 @@
 
                 async updateStock(product) {
                     const sandi = prompt("🔒 Masukkan PIN/Password Admin untuk Edit Stok:");
-                    if (sandi !== "100515") { alert("❌ Akses ditolak! Password salah."); return; }
+                    if (!sandi) return;
+                    
+                    // Cek PIN ke server
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi })
+                    });
+                    const dataPin = await resPin.json();
+                    
+                    if (!dataPin.success) {
+                        alert("❌ Akses ditolak! Password salah.");
+                        return;
+                    }
 
                     const newStockStr = prompt(`Edit Stok Manual 📦\n\nMasukkan jumlah STOK BARU (Total) untuk:\n${product.name}\n\nStok saat ini: ${product.stock}`, product.stock);
                     if (newStockStr === null || newStockStr.trim() === "") return; 
@@ -594,11 +679,17 @@
                     } catch (error) { console.error('Error fetching reports:', error); }
                 },
 
-                // FUNGSI BARU: BATALKAN RIWAYAT STOK DARI TABEL
                 async deleteStockHistory(id) {
                     const sandi = prompt(`🔒 BATALKAN STOK MASUK\n\nMasukkan PIN Admin:\n(Perhatian: Stok fisik barang ini di Master Produk akan ikut dikurangi)`);
-                    if (sandi !== "100515") {
-                        if (sandi !== null) alert("❌ Akses ditolak! Password salah.");
+                    if (!sandi) return;
+                    
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi })
+                    });
+                    const dataPin = await resPin.json();
+                    
+                    if (!dataPin.success) {
+                        alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
 
@@ -611,8 +702,8 @@
 
                         if (result.success) {
                             alert(`✅ Berhasil! Riwayat dihapus dan stok barang telah dikurangi kembali.`);
-                            this.fetchReport(); // Segarkan laporan
-                            this.fetchCatalog(); // Segarkan jumlah fisik di master produk
+                            this.fetchReport(); 
+                            this.fetchCatalog(); 
                         } else {
                             alert('Gagal menghapus riwayat: ' + result.message);
                         }
@@ -621,8 +712,15 @@
 
                 async deleteTransaction(invoice) {
                     const sandi = prompt(`🔒 MENGHAPUS STRUK ${invoice}\n\nMasukkan PIN Admin Anda:\n(Perhatian: Stok barang di nota ini akan otomatis dikembalikan ke gudang)`);
-                    if (sandi !== "100515") {
-                        if (sandi !== null) alert("❌ Akses ditolak! Password salah.");
+                    if (!sandi) return;
+                    
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi })
+                    });
+                    const dataPin = await resPin.json();
+                    
+                    if (!dataPin.success) {
+                        alert("❌ Akses ditolak! Password salah.");
                         return;
                     }
 
