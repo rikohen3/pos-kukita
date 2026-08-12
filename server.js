@@ -119,10 +119,12 @@ app.get('/api/reports', async (req, res) => {
     });
     const expenses = await prisma.expense.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } }); 
     
+    // FITUR BARU: Tarik juga riwayat stok sesuai filter tanggal laporan
+    const stockHistory = await prisma.stockHistory.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } });
+
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     
-    // VERSI ORIGINAL 100% AMAN
     const salesHistory = sales.map(s => ({
       invoice: s.invoice,
       time: s.createdAt,
@@ -139,7 +141,8 @@ app.get('/api/reports', async (req, res) => {
         netProfit: totalRevenue - totalExpenses, 
         transactions: sales.length, 
         salesHistory,
-        expenseHistory: expenses 
+        expenseHistory: expenses,
+        stockHistory: stockHistory // <-- Data stok ditambahkan ke respon laporan
       }
     });
   } catch (error) { res.status(500).json({ success: false }); }
