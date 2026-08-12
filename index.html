@@ -43,8 +43,23 @@
       }" 
       x-data="posApp()">
 
+    <!-- LAYAR KUNCI (LOGIN KASIR) -->
+    <div x-show="!activeCashier" class="fixed inset-0 bg-brand-brown z-50 flex flex-col items-center justify-center text-white p-4">
+        <div class="mb-8 text-center animate-bounce">
+            <i data-lucide="lock" class="w-16 h-16 mx-auto mb-2 text-brand-orange"></i>
+            <h1 class="text-4xl font-extrabold tracking-widest">KUKITA</h1>
+        </div>
+        <div class="bg-white text-gray-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-2xl font-bold mb-2">Login Kasir</h2>
+            <p class="text-sm text-gray-500 mb-6">Masukkan PIN untuk mulai bertugas</p>
+            <input type="password" x-model="loginPin" @keyup.enter="login()" class="w-full text-center text-3xl tracking-widest p-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-brand-orange focus:bg-white outline-none mb-6 transition" placeholder="****">
+            <button @click="login()" class="w-full bg-brand-orange text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:bg-orange-600 transition hover:-translate-y-1">BUKA KASIR</button>
+            <p class="text-xs text-gray-400 mt-6 mt-4">Belum ada kasir terdaftar? Gunakan PIN Admin (Pemilik) untuk masuk pertama kali.</p>
+        </div>
+    </div>
+
     <!-- BUNGKUS APLIKASI UTAMA -->
-    <div x-show="!isPrintingCatalog && !isPrintingReceipt" class="flex w-full h-full">
+    <div x-show="activeCashier && !isPrintingCatalog && !isPrintingReceipt" style="display: none;" class="flex w-full h-full">
 
         <!-- Sidebar -->
         <aside class="w-20 lg:w-64 flex-shrink-0 bg-white border-r flex flex-col shadow-sm hidden md:flex transition-all z-20">
@@ -66,12 +81,14 @@
             <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 
-                <div class="ml-4 flex items-center gap-2 md:gap-3">
-                    <select x-model="shift" class="bg-orange-50 border border-orange-200 text-brand-brown font-bold text-xs md:text-sm rounded-full px-3 py-1.5 outline-none focus:ring-2 focus:ring-brand-brown shadow-sm cursor-pointer">
-                        <option value="Pagi">☀️ Pagi</option>
-                        <option value="Sore">🌙 Sore</option>
-                    </select>
-                    <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center gap-1 text-sm font-bold"><i data-lucide="refresh-cw" class="w-4 h-4"></i> <span class="hidden md:inline">Refresh</span></button>
+                <div class="ml-4 flex items-center gap-2 md:gap-4">
+                    <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+                    <!-- TAMPILAN KASIR AKTIF -->
+                    <div class="flex items-center gap-2 bg-orange-100 px-3 py-1.5 rounded-full border border-orange-200">
+                        <i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i>
+                        <span class="text-xs md:text-sm font-bold text-brand-brown" x-text="activeCashier"></span>
+                        <button @click="logout()" class="ml-1 text-red-400 hover:text-red-600"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                    </div>
                 </div>
             </header>
 
@@ -201,16 +218,19 @@
             </div>
         </main>
 
-        <!-- TAB 3: PENGELUARAN -->
+        <!-- TAB 3: PENGELUARAN (SUDAH DENGAN DROPDOWN METODE) -->
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
-                        <i data-lucide="info" class="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5"></i>
-                        <p class="text-sm text-blue-800"><strong>PENTING:</strong> Catat di sini HANYA jika Anda mengambil uang tunai secara fisik dari laci kasir (misal: beli kresek, bayar parkir).</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Metode Uang</label>
+                            <select x-model="expMethod" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-red-50 text-red-700 font-bold">
+                                <option value="Tunai">Tunai (Uang Laci)</option>
+                                <option value="Transfer">Transfer (Rekening Modal)</option>
+                            </select>
+                        </div>
                         <div><label class="block text-sm font-semibold text-gray-700 mb-2">Kategori</label><select x-model="expCat" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"><option>Perlengkapan (Kotak, Kresek)</option><option>Biaya Operasional (Listrik, WiFi)</option><option>Transportasi / Ongkir</option><option>Biaya Gaji Karyawan</option><option>Lain-lain</option></select></div>
                         <div class="md:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-2">Keterangan</label><input type="text" x-model="expDesc" placeholder="Cth: Beli kresek hitam besar" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"></div>
                         <div><label class="block text-sm font-semibold text-gray-700 mb-2">Nominal (Rp)</label><input type="number" x-model="expAmount" placeholder="0" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"></div>
@@ -220,7 +240,7 @@
             </div>
         </main>
 
-        <!-- TAB 4: LAPORAN & ANALITIK -->
+        <!-- TAB 4: LAPORAN & ANALITIK (DENGAN LAPORAN KASIR) -->
         <main x-show="currentTab === 'laporan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
@@ -238,6 +258,8 @@
             </header>
             
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
+                
+                <!-- DATA KEUANGAN DIPISAH -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
                         <div>
@@ -253,18 +275,44 @@
                         </div>
                     </div>
                     
-                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
-                        <div class="flex items-center mb-2"><div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-down" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Pengeluaran Kasir</p></div>
-                        <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.expenses)"></p>
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-down" class="w-5 h-5"></i></div>
+                                <p class="text-sm font-semibold text-gray-500">Total Pengeluaran</p>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.expenses)"></p>
+                        </div>
+                        <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
+                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Potong Laci (Tunai)</p><p class="text-sm font-bold text-red-600" x-text="formatRupiah(reportData.expCash || 0)"></p></div>
+                            <div class="text-right"><p class="text-[10px] text-gray-400 font-semibold uppercase">Potong Rekening</p><p class="text-sm font-bold text-orange-500" x-text="formatRupiah(reportData.expTransfer || 0)"></p></div>
+                        </div>
                     </div>
+
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
                         <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
-                        <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Laci Kasir (Kotor)</p></div>
+                        <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p></div>
                         <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit)"></p>
+                        <p class="text-[10px] opacity-80 mt-1 relative z-10">Hasil: Pendapatan Tunai - Pengeluaran Laci</p>
                     </div>
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
                         <div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div>
                         <p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p>
+                    </div>
+                </div>
+
+                <!-- FITUR BARU: LAPORAN PERFORMA KASIR -->
+                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-purple-600"></i> Performa Kasir (Laporan Shift) </h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <template x-for="(data, nama) in getCashierPerformance()" :key="nama">
+                            <div class="p-4 bg-purple-50 rounded-xl border border-purple-100 shadow-sm">
+                                <h3 class="font-bold text-purple-900" x-text="nama"></h3>
+                                <p class="text-sm text-gray-600 mt-1"><span x-text="data.totalTx"></span> Transaksi Dilayani</p>
+                                <p class="text-xl font-black text-brand-brown mt-2" x-text="formatRupiah(data.revenue)"></p>
+                            </div>
+                        </template>
+                        <div x-show="Object.keys(getCashierPerformance()).length === 0" class="col-span-full p-4 text-center text-gray-400">Belum ada transaksi terekam oleh kasir hari ini.</div>
                     </div>
                 </div>
 
@@ -328,7 +376,6 @@
                                 <template x-for="tx in reportData.salesHistory" :key="tx.invoice">
                                     <tr class="border-b hover:bg-gray-50">
                                         <td class="p-3 text-sm">
-                                            <!-- TETAP TAMPILKAN NAMA PEMBELI DI LAPORAN -->
                                             <div class="font-bold text-brand-brown" x-text="tx.invoice"></div>
                                             <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                         </td>
@@ -360,14 +407,14 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran Laci Kasir </h2>
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran Toko </h2>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse mt-4 min-w-max">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-600 text-sm border-b">
                                     <th class="p-3">Waktu</th>
                                     <th class="p-3">Kategori</th>
-                                    <th class="p-3">Keterangan</th>
+                                    <th class="p-3">Keterangan & Sumber Dana</th>
                                     <th class="p-3 text-right">Nominal</th>
                                 </tr>
                             </thead>
@@ -388,18 +435,18 @@
             </div>
         </main>
 
-        <!-- TAB 5: PENGATURAN (PIN) -->
+        <!-- TAB 5: PENGATURAN -->
         <main x-show="currentTab === 'pengaturan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="h-16 bg-white border-b flex items-center px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800">Pengaturan Toko</h1>
             </header>
-            <div class="p-4 md:p-6 overflow-y-auto pb-24 flex justify-center">
-                <div class="bg-white rounded-xl shadow-sm border p-6 w-full max-w-md">
+            <div class="p-4 md:p-6 overflow-y-auto pb-24 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                
+                <div class="bg-white rounded-xl shadow-sm border p-6 w-full">
                     <h2 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                        <i data-lucide="lock" class="text-brand-brown"></i> Keamanan (Ganti PIN)
+                        <i data-lucide="lock" class="text-brand-brown"></i> Keamanan (Ganti PIN Admin)
                     </h2>
-                    <p class="text-sm text-gray-500 mb-6">Ganti PIN untuk fitur Hapus Struk, Tambah Produk, dan Edit Stok.</p>
-                    
+                    <p class="text-sm text-gray-500 mb-6">Ganti PIN Pemilik untuk fitur Hapus Struk, Tambah Produk, dan Edit Stok.</p>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">PIN Admin Lama</label>
@@ -416,6 +463,34 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- FITUR BARU: MANAJEMEN KASIR -->
+                <div class="bg-white rounded-xl shadow-sm border p-6 w-full">
+                    <h2 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <i data-lucide="users" class="text-purple-600"></i> Manajemen Tim Kasir (Shift)
+                    </h2>
+                    <p class="text-sm text-gray-500 mb-6">Daftarkan nama Yunda, Rizka, dll beserta PIN login mereka masing-masing.</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <template x-for="c in cashiersList" :key="c.id">
+                            <div class="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                                <div class="font-bold text-gray-700 flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center text-xs" x-text="c.name.substring(0,1)"></div> <span x-text="c.name"></span></div>
+                                <button @click="deleteCashier(c.id, c.name)" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                            </div>
+                        </template>
+                        <div x-show="cashiersList.length === 0" class="text-center text-gray-400 py-4 text-sm border-2 border-dashed rounded-lg">Belum ada kasir terdaftar.</div>
+                    </div>
+
+                    <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tambah Kasir Baru</label>
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" x-model="newCashierName" placeholder="Nama Panggilan" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-purple-400">
+                            <input type="number" x-model="newCashierPin" placeholder="Buat PIN" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-purple-400">
+                        </div>
+                        <button @click="addCashier()" class="w-full bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 transition">Daftarkan Kasir</button>
+                    </div>
+                </div>
+
             </div>
         </main>
 
@@ -428,7 +503,7 @@
             <button @click="currentTab = 'pengaturan'" :class="currentTab === 'pengaturan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="settings" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Setelan</span></button>
         </nav>
 
-        <!-- Modal Pembayaran (ADA FITUR NAMA PEMBELI) -->
+        <!-- Modal Pembayaran (TETAP ADA NAMA PEMBELI) -->
         <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" style="display: none;">
             <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
                 <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
@@ -556,7 +631,7 @@
         </div>
     </div>
 
-    <!-- FORMAT 2: STRUK KASIR THERMAL (MEMOTONG NAMA INSTANSI) -->
+    <!-- FORMAT 2: STRUK KASIR THERMAL -->
     <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
         <template x-if="lastTx">
             <div style="padding: 10px;">
@@ -568,9 +643,9 @@
                 </div>
                 
                 <div style="margin-bottom: 10px;">
-                    <!-- RUMUS PEMOTONG NAMA INSTANSI AGAR TIDAK MUNCUL DI KERTAS FISIK -->
                     <div>No : <span x-text="lastTx.invoice.split(' (')[0]"></span></div>
                     <div>Tgl: <span x-text="lastTx.date"></span></div>
+                    <div>Kasir: <span x-text="activeCashier"></span></div>
                     <div>------------------------</div>
                 </div>
                 <div style="margin-bottom: 10px;">
@@ -613,16 +688,21 @@
 
         function posApp() {
             return {
-                shift: 'Pagi',
+                // FITUR KASIR
+                activeCashier: null,
+                loginPin: '',
+                cashiersList: [],
+                newCashierName: '',
+                newCashierPin: '',
+                
                 currentTab: 'pos', categories: ['Semua'], selectedCategory: 'Semua', searchQuery: '', cart: [], products: [], 
                 showMobileCart: false, showPaymentModal: false, paymentStep: 'input', paymentMethod: 'Tunai', cashReceived: '', isProcessing: false, isLoading: true, lastTx: null, 
                 isCustomPackage: false, 
                 currentTime: new Date().toLocaleString('id-ID'),
-                expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '',
-                reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, 
+                expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '', expMethod: 'Tunai',
+                reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, 
                 
                 customerName: '',
-                
                 itemReports: [], reportPeriod: 'today', startDate: '', endDate: '',
                 oldPin: '', newPin: '',
                 isPrintingReceipt: false, isPrintingCatalog: false,
@@ -636,7 +716,70 @@
                     this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
                     this.$watch('paymentStep', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     this.$watch('showAddProductModal', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
+                    
+                    await this.fetchCashiers();
                     await this.fetchCatalog();
+                },
+
+                // LOGIKA LOGIN KASIR
+                async fetchCashiers() {
+                    try { const res = await fetch(`${SERVER_URL}/api/cashiers`); const data = await res.json(); if(data.success) this.cashiersList = data.data; } catch(e){}
+                },
+                async login() {
+                    if(!this.loginPin) return;
+                    const found = this.cashiersList.find(c => c.pin === this.loginPin);
+                    if (found) { this.activeCashier = found.name; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; }
+                    
+                    // Cek jika yang masuk adalah Admin/Pemilik (Pintu Darurat)
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: this.loginPin }) });
+                        const dataPin = await resPin.json();
+                        if (dataPin.success) { this.activeCashier = 'Admin Toko'; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; }
+                    } catch(e){}
+                    
+                    alert('❌ Akses Ditolak: PIN Salah atau Kasir tidak terdaftar!'); this.loginPin = '';
+                },
+                logout() { this.activeCashier = null; this.currentTab = 'pos'; },
+                
+                async addCashier() {
+                    if (!this.newCashierName || !this.newCashierPin) return alert('Isi Nama dan PIN Kasir Baru!');
+                    const sandi = prompt("🔒 MANAJEMEN KASIR\nMasukkan PIN Pemilik (Admin) Anda untuk konfirmasi:");
+                    if (!sandi) return;
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                    const dataPin = await resPin.json();
+                    if (!dataPin.success) return alert("❌ Akses ditolak! Password salah.");
+
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/cashiers`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name: this.newCashierName, pin: this.newCashierPin }) });
+                        const data = await res.json();
+                        if (data.success) { alert(`✅ Kasir ${this.newCashierName} berhasil didaftarkan!`); this.newCashierName = ''; this.newCashierPin = ''; this.fetchCashiers(); setTimeout(() => lucide.createIcons(), 50); } 
+                        else { alert(data.message); }
+                    } catch(e) { alert('Gagal terhubung ke server'); }
+                },
+                
+                async deleteCashier(id, nama) {
+                    const sandi = prompt(`🔒 HAPUS KASIR\nMasukkan PIN Pemilik (Admin) untuk menghapus ${nama}:`);
+                    if (!sandi) return;
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                    const dataPin = await resPin.json();
+                    if (!dataPin.success) return alert("❌ Akses ditolak! Password salah.");
+                    
+                    if(!confirm(`Yakin ingin menghapus kasir ${nama} dari sistem?`)) return;
+                    try { await fetch(`${SERVER_URL}/api/cashiers/${id}`, { method: 'DELETE' }); alert(`✅ Kasir ${nama} dihapus.`); this.fetchCashiers(); setTimeout(() => lucide.createIcons(), 50); } catch(e) {}
+                },
+
+                // FUNGSI HITUNG PERFORMA MASING-MASING KASIR
+                getCashierPerformance() {
+                    const perf = {};
+                    if (!this.reportData.salesHistory) return perf;
+                    this.reportData.salesHistory.forEach(tx => {
+                        const match = tx.invoice.match(/\[Kasir: (.*?)\]/);
+                        const nama = match ? match[1] : 'Kasir Lama';
+                        if (!perf[nama]) perf[nama] = { totalTx: 0, revenue: 0 };
+                        perf[nama].totalTx++;
+                        perf[nama].revenue += tx.total;
+                    });
+                    return perf;
                 },
 
                 printCatalog() { this.isPrintingCatalog = true; setTimeout(() => { window.print(); this.isPrintingCatalog = false; }, 500); },
@@ -845,7 +988,7 @@
                     let keranjangFix = JSON.parse(JSON.stringify(this.cart));
                     
                     let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
-                    let finalName = this.customerName ? `${this.customerName} [Shift ${this.shift}]` : `[Shift ${this.shift}]`;
+                    let finalName = this.customerName ? `${this.customerName} [Kasir: ${this.activeCashier}]` : `[Kasir: ${this.activeCashier}]`;
 
                     const payload = { 
                         cart: mappedCart, 
@@ -883,7 +1026,8 @@
                 async submitExpense() {
                     if(!this.expDesc || !this.expAmount) return alert('Mohon isi keterangan dan nominal pengeluaran');
                     try {
-                        const response = await fetch(`${SERVER_URL}/api/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category: this.expCat, description: this.expDesc, amount: this.expAmount }) });
+                        const payload = { category: this.expCat, description: this.expDesc, amount: this.expAmount, paymentMethod: this.expMethod };
+                        const response = await fetch(`${SERVER_URL}/api/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await response.json();
                         if(result.success) { alert('Pengeluaran berhasil dicatat ke Database!'); this.expDesc = ''; this.expAmount = ''; }
                     } catch(error) { alert('Gagal mencatat pengeluaran.'); }

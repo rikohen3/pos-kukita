@@ -101,3 +101,9 @@ model StockHistory {
   newTotal    Int
   createdAt   DateTime @default(now())
 }
+
+model Cashier {
+  id   Int    @id @default(autoincrement())
+  name String
+  pin  String @unique
+}

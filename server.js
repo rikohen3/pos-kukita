@@ -1,33 +1,30 @@
-import express from 'express';
-import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
-
-process.env.TZ = "Asia/Makassar";
+const express = require('express');
+const cors = require('cors');
+const { PrismaClient } = require('@prisma/client');
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+
 const prisma = new PrismaClient();
-const PORT = 5000; 
 
-app.use(cors()); 
-app.use(express.json()); 
-
-// 1. ENDPOINT: KATALOG KASIR
+// 1. ENDPOINT: KATALOG PRODUK & PAKET
 app.get('/api/catalog', async (req, res) => {
   try {
     const products = await prisma.product.findMany({ include: { category: true, supplier: true } });
-    const packages = await prisma.package.findMany({ where: { isActive: true } });
+    const packages = await prisma.package.findMany({ include: { items: { include: { product: true } } } });
     res.json({ success: true, data: { products, packages } });
-  } catch (error) { res.status(500).json({ success: false, message: 'Gagal mengambil katalog' }); }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Gagal memuat katalog' });
+  }
 });
 
-// 2. ENDPOINT: CHECKOUT / TRANSAKSI
+// 2. ENDPOINT: CHECKOUT / TRANSAKSI PENJUALAN
 app.post('/api/checkout', async (req, res) => {
   const { cart, paymentMethod, cashReceived, totalAmount, isPackage, customerName } = req.body;
   try {
     const result = await prisma.$transaction(async (tx) => {
       const prefix = isPackage ? 'PKT-' : 'INV-';
-      
-      // FITUR BARU: Sisipkan Nama Pembeli ke dalam Nomor Struk jika ada
       const invoiceNumber = customerName 
           ? `${prefix}${Date.now()} (${customerName})` 
           : `${prefix}${Date.now()}`;
@@ -50,29 +47,51 @@ app.post('/api/checkout', async (req, res) => {
       }
       return sale;
     });
-    res.json({ success: true, message: 'Sukses', data: result });
-  } catch (error) { res.status(400).json({ success: false, error: error.message }); }
+    res.json({ success: true, message: 'Transaksi berhasil', data: result });
+  } catch (error) { 
+    res.status(400).json({ success: false, error: error.message }); 
+  }
 });
 
-// 3. ENDPOINT: PENGELUARAN
-app.post('/api/expenses', async (req, res) => {
-  const { category, description, amount } = req.body;
-  try {
-    const expense = await prisma.expense.create({ data: { category, description, amount: parseInt(amount) } });
-    res.json({ success: true, data: expense });
-  } catch (error) { res.status(500).json({ success: false }); }
-});
-
-// 4. ENDPOINT: OPSI KATEGORI & SUPPLIER 
+// 3. ENDPOINT: OPSI KATEGORI & SUPPLIER
 app.get('/api/options', async (req, res) => {
   try {
     const categories = await prisma.category.findMany();
     const suppliers = await prisma.supplier.findMany();
     res.json({ success: true, data: { categories, suppliers } });
-  } catch (error) { res.status(500).json({ success: false }); }
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
 });
 
-// 5. ENDPOINT: TAMBAH PRODUK DENGAN HARGA BELI
+// 4. ENDPOINT: UPDATE STOK MANUAL V2 & CATAT RIWAYAT STOK
+app.put('/api/products/:id/stock-v2', async (req, res) => {
+  const productId = parseInt(req.params.id);
+  const { newStock } = req.body;
+  try {
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) return res.status(404).json({ success: false, message: 'Produk tidak ditemukan' });
+
+    const diff = newStock - product.stock;
+
+    const updated = await prisma.product.update({
+      where: { id: productId },
+      data: { stock: newStock }
+    });
+
+    if (diff > 0) {
+      await prisma.stockHistory.create({
+        data: { productId, productName: product.name, qtyAdded: diff, newTotal: newStock }
+      });
+    }
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Gagal update stok' });
+  }
+});
+
+// 5. ENDPOINT: TAMBAH PRODUK BARU
 app.post('/api/products', async (req, res) => {
   const { name, categoryId, supplierId, buyPrice, sellPrice, stock } = req.body;
   try {
@@ -87,7 +106,6 @@ app.post('/api/products', async (req, res) => {
       }
     });
 
-    // TAMBAHAN BARU: Otomatis catat ke riwayat stok jika stok awalnya lebih dari 0
     if (parseInt(stock) > 0) {
         await prisma.stockHistory.create({
             data: {
@@ -100,15 +118,50 @@ app.post('/api/products', async (req, res) => {
     }
 
     res.json({ success: true, data: newProduct });
-  } catch (error) { res.status(500).json({ success: false, message: 'Gagal menyimpan produk' }); }
+  } catch (error) { 
+    res.status(500).json({ success: false, message: 'Gagal menyimpan produk' }); 
+  }
 });
 
-// 6. ENDPOINT: UPDATE STOK
-app.put('/api/products/:id/stock', async (req, res) => {
+// 6. ENDPOINT: PENGATURAN PIN
+app.post('/api/settings/verify-pin', async (req, res) => {
+  const { pin } = req.body;
   try {
-    const updated = await prisma.product.update({ where: { id: parseInt(req.params.id) }, data: { stock: parseInt(req.body.newStock) } });
-    res.json({ success: true, data: updated });
-  } catch (error) { res.status(500).json({ success: false }); }
+    const setting = await prisma.setting.findFirst();
+    if (!setting) {
+      if (pin === '123456') return res.json({ success: true });
+      return res.json({ success: false });
+    }
+    if (setting.adminPin === pin) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+app.put('/api/settings/update-pin', async (req, res) => {
+  const { oldPin, newPin } = req.body;
+  try {
+    let setting = await prisma.setting.findFirst();
+    if (!setting) {
+      if (oldPin !== '123456') return res.json({ success: false, message: 'PIN Lama salah' });
+      setting = await prisma.setting.create({ data: { adminPin: newPin } });
+      return res.json({ success: true });
+    }
+    if (setting.adminPin !== oldPin) {
+      return res.json({ success: false, message: 'PIN Lama salah' });
+    }
+    await prisma.setting.update({
+      where: { id: setting.id },
+      data: { adminPin: newPin }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Gagal update PIN' });
+  }
 });
 
 // 7. ENDPOINT: LAPORAN GLOBAL & RIWAYAT STRUK
@@ -139,12 +192,12 @@ app.get('/api/reports', async (req, res) => {
     const stockHistory = await prisma.stockHistory.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } });
 
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
-    
-    // PENGEMBALIAN FITUR: Hitung pemisahan Tunai dan QRIS
     const totalCash = sales.filter(s => s.paymentMethod === 'Tunai').reduce((sum, s) => sum + s.totalAmount, 0);
     const totalQris = sales.filter(s => s.paymentMethod === 'QRIS').reduce((sum, s) => sum + s.totalAmount, 0);
     
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const expTransfer = expenses.filter(e => e.description.includes('[Transfer]') || e.description.includes('[QRIS]')).reduce((sum, e) => sum + e.amount, 0);
+    const expCash = totalExpenses - expTransfer;
     
     const salesHistory = sales.map(s => ({
       invoice: s.invoice,
@@ -158,10 +211,12 @@ app.get('/api/reports', async (req, res) => {
       success: true,
       data: { 
         revenue: totalRevenue, 
-        revenueCash: totalCash, // Dikirim ke layar
-        revenueQris: totalQris, // Dikirim ke layar
+        revenueCash: totalCash, 
+        revenueQris: totalQris, 
         expenses: totalExpenses, 
-        netProfit: totalRevenue - totalExpenses, 
+        expCash: expCash,
+        expTransfer: expTransfer,
+        netProfit: totalCash - expCash, 
         transactions: sales.length, 
         salesHistory,
         expenseHistory: expenses,
@@ -195,204 +250,91 @@ app.get('/api/reports/items', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 9. ENDPOINT BARU: HAPUS STRUK & KEMBALIKAN STOK
-app.delete('/api/sales/:invoice', async (req, res) => {
-  const invoice = req.params.invoice;
+// 9. ENDPOINT: PEMBATALAN / HAPUS STOK MASUK
+app.delete('/api/stock-history/:id', async (req, res) => {
+  const historyId = parseInt(req.params.id);
   try {
-    const sale = await prisma.sale.findFirst({ where: { invoice: invoice }, include: { items: true } });
+    const history = await prisma.stockHistory.findUnique({ where: { id: historyId } });
+    if (!history) return res.status(404).json({ success: false, message: 'Riwayat tidak ditemukan' });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id: history.productId },
+        data: { stock: { decrement: history.qtyAdded } }
+      });
+      await tx.stockHistory.delete({ where: { id: historyId } });
+    });
+
+    res.json({ success: true, message: 'Riwayat dibatalkan & stok dikurangi' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Gagal menghapus riwayat' });
+  }
+});
+
+// 10. ENDPOINT: PEMBATALAN / HAPUS STRUK PENJUALAN
+app.delete('/api/transactions/:invoice', async (req, res) => {
+  const invoiceNo = req.params.invoice;
+  try {
+    const sale = await prisma.sale.findUnique({
+      where: { invoice: invoiceNo },
+      include: { items: { include: { package: { include: { items: true } } } } }
+    });
+
     if (!sale) return res.status(404).json({ success: false, message: 'Struk tidak ditemukan' });
 
     await prisma.$transaction(async (tx) => {
-      // 1. Kembalikan stok barang ke gudang
       for (const item of sale.items) {
         if (item.productId) {
-          await tx.product.update({ where: { id: item.productId }, data: { stock: { increment: item.qty } } });
-        } else if (item.packageId) {
-          const pkg = await tx.package.findUnique({ where: { id: item.packageId }, include: { items: true } });
-          if (pkg) {
-            for (const pkgItem of pkg.items) {
-              await tx.product.update({ where: { id: pkgItem.productId }, data: { stock: { increment: pkgItem.qty * item.qty } } });
-            }
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.qty } }
+          });
+        } else if (item.packageId && item.package) {
+          for (const pkgItem of item.package.items) {
+            await tx.product.update({
+              where: { id: pkgItem.productId },
+              data: { stock: { increment: pkgItem.qty * item.qty } }
+            });
           }
         }
       }
-      // 2. Hapus Rincian Belanjaan (SaleItem)
       await tx.saleItem.deleteMany({ where: { saleId: sale.id } });
-      // 3. Hapus Nota Utama (Sale)
       await tx.sale.delete({ where: { id: sale.id } });
     });
-    res.json({ success: true, message: 'Struk dihapus & stok telah dikembalikan!' });
-  } catch (error) { res.status(500).json({ success: false, message: 'Gagal menghapus struk' }); }
+
+    res.json({ success: true, message: 'Struk berhasil dihapus dan stok dikembalikan' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Gagal membatalkan transaksi: ' + error.message });
+  }
 });
 
-// ==========================================
-// API UNTUK MENGHAPUS STRUK & KEMBALIKAN STOK
-// ==========================================
-app.delete('/api/transactions/:invoice', async (req, res) => {
-    const { invoice } = req.params;
-    try {
-        // 1. Cari data struk beserta isi keranjangnya
-        const sale = await prisma.sale.findUnique({
-            where: { invoice: invoice },
-            include: { items: true } // Pastikan 'items' ini sama dengan nama relasi di schema.prisma Anda
-        });
-
-        if (!sale) return res.status(404).json({ success: false, message: 'Struk tidak ditemukan' });
-
-        // 2. Gunakan $transaction agar aman (Jika satu gagal, semua batal)
-        await prisma.$transaction(async (tx) => {
-            // a. Kembalikan stok barang satu per satu secara otomatis
-            for (const item of sale.items) {
-                // Hanya proses jika barang tersebut punya ID produk fisik
-                if (item.productId) {
-                    await tx.product.update({
-                        where: { id: item.productId },
-                        data: { stock: { increment: item.qty } } // Tambahkan kembali stok sesuai yang terhapus
-                    });
-                }
-            }
-            
-            // b. Hapus rincian struk (SaleItem)
-            await tx.saleItem.deleteMany({ where: { saleId: sale.id } });
-            
-            // c. Hapus struk utama (Sale)
-            await tx.sale.delete({ where: { id: sale.id } });
-        });
-
-        res.json({ success: true, message: 'Transaksi dibatalkan & stok otomatis dikembalikan.' });
-    } catch (error) {
-        console.error('Error delete transaction:', error);
-        res.status(500).json({ success: false, message: 'Terjadi kesalahan sistem saat membatalkan struk.' });
-    }
+// 11. ENDPOINT: PENGELUARAN
+app.post('/api/expenses', async (req, res) => {
+  const { category, description, amount, paymentMethod } = req.body;
+  const finalDesc = paymentMethod === 'Transfer' ? `[Transfer] ${description}` : `[Tunai] ${description}`;
+  try {
+    const expense = await prisma.expense.create({
+      data: { category, description: finalDesc, amount: parseInt(amount) }
+    });
+    res.json({ success: true, data: expense });
+  } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// ==========================================
-// API UNTUK PENGATURAN (PIN ADMIN)
-// ==========================================
-app.post('/api/settings/verify-pin', async (req, res) => {
-    const { pin } = req.body;
-    try {
-        const pinSetting = await prisma.setting.findUnique({ where: { name: 'admin_pin' } });
-        const validPin = pinSetting ? pinSetting.value : '030388'; // Default PIN yang diminta
-        
-        if (pin === validPin) {
-            res.json({ success: true });
-        } else {
-            res.json({ success: false, message: 'PIN Salah' });
-        }
-    } catch (error) {
-        console.error('Error verify pin:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
+// 12. ENDPOINT: MANAJEMEN LOGIN KASIR
+app.get('/api/cashiers', async (req, res) => {
+  try { const cashiers = await prisma.cashier.findMany(); res.json({ success: true, data: cashiers }); } 
+  catch (error) { res.status(500).json({ success: false }); }
 });
 
-app.put('/api/settings/update-pin', async (req, res) => {
-    const { oldPin, newPin } = req.body;
-    try {
-        const pinSetting = await prisma.setting.findUnique({ where: { name: 'admin_pin' } });
-        const currentPin = pinSetting ? pinSetting.value : '030388';
-
-        if (oldPin !== currentPin) {
-            return res.json({ success: false, message: 'PIN Lama salah!' });
-        }
-
-        // Simpan PIN baru ke Database Neon
-        await prisma.setting.upsert({
-            where: { name: 'admin_pin' },
-            update: { value: newPin },
-            create: { id: 1, name: 'admin_pin', value: newPin }
-        });
-
-        res.json({ success: true, message: 'PIN berhasil diubah!' });
-    } catch (error) {
-        console.error('Error update pin:', error);
-        res.status(500).json({ success: false, message: 'Gagal mengubah PIN' });
-    }
+app.post('/api/cashiers', async (req, res) => {
+  try { const newCashier = await prisma.cashier.create({ data: req.body }); res.json({ success: true, data: newCashier }); } 
+  catch (error) { res.status(500).json({ success: false, message: 'PIN sudah dipakai orang lain' }); }
 });
 
-// ==========================================
-// API BARU: EDIT STOK & CATAT RIWAYAT MASUK
-// ==========================================
-app.put('/api/products/:id/stock-v2', async (req, res) => {
-    const { id } = req.params;
-    const { newStock } = req.body;
-    try {
-        const oldProduct = await prisma.product.findUnique({ where: { id: parseInt(id) } });
-        if (!oldProduct) return res.status(404).json({ success: false, message: 'Produk tidak ditemukan' });
-
-        // Hitung selisih: Berapa banyak barang yang baru masuk?
-        const qtyAdded = newStock - oldProduct.stock;
-        
-        const updatedProduct = await prisma.product.update({
-            where: { id: parseInt(id) },
-            data: { stock: newStock }
-        });
-
-        // Catat ke buku riwayat HANYA JIKA stok bertambah (barang masuk)
-        if (qtyAdded > 0) {
-            await prisma.stockHistory.create({
-                data: {
-                    productId: updatedProduct.id,
-                    productName: updatedProduct.name,
-                    qtyAdded: qtyAdded,
-                    newTotal: newStock
-                }
-            });
-        }
-        res.json({ success: true, data: updatedProduct });
-    } catch (error) {
-        console.error('Error update stock:', error);
-        res.status(500).json({ success: false, message: 'Gagal update stok' });
-    }
+app.delete('/api/cashiers/:id', async (req, res) => {
+  try { await prisma.cashier.delete({ where: { id: parseInt(req.params.id) } }); res.json({ success: true }); } 
+  catch (error) { res.status(500).json({ success: false }); }
 });
 
-// ==========================================
-// API BARU: AMBIL DATA RIWAYAT STOK MASUK
-// ==========================================
-app.get('/api/stock-history', async (req, res) => {
-    try {
-        // Ambil 100 catatan stok masuk paling baru
-        const history = await prisma.stockHistory.findMany({
-            orderBy: { createdAt: 'desc' },
-            take: 100
-        });
-        res.json({ success: true, data: history });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Gagal memuat riwayat stok' });
-    }
-});
-
-// ==========================================
-// API BARU: HAPUS RIWAYAT & KEMBALIKAN STOK
-// ==========================================
-app.delete('/api/stock-history/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        // 1. Cari data riwayat yang mau dihapus
-        const history = await prisma.stockHistory.findUnique({
-            where: { id: parseInt(id) }
-        });
-        if (!history) return res.status(404).json({ success: false, message: 'Data tidak ditemukan' });
-
-        // 2. Gunakan $transaction (Hapus riwayat sekaligus kurangi stok)
-        await prisma.$transaction(async (tx) => {
-            // a. Kurangi stok produk sejumlah yang salah input tadi
-            await tx.product.update({
-                where: { id: history.productId },
-                data: { stock: { decrement: history.qtyAdded } }
-            });
-            // b. Hapus catatan dari riwayat
-            await tx.stockHistory.delete({
-                where: { id: parseInt(id) }
-            });
-        });
-
-        res.json({ success: true, message: 'Riwayat dibatalkan, stok dikurangi.' });
-    } catch (error) {
-        console.error('Error delete stock history:', error);
-        res.status(500).json({ success: false, message: 'Gagal membatalkan riwayat' });
-    }
-});
-
-app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
-app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
