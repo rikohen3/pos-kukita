@@ -26,6 +26,8 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         body { -webkit-user-select: none; user-select: none; }
         input, select, textarea { -webkit-user-select: auto; user-select: auto; }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
 
         /* JURUS GAIB KHUSUS CETAK ANDROID */
         @media print {
@@ -133,7 +135,7 @@
                             <div class="flex items-center justify-between p-3 border rounded-lg">
                                 <div class="flex-1"><h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4><p class="text-brand-brown text-sm" x-text="formatRupiah(item.price)"></p></div>
                                 <div class="flex items-center gap-1 md:gap-2">
-                                    <div class="flex items-center bg-gray-100 rounded-lg"><button @click="decreaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-l-lg">-</button><span class="w-6 text-center text-sm font-bold" x-text="item.qty"></span><button @click="increaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-r-lg">+</button></div>
+                                    <div class="flex items-center bg-gray-100 rounded-lg"><button @click="decreaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-l-lg">-</button><input type="number" x-model.number="item.qty" @change="validateQty(index)" class="w-10 text-center text-sm font-bold bg-transparent outline-none p-0" min="1"><button @click="increaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-r-lg">+</button></div>
                                     <button @click="removeFromCart(index)" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4 md:w-5"></i></button>
                                 </div>
                             </div>
@@ -973,7 +975,24 @@
                 increaseQty(index) { this.isCustomPackage = false; const item = this.cart[index]; const product = this.products.find(p => p.id === item.id && p.type === item.type); if (product.type === 'package' || item.qty < product.stock) item.qty++; },
                 decreaseQty(index) { this.isCustomPackage = false; if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
                 removeFromCart(index) { this.isCustomPackage = false; this.cart.splice(index, 1); },
-                
+                validateQty(index) {
+                 this.isCustomPackage = false;
+                 let item = this.cart[index];
+                 let val = parseInt(item.qty);
+
+                 // Jika kasir salah ketik huruf atau angka minus, paksa jadi 1
+                 if (isNaN(val) || val < 1) val = 1;
+
+                 // Cek ketersediaan stok fisik gudang
+                 const product = this.products.find(p => p.id === item.id && p.type === item.type);
+                 if (product && product.type === 'product' && val > product.stock) {
+                     alert(`❌ Stok tidak mencukupi! Sisa stok ${product.name} tinggal ${product.stock} pcs.`);
+                     val = product.stock; // Paksa angka kembali ke batas maksimal stok
+                 }
+
+                 this.cart[index].qty = val;
+             },
+
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
                 get change() { return parseFloat(this.cashReceived || 0) - this.total; },
