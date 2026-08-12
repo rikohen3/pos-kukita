@@ -81,6 +81,19 @@ app.post('/api/products', async (req, res) => {
         stock: parseInt(stock) 
       }
     });
+
+    // TAMBAHAN BARU: Otomatis catat ke riwayat stok jika stok awalnya lebih dari 0
+    if (parseInt(stock) > 0) {
+        await prisma.stockHistory.create({
+            data: {
+                productId: newProduct.id,
+                productName: newProduct.name,
+                qtyAdded: parseInt(stock),
+                newTotal: parseInt(stock)
+            }
+        });
+    }
+
     res.json({ success: true, data: newProduct });
   } catch (error) { res.status(500).json({ success: false, message: 'Gagal menyimpan produk' }); }
 });
