@@ -431,14 +431,25 @@
                             <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
                         </div>
                         
-                        <!-- INPUT BARU: NAMA PEMBELI -->
                         <div class="mb-4">
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli (Opsional)</label>
                             <input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Cth: Biro Umum / Ibu Siska">
                         </div>
 
                         <div class="mb-4"><div class="grid grid-cols-2 gap-2"><button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">Tunai</button><button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">QRIS</button></div></div>
-                        <div x-show="paymentMethod === 'Tunai'" class="mb-6"><input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0"><div class="grid grid-cols-4 gap-2 mt-2"><button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button><button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button><button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button></div><div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50"><span class="font-semibold text-gray-600">Kembalian</span><span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span></div></div>
+                        <div x-show="paymentMethod === 'Tunai'" class="mb-6">
+                            <input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0">
+                            <div class="grid grid-cols-4 gap-2 mt-2">
+                                <button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button>
+                                <button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button>
+                                <button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50">
+                                <span class="font-semibold text-gray-600">Kembalian</span>
+                                <!-- RUMUS NAN SUDAH DIPERBAIKI DI BAWAH INI -->
+                                <span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span>
+                            </div>
+                        </div>
                         <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50"><i data-lucide="check-circle" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span></button>
                     </div>
                     <div x-show="paymentStep === 'success'" style="display: none;" class="text-center">
@@ -502,7 +513,6 @@
             </div>
         </div>
     </div>
-    <!-- AKHIR BUNGKUS APLIKASI UTAMA -->
 
     <!-- FORMAT 1: KATALOG PROMO EKSKLUSIF -->
     <div x-show="isPrintingCatalog" id="catalog-area" class="w-full max-w-4xl mx-auto p-4 md:p-8 bg-white" style="display: none;">
@@ -538,7 +548,6 @@
             <div class="inline-block bg-brand-brown text-white font-bold py-2 px-6 rounded-full">Hubungi Admin Kukita Sekarang!</div>
         </div>
     </div>
-
 
     <!-- FORMAT 2: STRUK KASIR THERMAL -->
     <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
@@ -593,7 +602,6 @@
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '',
                 reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, expenses: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, 
                 
-                // STATE BARU: Untuk menyimpan nama pembeli
                 customerName: '',
                 
                 itemReports: [], reportPeriod: 'today', startDate: '', endDate: '',
@@ -751,51 +759,76 @@
                 increaseQty(index) { this.isCustomPackage = false; const item = this.cart[index]; const product = this.products.find(p => p.id === item.id && p.type === item.type); if (product.type === 'package' || item.qty < product.stock) item.qty++; },
                 decreaseQty(index) { this.isCustomPackage = false; if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
                 removeFromCart(index) { this.isCustomPackage = false; this.cart.splice(index, 1); },
+                
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
+                // PERBAIKAN BUG NaN: Rumus kembalian dikembalikan lagi
+                get change() { return parseFloat(this.cashReceived || 0) - this.total; },
+                
                 formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); },
                 
+                // FITUR BARU: SET HARGA PAKET (Jumlah x Harga)
                 setCustomPrice() { 
                     if (this.cart.length === 0) return alert('Keranjang masih kosong!'); 
-                    const currentTotal = this.total; 
-                    const customTotalStr = prompt(`UBAH TOTAL HARGA\n\nTotal saat ini: ${this.formatRupiah(currentTotal)}\nMasukkan harga baru paket:`, currentTotal); 
-                    if (customTotalStr === null || customTotalStr.trim() === "") return; 
-                    const newTotal = parseFloat(customTotalStr); 
-                    if (isNaN(newTotal) || newTotal < 0) return alert('Harga tidak valid!'); 
-                    if (currentTotal === 0) return; 
                     
-                    this.isCustomPackage = true; 
+                    // 1. Meminta Jumlah Kotak Paket
+                    const qtyStr = prompt('📦 SET HARGA PAKET\n\nBerapa JUMLAH KOTAK pesanan ini?', '10');
+                    if (qtyStr === null || qtyStr.trim() === "") return;
+                    const qtyBox = parseInt(qtyStr);
+                    if (isNaN(qtyBox) || qtyBox <= 0) return alert('Jumlah kotak tidak valid!');
+
+                    // 2. Meminta Harga Per Kotak
+                    const priceStr = prompt(`Berapa HARGA PER KOTAK untuk pesanan ini?`, '15000');
+                    if (priceStr === null || priceStr.trim() === "") return;
+                    const pricePerBox = parseFloat(priceStr);
+                    if (isNaN(pricePerBox) || pricePerBox < 0) return alert('Harga tidak valid!');
+
+                    // 3. Menghitung Total Harga Paket Otomatis
+                    const newTotal = qtyBox * pricePerBox;
                     
-                    // FITUR BARU: Memunculkan pop-up minta nama instansi
-                    const inputNama = prompt(`NAMA INSTANSI / PEMBELI\n\nMasukkan nama instansi atau pemesan paket ini.\n(Boleh dikosongkan dan langsung klik OK):`, this.customerName);
+                    // 4. Meminta Nama Pemesan
+                    const inputNama = prompt(`🏢 NAMA INSTANSI / PEMBELI\n\nMasukkan nama instansi atau pemesan paket ini (Boleh dikosongkan):`, this.customerName);
                     if (inputNama !== null) {
-                        this.customerName = inputNama.trim(); // Otomatis mengisi kotak di halaman pembayaran
+                        this.customerName = inputNama.trim();
                     }
 
-                    const ratio = newTotal / currentTotal; 
-                    let runningTotal = 0; 
-                    for (let i = 0; i < this.cart.length; i++) { 
-                        if (i === this.cart.length - 1) { const remaining = newTotal - runningTotal; this.cart[i].price = remaining / this.cart[i].qty; } 
-                        else { const newPrice = Math.round(this.cart[i].price * ratio); this.cart[i].price = newPrice; runningTotal += (newPrice * this.cart[i].qty); } 
-                    } 
+                    this.isCustomPackage = true; 
+                    const currentTotal = this.total; 
+                    
+                    if (currentTotal > 0) {
+                        const ratio = newTotal / currentTotal; 
+                        let runningTotal = 0; 
+                        for (let i = 0; i < this.cart.length; i++) { 
+                            if (i === this.cart.length - 1) { 
+                                const remaining = newTotal - runningTotal; 
+                                this.cart[i].price = remaining / this.cart[i].qty; 
+                            } else { 
+                                const newPrice = Math.round(this.cart[i].price * ratio); 
+                                this.cart[i].price = newPrice; 
+                                runningTotal += (newPrice * this.cart[i].qty); 
+                            } 
+                        } 
+                    }
+                    
+                    // Tampilkan ringkasan perhitungan
+                    alert(`✅ PAKET BERHASIL DISET!\n\n${qtyBox} Kotak x Rp ${new Intl.NumberFormat('id-ID').format(pricePerBox)}\nTotal: Rp ${new Intl.NumberFormat('id-ID').format(newTotal)}\n\nSilakan klik tombol BAYAR SEKARANG.`);
                 },
                 
-                // MENGATUR RESET NAMA PEMBELI SETIAP BUKA PEMBAYARAN BARU
                 openPayment() { 
                     this.cashReceived = ''; 
                     this.paymentMethod = 'Tunai'; 
-                    this.customerName = ''; // Reset kotak isian nama pembeli
+                    // PERBAIKAN BUG INSTANSI: Variabel customerName tidak di-reset lagi di sini
                     this.paymentStep = 'input'; 
                     this.showPaymentModal = true; 
                     setTimeout(() => { lucide.createIcons(); }, 10); 
                 },
+                
                 closePayment() { if (this.paymentStep === 'success') { this.resetCart(); } else { this.showPaymentModal = false; } },
                 
                 async processTransaction() {
                     this.isProcessing = true;
                     let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
                     
-                    // MENYISIPKAN NAMA PEMBELI KE PAYLOAD SERVER
                     const payload = { 
                         cart: mappedCart, 
                         paymentMethod: this.paymentMethod, 
