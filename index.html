@@ -727,10 +727,23 @@
                 },
                 async login() {
                     if(!this.loginPin) return;
+                    
+                    // 🔑 KUNCI MASTER DARURAT ANTI-BADAI (Bypass Server)
+                    if (this.loginPin === '123456' || this.loginPin === '030388' || this.loginPin === '100515') {
+                        this.activeCashier = 'Admin Toko'; 
+                        this.loginPin = ''; 
+                        setTimeout(() => lucide.createIcons(), 50); 
+                        // Paksa ambil data dari gudang setelah login
+                        await this.fetchCashiers();
+                        await this.fetchCatalog();
+                        return;
+                    }
+
+                    // Cek PIN Kasir (Yunda / Rizka)
                     const found = this.cashiersList.find(c => c.pin === this.loginPin);
                     if (found) { this.activeCashier = found.name; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; }
                     
-                    // Cek jika yang masuk adalah Admin/Pemilik (Pintu Darurat)
+                    // Cek PIN Database
                     try {
                         const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: this.loginPin }) });
                         const dataPin = await resPin.json();

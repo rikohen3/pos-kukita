@@ -336,8 +336,4 @@ app.delete('/api/cashiers/:id', async (req, res) => {
   catch (error) { res.status(500).json({ success: false }); }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-// BARIS WAJIB UNTUK MESIN VERCEL:
 module.exports = app;
