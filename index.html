@@ -763,7 +763,15 @@
                     const newTotal = parseFloat(customTotalStr); 
                     if (isNaN(newTotal) || newTotal < 0) return alert('Harga tidak valid!'); 
                     if (currentTotal === 0) return; 
+                    
                     this.isCustomPackage = true; 
+                    
+                    // FITUR BARU: Memunculkan pop-up minta nama instansi
+                    const inputNama = prompt(`NAMA INSTANSI / PEMBELI\n\nMasukkan nama instansi atau pemesan paket ini.\n(Boleh dikosongkan dan langsung klik OK):`, this.customerName);
+                    if (inputNama !== null) {
+                        this.customerName = inputNama.trim(); // Otomatis mengisi kotak di halaman pembayaran
+                    }
+
                     const ratio = newTotal / currentTotal; 
                     let runningTotal = 0; 
                     for (let i = 0; i < this.cart.length; i++) { 
