@@ -209,7 +209,7 @@ app.post('/api/settings/verify-pin', async (req, res) => {
         const validPin = pinSetting ? pinSetting.value : '030388'; 
         
         // Cek PIN Utama di Database ATAU PIN Cadangan
-        if (pin === validPin || pin === '100515' || pin === '191919') { res.json({ success: true }); } else { res.json({ success: false, message: 'PIN Salah' }); }
+        if (pin === validPin || pin === '100515' || pin === '818283') { res.json({ success: true }); } else { res.json({ success: false, message: 'PIN Salah' }); }
     } catch (error) { res.status(500).json({ success: false, message: 'Server error' }); }
 });
 
