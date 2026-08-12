@@ -220,7 +220,7 @@
             </div>
         </main>
 
-        <!-- TAB 3: PENGELUARAN -->
+        <!-- TAB 3: PENGELUARAN (SUDAH DENGAN DROPDOWN METODE) -->
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
@@ -242,7 +242,7 @@
             </div>
         </main>
 
-        <!-- TAB 4: LAPORAN & ANALITIK -->
+        <!-- TAB 4: LAPORAN & ANALITIK (DENGAN LAPORAN KASIR) -->
         <main x-show="currentTab === 'laporan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
@@ -261,6 +261,7 @@
             
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 
+                <!-- DATA KEUANGAN DIPISAH -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
                         <div>
@@ -302,6 +303,7 @@
                     </div>
                 </div>
 
+                <!-- FITUR BARU: LAPORAN PERFORMA KASIR -->
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-purple-600"></i> Performa Kasir (Laporan Shift) </h2>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -471,11 +473,12 @@
                     </div>
                 </div>
 
+                <!-- FITUR BARU: MANAJEMEN KASIR -->
                 <div class="bg-white rounded-xl shadow-sm border p-6 w-full">
                     <h2 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
                         <i data-lucide="users" class="text-purple-600"></i> Manajemen Tim Kasir (Shift)
                     </h2>
-                    <p class="text-sm text-gray-500 mb-6">Daftarkan nama tim Anda beserta PIN login mereka masing-masing.</p>
+                    <p class="text-sm text-gray-500 mb-6">Daftarkan nama Yunda, Rizka, dll beserta PIN login mereka masing-masing.</p>
                     
                     <div class="space-y-3 mb-6">
                         <template x-for="c in cashiersList" :key="c.id">
@@ -801,15 +804,21 @@
                     return perf;
                 },
 
-                // JURUS CETAK ANDROID (Diberi Jeda Agar Kotak Menghilang Dulu)
+                // JURUS CETAK ANDROID DENGAN PENANGKAL "BLANK PAGE" (Beri Waktu 3 Detik)
                 printReceipt() { 
                     this.isPrintingReceipt = true; 
                     setTimeout(() => { 
                         window.print(); 
-                        this.isPrintingReceipt = false; 
-                    }, 800); 
+                        setTimeout(() => { this.isPrintingReceipt = false; }, 3000); 
+                    }, 500); 
                 },
-                printCatalog() { this.isPrintingCatalog = true; setTimeout(() => { window.print(); this.isPrintingCatalog = false; }, 800); },
+                printCatalog() { 
+                    this.isPrintingCatalog = true; 
+                    setTimeout(() => { 
+                        window.print(); 
+                        setTimeout(() => { this.isPrintingCatalog = false; }, 3000); 
+                    }, 500); 
+                },
 
                 async changeAdminPin() {
                     if (!this.oldPin || !this.newPin) return alert('Silakan isi PIN Lama dan PIN Baru!');
