@@ -336,4 +336,5 @@ app.delete('/api/cashiers/:id', async (req, res) => {
   catch (error) { res.status(500).json({ success: false }); }
 });
 
-module.exports = app;
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
