@@ -830,6 +830,15 @@
                 
                 async processTransaction() {
                     this.isProcessing = true;
+                    
+                    // KUNCI PERBAIKAN: Kita kunci/simpan semua angka ke dalam memori sementara 
+                    // sebelum mengirimnya ke server, agar tidak ter-reset menjadi NaN.
+                    let totalBelanja = this.total;
+                    let qtyBelanja = this.totalQty;
+                    let uangMasuk = this.paymentMethod === 'Tunai' ? (parseFloat(this.cashReceived) || totalBelanja) : totalBelanja;
+                    let uangKembali = this.paymentMethod === 'Tunai' ? (uangMasuk - totalBelanja) : 0;
+                    let keranjangFix = JSON.parse(JSON.stringify(this.cart));
+                    
                     let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
                     
                     // GABUNGKAN NAMA PEMBELI DENGAN LABEL SHIFT KASIR
@@ -838,8 +847,8 @@
                     const payload = { 
                         cart: mappedCart, 
                         paymentMethod: this.paymentMethod, 
-                        cashReceived: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : 0, 
-                        totalAmount: this.total, 
+                        cashReceived: this.paymentMethod === 'Tunai' ? uangMasuk : 0, 
+                        totalAmount: totalBelanja, 
                         isPackage: this.isCustomPackage,
                         customerName: finalName 
                     };
@@ -847,7 +856,20 @@
                     try {
                         const response = await fetch(`${SERVER_URL}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await response.json();
-                        if (result.success) { this.lastTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), cart: JSON.parse(JSON.stringify(this.cart)), total: this.total, cash: this.paymentMethod === 'Tunai' ? parseFloat(this.cashReceived) : this.total, change: this.paymentMethod === 'Tunai' ? this.change : 0, isPackage: this.isCustomPackage, method: this.paymentMethod, totalQty: this.totalQty }; this.paymentStep = 'success'; } 
+                        if (result.success) { 
+                            this.lastTx = { 
+                                invoice: result.data.invoice, 
+                                date: new Date().toLocaleString('id-ID'), 
+                                cart: keranjangFix, 
+                                total: totalBelanja, 
+                                cash: uangMasuk, 
+                                change: uangKembali, 
+                                isPackage: this.isCustomPackage, 
+                                method: this.paymentMethod, 
+                                totalQty: qtyBelanja 
+                            }; 
+                            this.paymentStep = 'success'; 
+                        } 
                         else { alert('Gagal: ' + result.message); }
                     } catch (error) { alert('Koneksi ke server terputus.'); } 
                     finally { this.isProcessing = false; }
