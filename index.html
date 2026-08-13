@@ -894,14 +894,25 @@
                     const dataPin = await resPin.json();
                     if (!dataPin.success) { alert("❌ Akses ditolak! Password salah."); return; }
 
-                    const newStockStr = prompt(`Edit Stok Manual 📦\n\nMasukkan jumlah STOK BARU (Total) untuk:\n${product.name}\n\nStok saat ini: ${product.stock}`, product.stock);
-                    if (newStockStr === null || newStockStr.trim() === "") return; 
-                    const newStock = parseInt(newStockStr);
-                    if (isNaN(newStock) || newStock < 0) return alert('Input dibatalkan: Jumlah stok tidak valid!');
+                    const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\nStok Saat Ini: ${product.stock} Pcs\n\n➡️ Ketik jumlah barang yang BARU DATANG (Misal ketik: 5)\n➡️ Ketik angka minus jika ada barang rusak/dibuang (Misal ketik: -4)`, "0");
+                    
+                    if (inputStr === null || inputStr.trim() === "") return; 
+                    const diffQty = parseInt(inputStr);
+                    
+                    if (isNaN(diffQty) || diffQty === 0) return alert('Input dibatalkan: Tidak ada perubahan angka.');
+                    
+                    // Komputer yang menghitung otomatis stok barunya!
+                    const newStock = product.stock + diffQty;
+                    
+                    if (newStock < 0) return alert('❌ Gagal: Stok akhir tidak boleh sampai minus!');
+
                     try {
                         const response = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: newStock }) });
                         const result = await response.json();
-                        if (result.success) { alert(`Berhasil! Stok ${product.name} sekarang adalah ${newStock} pcs.`); await this.fetchCatalog(); } 
+                        if (result.success) { 
+                            alert(`✅ Berhasil! Stok ${product.name} sekarang menjadi ${newStock} Pcs.`); 
+                            await this.fetchCatalog(); 
+                        } 
                         else { alert('Gagal update stok: ' + result.message); }
                     } catch (error) { alert('Koneksi ke server terputus.'); }
                 },
