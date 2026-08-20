@@ -1050,12 +1050,12 @@
                 setCustomPrice() { 
                     if (this.cart.length === 0) return alert('Keranjang masih kosong!'); 
                     
-                    const qtyStr = prompt('📦 SET HARGA PAKET\n\nBerapa JUMLAH KOTAK pesanan ini?', '10');
+                    const qtyStr = prompt('📦 SET HARGA PAKET\n\nBerapa JUMLAH KOTAK pesanan ini?', '1');
                     if (qtyStr === null || qtyStr.trim() === "") return;
                     const qtyBox = parseInt(qtyStr);
                     if (isNaN(qtyBox) || qtyBox <= 0) return alert('Jumlah kotak tidak valid!');
 
-                    const priceStr = prompt(`Berapa HARGA PER KOTAK untuk pesanan ini?`, '15000');
+                    const priceStr = prompt(`Berapa HARGA PER KOTAK untuk pesanan ini?`, '0');
                     if (priceStr === null || priceStr.trim() === "") return;
                     const pricePerBox = parseFloat(priceStr);
                     if (isNaN(pricePerBox) || pricePerBox < 0) return alert('Harga tidak valid!');
@@ -1066,19 +1066,30 @@
                     let namaPemesan = (inputNama !== null && inputNama.trim() !== "") ? inputNama.trim() + " - " : "Pesanan Umum - ";
                     
                     this.customerName = `${namaPemesan}${qtyBox} Kotak`;
-
                     this.isCustomPackage = true; 
-                    const currentTotal = this.total; 
                     
-                    if (currentTotal > 0) {
-                        const ratio = newTotal / currentTotal; 
+                    // JURUS ALGORITMA BARU: Hitung proporsi berdasarkan harga NORMAL (Harga Master)
+                    let originalTotal = 0;
+                    this.cart.forEach(item => {
+                        const prod = this.products.find(p => p.id === item.id && p.type === item.type);
+                        const normalPrice = prod ? prod.price : item.price;
+                        originalTotal += (normalPrice * item.qty);
+                    });
+                    
+                    if (originalTotal > 0) {
+                        const ratio = newTotal / originalTotal; 
                         let runningTotal = 0; 
+                        
                         for (let i = 0; i < this.cart.length; i++) { 
+                            // Ambil harga asli barang sebagai patokan pembagian
+                            const prod = this.products.find(p => p.id === this.cart[i].id && p.type === this.cart[i].type);
+                            const normalPrice = prod ? prod.price : this.cart[i].price;
+
                             if (i === this.cart.length - 1) { 
                                 const remaining = newTotal - runningTotal; 
                                 this.cart[i].price = remaining / this.cart[i].qty; 
                             } else { 
-                                const newPrice = Math.round(this.cart[i].price * ratio); 
+                                const newPrice = Math.round(normalPrice * ratio); 
                                 this.cart[i].price = newPrice; 
                                 runningTotal += (newPrice * this.cart[i].qty); 
                             } 
