@@ -106,7 +106,7 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Gagal update stok' }); }
 });
 
-// 7. ENDPOINT: LAPORAN GLOBAL & RIWAYAT STRUK
+// 7. ENDPOINT: LAPORAN GLOBAL & RIWAYAT STRUK (TERMASUK LABA)
 app.get('/api/reports', async (req, res) => {
   const { period, start, end } = req.query;
   let dateFilter = {};
@@ -128,7 +128,7 @@ app.get('/api/reports', async (req, res) => {
   try {
     const sales = await prisma.sale.findMany({ 
       where: dateFilter, orderBy: { createdAt: 'desc' },
-      include: { items: { include: { product: true, package: true } } }
+      include: { items: { include: { product: true, package: { include: { items: { include: { product: true } } } } } } }
     });
     const expenses = await prisma.expense.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } }); 
     const stockHistory = await prisma.stockHistory.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } });
@@ -136,6 +136,23 @@ app.get('/api/reports', async (req, res) => {
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
     const totalCash = sales.filter(s => s.paymentMethod === 'Tunai').reduce((sum, s) => sum + s.totalAmount, 0);
     const totalQris = sales.filter(s => s.paymentMethod === 'QRIS').reduce((sum, s) => sum + s.totalAmount, 0);
+
+    // MENGHITUNG MODAL (HPP) UNTUK LABA
+    let totalCOGS = 0;
+    sales.forEach(s => {
+        s.items.forEach(i => {
+            if (i.product) {
+                totalCOGS += (i.product.buyPrice || 0) * i.qty;
+            } else if (i.package && i.package.items) {
+                let pkgCOGS = 0;
+                i.package.items.forEach(pkgItem => {
+                    pkgCOGS += (pkgItem.product.buyPrice || 0) * pkgItem.qty;
+                });
+                totalCOGS += pkgCOGS * i.qty;
+            }
+        });
+    });
+    const grossProfit = totalRevenue - totalCOGS; // Laba Kotor
 
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     const expTransfer = expenses.filter(e => (e.description || '').includes('[Transfer]') || (e.description || '').includes('[QRIS]')).reduce((sum, e) => sum + e.amount, 0);
@@ -150,6 +167,7 @@ app.get('/api/reports', async (req, res) => {
       success: true,
       data: { 
         revenue: totalRevenue, revenueCash: totalCash, revenueQris: totalQris,
+        grossProfit: grossProfit, // Data Laba Baru
         expenses: totalExpenses, expCash: expCash, expTransfer: expTransfer,
         netProfit: totalCash - expCash, transactions: sales.length, 
         salesHistory, expenseHistory: expenses, stockHistory 
@@ -158,7 +176,7 @@ app.get('/api/reports', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// 8. ENDPOINT: LAPORAN ITEM TERJUAL
+// 8. ENDPOINT: LAPORAN ITEM TERJUAL (TERMASUK LABA PER ITEM)
 app.get('/api/reports/items', async (req, res) => {
   const { period, start, end } = req.query;
   let dateFilter = {};
@@ -172,8 +190,10 @@ app.get('/api/reports/items', async (req, res) => {
     const catatBarang = (produk, qtyTerjual, omset, label) => {
       if(!produk) return;
       const key = produk.id + '_' + label;
-      if (!itemSummary[key]) { itemSummary[key] = { id: key, name: produk.name + (label === 'Bijian' ? '' : ` (${label})`), supplier: produk.supplier ? produk.supplier.name : 'Unknown', qtySold: 0, totalSales: 0 }; }
-      itemSummary[key].qtySold += qtyTerjual; itemSummary[key].totalSales += omset;
+      if (!itemSummary[key]) { itemSummary[key] = { id: key, name: produk.name + (label === 'Bijian' ? '' : ` (${label})`), supplier: produk.supplier ? produk.supplier.name : 'Unknown', qtySold: 0, totalSales: 0, totalProfit: 0 }; }
+      itemSummary[key].qtySold += qtyTerjual; 
+      itemSummary[key].totalSales += omset;
+      itemSummary[key].totalProfit += (omset - (produk.buyPrice * qtyTerjual)); // Laba Item
     };
     saleItems.forEach(item => {
       if (item.product) { const label = (item.price !== item.product.sellPrice) ? 'Paket Snack Box' : 'Bijian'; catatBarang(item.product, item.qty, item.subtotal, label); } 
@@ -208,7 +228,6 @@ app.post('/api/settings/verify-pin', async (req, res) => {
         const pinSetting = await prisma.setting.findUnique({ where: { name: 'admin_pin' } });
         const validPin = pinSetting ? pinSetting.value : '030388'; 
         
-        // Cek PIN Utama di Database ATAU PIN Cadangan
         if (pin === validPin || pin === '100515' || pin === '818283') { res.json({ success: true }); } else { res.json({ success: false, message: 'PIN Salah' }); }
     } catch (error) { res.status(500).json({ success: false, message: 'Server error' }); }
 });

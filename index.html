@@ -15,7 +15,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = { theme: { extend: { colors: { brand: { brown: '#A0522D', orange: '#F97316', green: '#22C55E', gray: '#F3F4F6', red: '#EF4444', blue: '#3B82F6' } } } } }
+        tailwind.config = { theme: { extend: { colors: { brand: { brown: '#A0522D', orange: '#F97316', green: '#22C55E', gray: '#F3F4F6', red: '#EF4444', blue: '#3B82F6', yellow: '#EAB308' } } } } }
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -136,7 +136,6 @@
                             <div class="flex items-center justify-between p-3 border rounded-lg">
                                 <div class="flex-1"><h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4><p class="text-brand-brown text-sm" x-text="formatRupiah(item.price)"></p></div>
                                 
-                                <!-- BAGIAN KUANTITAS KETIK & SVG PERMANEN -->
                                 <div class="flex items-center gap-1 md:gap-2">
                                     <div class="flex items-center bg-gray-100 rounded-lg">
                                         <button @click="decreaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-l-lg">-</button>
@@ -147,7 +146,6 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 md:w-5 md:h-5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                     </button>
                                 </div>
-
                             </div>
                         </template>
                     </div>
@@ -205,11 +203,10 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6">
-                <!-- TAMBAHAN: Kolom Pencarian Master Produk -->
-<div class="mb-4 relative max-w-md">
-    <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 text-gray-400 w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-    <input type="text" x-model="masterSearchQuery" placeholder="Ketik nama kue untuk mencari..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50 transition-all">
-</div>
+                    <div class="mb-4 relative max-w-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 text-gray-400 w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" x-model="masterSearchQuery" placeholder="Ketik nama kue untuk mencari..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50 transition-all">
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-max">
                             <thead>
@@ -278,7 +275,9 @@
             
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- KOTAK-KOTAK LAPORAN ATAS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                    
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex items-center mb-2">
@@ -290,6 +289,20 @@
                         <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
                             <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Tunai / Cash</p><p class="text-sm font-bold text-green-600" x-text="formatRupiah(reportData.revenueCash || 0)"></p></div>
                             <div class="text-right"><p class="text-[10px] text-gray-400 font-semibold uppercase">QRIS / Transfer</p><p class="text-sm font-bold text-blue-600" x-text="formatRupiah(reportData.revenueQris || 0)"></p></div>
+                        </div>
+                    </div>
+
+                    <!-- KOTAK BARU: LABA KOTOR -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="piggy-bank" class="w-5 h-5"></i></div>
+                                <p class="text-sm font-semibold text-gray-500">Total Keuntungan</p>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.grossProfit || 0)"></p>
+                        </div>
+                        <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
+                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Laba Kotor (Selisih Hrg)</p></div>
                         </div>
                     </div>
                     
@@ -313,6 +326,7 @@
                         <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit)"></p>
                         <p class="text-[10px] opacity-80 mt-1 relative z-10">Hasil: Pendapatan Tunai - Pengeluaran Laci</p>
                     </div>
+                    
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
                         <div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div>
                         <p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p>
@@ -364,14 +378,32 @@
                     </div>
                 </div>
 
+                <!-- TABEL RINCIAN PRODUK DENGAN KOLOM LABA BARU -->
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual (Omset) </h2>
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual (Omset & Laba) </h2>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse mt-4 min-w-max">
-                            <thead><tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3">Nama Produk</th><th class="p-3">Supplier</th><th class="p-3 text-center">Terjual (Qty)</th><th class="p-3 text-right">Total Uang Masuk</th></tr></thead>
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                    <th class="p-3">Nama Produk</th>
+                                    <th class="p-3">Supplier</th>
+                                    <th class="p-3 text-center">Terjual (Qty)</th>
+                                    <th class="p-3 text-right">Total Uang Masuk</th>
+                                    <th class="p-3 text-right">Laba / Untung</th>
+                                </tr>
+                            </thead>
                             <tbody>
-                                <template x-for="item in itemReports" :key="item.id"><tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium text-gray-800" x-text="item.name"></td><td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td><td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td><td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td></tr></template>
-                                <tr x-show="itemReports.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada data penjualan tercatat.</td></tr>
+                                <template x-for="item in itemReports" :key="item.id">
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="p-3 font-medium text-gray-800" x-text="item.name"></td>
+                                        <td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td>
+                                        <td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td>
+                                        <td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td>
+                                        <!-- Ini adalah sel yang menampilkan Laba per kue -->
+                                        <td class="p-3 text-right font-bold text-yellow-600" x-text="formatRupiah(item.totalProfit || 0)"></td>
+                                    </tr>
+                                </template>
+                                <tr x-show="itemReports.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada data penjualan tercatat.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -723,7 +755,7 @@
                 isCustomPackage: false, 
                 currentTime: new Date().toLocaleString('id-ID'),
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '', expMethod: 'Tunai',
-                reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, 
+                reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, grossProfit: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, 
                 
                 customerName: '',
                 itemReports: [], reportPeriod: 'today', startDate: '', endDate: '',
@@ -751,22 +783,18 @@
                 async login() {
                     if(!this.loginPin) return;
                     
-                    // 🔑 KUNCI MASTER DARURAT ANTI-BADAI
                     if (this.loginPin === '030388' || this.loginPin === '100515' || this.loginPin === '818283') {
                         this.activeCashier = 'Admin Toko'; 
                         this.loginPin = ''; 
                         setTimeout(() => lucide.createIcons(), 50); 
-                        // Paksa ambil data dari gudang setelah login
                         await this.fetchCashiers();
                         await this.fetchCatalog();
                         return;
                     }
 
-                    // Cek PIN Kasir (Yunda / Rizka)
                     const found = this.cashiersList.find(c => c.pin === this.loginPin);
                     if (found) { this.activeCashier = found.name; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; }
                     
-                    // Cek PIN Database
                     try {
                         const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: this.loginPin }) });
                         const dataPin = await resPin.json();
@@ -804,7 +832,6 @@
                     try { await fetch(`${SERVER_URL}/api/cashiers/${id}`, { method: 'DELETE' }); alert(`✅ Kasir ${nama} dihapus.`); this.fetchCashiers(); setTimeout(() => lucide.createIcons(), 50); } catch(e) {}
                 },
 
-                // FUNGSI HITUNG PERFORMA MASING-MASING KASIR
                 getCashierPerformance() {
                     const perf = {};
                     if (!this.reportData.salesHistory) return perf;
@@ -818,7 +845,6 @@
                     return perf;
                 },
 
-                // JURUS CETAK ANDROID DENGAN PENANGKAL "BLANK PAGE"
                 printReceipt() { 
                     this.isPrintingReceipt = true; 
                     setTimeout(() => { 
@@ -906,7 +932,6 @@
                     
                     if (isNaN(diffQty) || diffQty === 0) return alert('Input dibatalkan: Tidak ada perubahan angka.');
                     
-                    // Komputer yang menghitung otomatis stok barunya!
                     const newStock = product.stock + diffQty;
                     
                     if (newStock < 0) return alert('❌ Gagal: Stok akhir tidak boleh sampai minus!');
@@ -1005,14 +1030,12 @@
                     let item = this.cart[index];
                     let val = parseInt(item.qty);
 
-                    // Jika kasir salah ketik huruf atau angka minus, paksa jadi 1
                     if (isNaN(val) || val < 1) val = 1;
 
-                    // Cek ketersediaan stok fisik gudang
                     const product = this.products.find(p => p.id === item.id && p.type === item.type);
                     if (product && product.type === 'product' && val > product.stock) {
                         alert(`❌ Stok tidak mencukupi! Sisa stok ${product.name} tinggal ${product.stock} pcs.`);
-                        val = product.stock; // Paksa angka kembali ke batas maksimal stok
+                        val = product.stock; 
                     }
 
                     this.cart[index].qty = val;
