@@ -73,6 +73,10 @@
             <nav class="flex-1 py-4 flex flex-col gap-2 px-3 overflow-y-auto">
                 <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="layout-dashboard" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">POS Kasir</span></button>
                 <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="calendar-days" class="w-6 h-6 lg:mr-3 text-purple-500"></i><span class="hidden lg:block font-bold">Buku Pesanan (PO)</span></button>
+                
+                <!-- MENU BARU BUKU PIUTANG -->
+                <button @click="currentTab = 'piutang'; fetchPiutang();" :class="currentTab === 'piutang' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="book-down" class="w-6 h-6 lg:mr-3 text-red-500"></i><span class="hidden lg:block font-bold">Buku Piutang</span></button>
+
                 <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="package" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Master Produk</span></button>
                 <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="wallet" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Pengeluaran</span></button>
                 <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="bar-chart-3" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Laporan & Analitik</span></button>
@@ -229,6 +233,47 @@
                             <div class="p-3 grid grid-cols-3 gap-2">
                                 <button @click="deleteOrder(order.id, order.customerName)" class="col-span-1 bg-red-50 text-red-600 hover:bg-red-100 font-bold py-2 rounded-lg text-xs flex justify-center items-center gap-1 transition"><i data-lucide="trash-2" class="w-3 h-3"></i> Batal</button>
                                 <button @click="completeOrder(order)" class="col-span-2 bg-green-500 text-white hover:bg-green-600 font-bold py-2 rounded-lg text-xs md:text-sm flex justify-center items-center gap-1 transition shadow-sm"><i data-lucide="check-circle" class="w-4 h-4"></i> Selesai & Ambil Kue</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </main>
+
+        <!-- TAB BARU: BUKU PIUTANG -->
+        <main x-show="currentTab === 'piutang'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="book-down" class="text-red-500"></i> Buku Piutang (Kasbon)</h1>
+                    <p class="text-sm text-gray-500 hidden md:block">Daftar tagihan yang belum dilunasi oleh instansi/pelanggan.</p>
+                </div>
+                <button @click="fetchPiutang()" class="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+            </header>
+            
+            <div class="p-4 md:p-6 overflow-y-auto pb-24">
+                <div x-show="piutangList.length === 0" class="flex flex-col items-center justify-center py-20 text-gray-400">
+                    <i data-lucide="check-circle" class="w-16 h-16 mb-4 opacity-30 text-green-500"></i>
+                    <p class="text-lg font-medium">Buku Piutang Bersih!</p>
+                    <p class="text-sm">Tidak ada pelanggan yang berutang saat ini.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <template x-for="p in piutangList" :key="p.id">
+                        <div class="bg-white border-2 border-red-100 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+                            <div class="p-4 border-b bg-red-50">
+                                <h3 class="font-bold text-lg text-red-800" x-text="p.invoice.split(' [')[0]"></h3>
+                                <p class="text-xs text-red-500 mt-1"><i data-lucide="clock" class="w-3 h-3 inline"></i> Berutang sejak: <span x-text="new Date(p.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></span></p>
+                            </div>
+                            <div class="p-4 flex-1">
+                                <p class="text-[11px] font-bold text-gray-400 uppercase mb-2">Rincian Belanja:</p>
+                                <p class="text-sm text-gray-600 mb-4" x-text="p.items"></p>
+                            </div>
+                            <div class="p-4 border-t bg-gray-50 flex justify-between items-center">
+                                <div>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Total Tagihan</p>
+                                    <p class="font-bold text-xl text-red-600" x-text="formatRupiah(p.total)"></p>
+                                </div>
+                                <button @click="terimaPelunasan(p.invoice)" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg text-sm hover:bg-green-600 transition shadow-md flex items-center gap-2"><i data-lucide="banknote" class="w-4 h-4"></i> Terima Uang</button>
                             </div>
                         </div>
                     </template>
@@ -415,7 +460,6 @@
                     </div>
                 </div>
 
-                <!-- TABEL RINCIAN PRODUK (TIDAK BERUBAH) -->
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual (Omset & Laba) </h2>
                     <div class="overflow-x-auto">
@@ -544,13 +588,13 @@
             </div>
         </main>
 
-        <!-- Menu Bawah Khusus HP -->
-        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-between px-2 py-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] no-print">
-            <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Kasir</span></button>
-            <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'text-purple-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="calendar-days" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Pesanan</span></button>
-            <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="package" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Produk</span></button>
-            <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Laporan</span></button>
-            <button @click="currentTab = 'pengaturan'" :class="currentTab === 'pengaturan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="settings" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Setelan</span></button>
+        <!-- Menu Bawah Khusus HP (Ditambah Buku Piutang) -->
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-between px-1 py-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] no-print overflow-x-auto gap-1">
+            <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Kasir</span></button>
+            <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'text-purple-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="calendar-days" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">PO</span></button>
+            <button @click="currentTab = 'piutang'; fetchPiutang();" :class="currentTab === 'piutang' ? 'text-red-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="book-down" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Piutang</span></button>
+            <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="package" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Kue</span></button>
+            <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Laporan</span></button>
         </nav>
 
         <!-- MODAL 1: PEMBAYARAN KASIR BIASA -->
@@ -681,7 +725,7 @@
 
     </div>
 
-    <!-- FORMAT STRUK (TIDAK BERUBAH) -->
+    <!-- FORMAT STRUK -->
     <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
         <template x-if="lastTx">
             <div style="padding: 10px;">
@@ -750,8 +794,8 @@
                 oldPin: '', newPin: '', isPrintingReceipt: false, isPrintingCatalog: false,
                 showAddProductModal: false, options: { categories: [], suppliers: [] }, newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' },
 
-                // VARIABEL BUKU PESANAN (PO)
-                poList: [],
+                // VARIABEL BUKU PESANAN (PO) & PIUTANG
+                poList: [], piutangList: [],
                 showPoModal: false,
                 poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
 
@@ -793,7 +837,7 @@
                     } catch (e) {} finally { this.isLoading = false; setTimeout(() => { lucide.createIcons(); }, 10); }
                 },
 
-                // FUNGSI KERANJANG PINTAR (BISA MASUK MESKI STOK 0)
+                // FUNGSI KERANJANG PINTAR
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
                 get filteredMasterProducts() { return this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); },
                 
@@ -838,7 +882,6 @@
                         for (let i = 0; i < this.cart.length; i++) { 
                             const prod = this.products.find(p => p.id === this.cart[i].id && p.type === this.cart[i].type); const normalPrice = prod ? prod.price : this.cart[i].price;
                             if (i === this.cart.length - 1) { 
-                                // JURUS MATH.ROUND: Menghilangkan angka desimal dari sisa perhitungan paket
                                 this.cart[i].price = Math.round((newTotal - runningTotal) / this.cart[i].qty); 
                             } 
                             else { 
@@ -852,10 +895,8 @@
                 },
                 
                 openPayment() { 
-                    // CEK STOK FISIK HANYA SAAT KLIK BAYAR LANGSUNG
                     let stokKurang = false;
                     let namaBarangKurang = '';
-                    
                     for (let item of this.cart) {
                         if (item.type === 'product') {
                             const prod = this.products.find(p => p.id === item.id && p.type === item.type);
@@ -866,11 +907,7 @@
                             }
                         }
                     }
-
-                    if (stokKurang) {
-                        return alert(`❌ STOK TIDAK CUKUP!\n\nSisa stok fisik '${namaBarangKurang}' di etalase tidak mencukupi untuk dijual hari ini.\n\n💡 Jika ini pesanan untuk besok/lusa, silakan gunakan tombol "Simpan sbg PO".`);
-                    }
-
+                    if (stokKurang) { return alert(`❌ STOK TIDAK CUKUP!\n\nSisa stok fisik '${namaBarangKurang}' di etalase tidak mencukupi untuk dijual hari ini.\n\n💡 Jika ini pesanan untuk besok/lusa, silakan gunakan tombol "Simpan sbg PO".`); }
                     this.cashReceived = ''; this.mixCash = ''; this.paymentMethod = 'Tunai'; this.paymentStep = 'input'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); 
                 },
                 
@@ -901,7 +938,7 @@
                 },
 
                 // ==========================================
-                // FUNGSI BUKU PESANAN (PO)
+                // FUNGSI BUKU PESANAN (PO) & PIUTANG
                 // ==========================================
                 openPoForm() {
                     this.poForm = { name: this.customerName || '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' };
@@ -915,6 +952,14 @@
                         const data = await res.json();
                         if (data.success) { this.poList = data.data; setTimeout(() => { lucide.createIcons(); }, 10); }
                     } catch (error) { console.error('Gagal memuat PO'); }
+                },
+                
+                async fetchPiutang() {
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/piutang`);
+                        const result = await res.json();
+                        if(result.success) { this.piutangList = result.data; setTimeout(() => { lucide.createIcons(); }, 10); }
+                    } catch(e) {}
                 },
 
                 isPast(dateString) { return new Date(dateString) < new Date(); },
@@ -975,27 +1020,16 @@
                         const result = await res.json();
                         
                         if (result.success) {
-                            // JURUS BARU: MEMANGGIL LAYAR CETAK STRUK PELUNASAN
                             this.lastTx = {
                                 invoice: `LUNAS-${order.invoice} (${order.customerName})`,
                                 date: new Date().toLocaleString('id-ID'),
-                                cart: order.items.map(i => ({
-                                    name: i.product ? i.product.name : i.package.name,
-                                    qty: i.qty,
-                                    price: i.price
-                                })),
-                                total: remaining,
-                                cash: method === 'Tunai' ? remaining : 0,
-                                change: 0,
-                                isPackage: false,
-                                method: method,
+                                cart: order.items.map(i => ({ name: i.product ? i.product.name : i.package.name, qty: i.qty, price: i.price })),
+                                total: remaining, cash: method === 'Tunai' ? remaining : 0, change: 0, isPackage: false, method: method,
                                 totalQty: order.items.reduce((sum, i) => sum + i.qty, 0)
                             };
                             this.paymentStep = 'success';
                             this.showPaymentModal = true;
-                            
-                            this.fetchOrders();
-                            this.fetchCatalog();
+                            this.fetchOrders(); this.fetchCatalog();
                         } else alert('Gagal memproses pesanan.');
                     } catch (e) { alert('Koneksi terputus.'); }
                     finally { this.isProcessing = false; }
@@ -1006,7 +1040,6 @@
                     if (!sandi) return;
                     const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
                     if (!(await resPin.json()).success) return alert("❌ Akses ditolak! Password salah.");
-                    
                     if (!confirm('Yakin ingin membatalkan dan menghapus pesanan ini dari buku?')) return;
                     
                     try {
@@ -1029,12 +1062,17 @@
                 },
 
                 async terimaPelunasan(invoice) {
-                    const method = prompt('💰 TERIMA PELUNASAN KASBON\n\nKetik "1" untuk pelunasan TUNAI\nKetik "2" untuk pelunasan QRIS / Transfer', '1');
-                    if (method === null) return; const newMethod = method === '2' ? 'QRIS' : 'Tunai';
-                    if (!confirm(`Tandai struk lunas menggunakan ${newMethod.toUpperCase()}?`)) return;
+                    const method = prompt(`💰 TERIMA PELUNASAN KASBON\n\nPelanggan: ${invoice.split(' [')[0]}\n\nUang pelunasan dibayar menggunakan apa?\nKetik "1" untuk TUNAI\nKetik "2" untuk QRIS / Transfer`, '1');
+                    if (method === null) return; 
+                    const newMethod = method === '2' ? 'QRIS' : 'Tunai';
+                    if (!confirm(`Tandai piutang ini LUNAS menggunakan ${newMethod.toUpperCase()}?\n\nUang akan langsung tercatat masuk ke Laporan Hari Ini.`)) return;
                     try {
                         const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}/pay`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentMethod: newMethod }) });
-                        if ((await res.json()).success) { alert(`✅ BERHASIL! Masuk ke laporan hari ini.`); this.fetchReport(); } 
+                        if ((await res.json()).success) { 
+                            alert(`✅ BERHASIL! Status piutang lunas dan uang masuk ke Laci Hari Ini.`); 
+                            if(this.currentTab === 'piutang') this.fetchPiutang();
+                            if(this.currentTab === 'laporan') this.fetchReport();
+                        } 
                     } catch (e) {}
                 },
 

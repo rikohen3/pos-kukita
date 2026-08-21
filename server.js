@@ -68,10 +68,9 @@ app.put('/api/transactions/:invoice/pay', async (req, res) => {
 });
 
 // ==========================================
-// ENDPOINT KHUSUS: BUKU PESANAN (PO)
+// ENDPOINT KHUSUS: BUKU PESANAN & PIUTANG
 // ==========================================
 
-// A. Tampilkan Semua Pesanan Aktif
 app.get('/api/orders', async (req, res) => {
     try {
         const orders = await prisma.order.findMany({
@@ -83,7 +82,6 @@ app.get('/api/orders', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// B. Buat Pesanan Baru (Simpan DP, TAPI STOK TIDAK DIPOTONG)
 app.post('/api/orders', async (req, res) => {
     const { customerName, customerPhone, pickupDate, cart, shippingCost, downPayment, paymentMethod, notes, cashierName } = req.body;
     try {
@@ -109,7 +107,6 @@ app.post('/api/orders', async (req, res) => {
                 }
             }
 
-            // Jika ada DP, masukkan ke Laporan Penjualan (Struk Harian) agar Laci tidak selisih
             if (dp > 0) {
                 await tx.sale.create({
                     data: {
@@ -126,10 +123,9 @@ app.post('/api/orders', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
-// C. Selesaikan Pesanan (Potong Stok & Catat Sisa Pelunasan)
 app.put('/api/orders/:id/complete', async (req, res) => {
     const { id } = req.params;
-    const { paymentMethod } = req.body; // Metode bayar untuk SISA tagihan
+    const { paymentMethod } = req.body; 
     try {
         const result = await prisma.$transaction(async (tx) => {
             const order = await tx.order.findUnique({ where: { id: parseInt(id) }, include: { items: true } });
@@ -137,7 +133,6 @@ app.put('/api/orders/:id/complete', async (req, res) => {
 
             await tx.order.update({ where: { id: parseInt(id) }, data: { status: 'Selesai', paymentStatus: 'Lunas' } });
 
-            // 1. Potong Stok Barang Fisik Hari Ini
             for (const item of order.items) {
                 if (item.productId) {
                     await tx.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.qty } } });
@@ -147,7 +142,6 @@ app.put('/api/orders/:id/complete', async (req, res) => {
                 }
             }
 
-            // 2. Masukkan Sisa Tagihan (beserta Harga Modal) ke Laporan Harian
             const remainingBalance = (order.totalAmount + order.shippingCost) - order.downPayment;
             const finalPaymentMethod = paymentMethod || order.paymentMethod || 'Tunai';
             
@@ -160,7 +154,6 @@ app.put('/api/orders/:id/complete', async (req, res) => {
                 }
             });
 
-            // 3. Masukkan Rincian Barang agar Laba Kotor Terhitung Akurat
             for (const item of order.items) {
                 await tx.saleItem.create({ data: { saleId: sale.id, productId: item.productId, packageId: item.packageId, qty: item.qty, price: item.price, subtotal: item.subtotal } });
             }
@@ -170,7 +163,6 @@ app.put('/api/orders/:id/complete', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
-// D. Hapus / Batal Pesanan (Oleh Admin)
 app.delete('/api/orders/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -182,6 +174,25 @@ app.delete('/api/orders/:id', async (req, res) => {
         });
         res.json({ success: true, message: 'Pesanan Dibatalkan' });
     } catch (error) { res.status(500).json({ success: false, message: 'Gagal membatalkan pesanan' }); }
+});
+
+// ENDPOINT BARU: AMBIL DAFTAR PIUTANG (YANG BELUM LUNAS SAJA)
+app.get('/api/piutang', async (req, res) => {
+    try {
+        const sales = await prisma.sale.findMany({
+            where: { paymentMethod: 'Piutang' },
+            orderBy: { createdAt: 'desc' },
+            include: { items: { include: { product: true, package: true } } }
+        });
+        const formatted = sales.map(s => ({
+            id: s.id,
+            invoice: s.invoice,
+            time: s.createdAt,
+            total: s.totalAmount,
+            items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
+        }));
+        res.json({ success: true, data: formatted });
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 // ==========================================
