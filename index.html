@@ -151,7 +151,6 @@
                     <div class="p-5 border-t bg-gray-50">
                         <div class="grid grid-cols-2 gap-2 mb-4">
                             <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="edit-3" class="w-3 h-3"></i> Set Hrg Paket</button>
-                            <!-- TOMBOL BARU UNTUK PO -->
                             <button @click="openPoForm()" x-show="cart.length > 0" class="w-full bg-purple-100 text-purple-700 border border-purple-200 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="book-check" class="w-3 h-3"></i> Simpan sbg PO</button>
                         </div>
                         
@@ -838,8 +837,15 @@
                         const ratio = newTotal / originalTotal; let runningTotal = 0; 
                         for (let i = 0; i < this.cart.length; i++) { 
                             const prod = this.products.find(p => p.id === this.cart[i].id && p.type === this.cart[i].type); const normalPrice = prod ? prod.price : this.cart[i].price;
-                            if (i === this.cart.length - 1) { this.cart[i].price = (newTotal - runningTotal) / this.cart[i].qty; } 
-                            else { const newPrice = Math.round(normalPrice * ratio); this.cart[i].price = newPrice; runningTotal += (newPrice * this.cart[i].qty); } 
+                            if (i === this.cart.length - 1) { 
+                                // JURUS MATH.ROUND: Menghilangkan angka desimal dari sisa perhitungan paket
+                                this.cart[i].price = Math.round((newTotal - runningTotal) / this.cart[i].qty); 
+                            } 
+                            else { 
+                                const newPrice = Math.round(normalPrice * ratio); 
+                                this.cart[i].price = newPrice; 
+                                runningTotal += (newPrice * this.cart[i].qty); 
+                            } 
                         } 
                     }
                     alert(`✅ SET BERHASIL! Silakan klik BAYAR ATAU SIMPAN PO.`);

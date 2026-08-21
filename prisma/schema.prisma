@@ -32,9 +32,10 @@ model Product {
   buyPrice    Int           
   sellPrice   Int           
   stock       Int           @default(0)
-  imageUrl    String?  @default("https://cdn-icons-png.flaticon.com/512/3081/3081840.png")
+  imageUrl    String?       @default("https://cdn-icons-png.flaticon.com/512/3081/3081840.png")
   packageItems PackageItem[]
   saleItems    SaleItem[]
+  orderItems   OrderItem[]  // Relasi baru ke Buku Pesanan
 }
 
 model Package {
@@ -45,6 +46,7 @@ model Package {
   isActive    Boolean       @default(true)
   items       PackageItem[]
   saleItems   SaleItem[]
+  orderItems  OrderItem[]   // Relasi baru ke Buku Pesanan
 }
 
 model PackageItem {
@@ -106,4 +108,39 @@ model Cashier {
   id   Int    @id @default(autoincrement())
   name String
   pin  String @unique
+}
+
+// ==========================================
+// KAMAR BARU UNTUK FITUR BUKU PESANAN (PO)
+// ==========================================
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  invoice       String      @unique
+  customerName  String
+  customerPhone String?
+  pickupDate    DateTime    // Kapan kue ini akan diambil
+  totalAmount   Int         // Total harga kue saja
+  shippingCost  Int         @default(0) // Biaya ongkos kirim (opsional)
+  downPayment   Int         @default(0) // Uang Muka (DP) yang dibayar hari ini
+  paymentMethod String?     // Tunai / QRIS (untuk DP atau Pelunasan)
+  status        String      @default("Menunggu") // Menunggu, Selesai, Batal
+  paymentStatus String      @default("Belum Lunas") // Belum Lunas, Lunas
+  notes         String?     // Catatan khusus (misal: "Kue jangan terlalu manis")
+  cashierName   String      // Nama kasir yang mencatat pesanan
+  createdAt     DateTime    @default(now()) // Waktu pesanan dibuat
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  order       Order    @relation(fields: [orderId], references: [id])
+  productId   Int?
+  product     Product? @relation(fields: [productId], references: [id])
+  packageId   Int?
+  package     Package? @relation(fields: [packageId], references: [id])
+  qty         Int
+  price       Int
+  subtotal    Int
 }
