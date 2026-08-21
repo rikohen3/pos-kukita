@@ -955,12 +955,17 @@
                     let method = order.paymentMethod || 'Tunai';
 
                     if (remaining > 0) {
-                        const inputMethod = prompt(`💰 PELUNASAN KUE\n\nPesanan ini memiliki sisa tagihan: Rp ${new Intl.NumberFormat('id-ID').format(remaining)}\n\nPembeli melunasi sisa tagihan menggunakan apa?\nKetik "1" untuk TUNAI\nKetik "2" untuk QRIS / Transfer`, '1');
+                        const inputMethod = prompt(`💰 PELUNASAN KUE\n\nPesanan ini memiliki sisa tagihan: Rp ${new Intl.NumberFormat('id-ID').format(remaining)}\n\nSisa tagihan ini diselesaikan menggunakan metode apa?\nKetik "1" untuk TUNAI\nKetik "2" untuk QRIS / Transfer\nKetik "3" untuk KASBON / PIUTANG INSTANSI`, '1');
                         if (inputMethod === null) return;
-                        method = inputMethod === '2' ? 'QRIS' : 'Tunai';
+                        
+                        if (inputMethod === '3') {
+                            method = 'Piutang';
+                        } else {
+                            method = inputMethod === '2' ? 'QRIS' : 'Tunai';
+                        }
                     }
 
-                    if (!confirm(`⚠️ Selesaikan pesanan ${order.customerName}?\n\n- Stok fisik kue akan otomatis dipotong hari ini.\n- Jika ada sisa tagihan, uangnya akan masuk ke laporan hari ini.`)) return;
+                    if (!confirm(`⚠️ Selesaikan pesanan ${order.customerName}?\n\n- Stok fisik kue akan otomatis dipotong hari ini.\n- Jika ada sisa tagihan/piutang, akan masuk ke laporan hari ini.`)) return;
 
                     try {
                         const res = await fetch(`${SERVER_URL}/api/orders/${order.id}/complete`, { 
