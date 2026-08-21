@@ -416,16 +416,29 @@
                     </div>
                 </div>
 
+                <!-- TABEL RINCIAN PRODUK (TIDAK BERUBAH) -->
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual (Omset & Laba) </h2>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse mt-4 min-w-max">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3">Nama Produk</th><th class="p-3">Supplier</th><th class="p-3 text-center">Terjual (Qty)</th><th class="p-3 text-right">Total Uang Masuk</th><th class="p-3 text-right">Laba / Untung</th></tr>
+                                <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                    <th class="p-3">Nama Produk</th>
+                                    <th class="p-3">Supplier</th>
+                                    <th class="p-3 text-center">Terjual (Qty)</th>
+                                    <th class="p-3 text-right">Total Uang Masuk</th>
+                                    <th class="p-3 text-right">Laba / Untung</th>
+                                </tr>
                             </thead>
                             <tbody>
                                 <template x-for="item in itemReports" :key="item.id">
-                                    <tr class="border-b hover:bg-gray-50"><td class="p-3 font-medium text-gray-800" x-text="item.name"></td><td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td><td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td><td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td><td class="p-3 text-right font-bold text-yellow-600" x-text="formatRupiah(item.totalProfit || 0)"></td></tr>
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="p-3 font-medium text-gray-800" x-text="item.name"></td>
+                                        <td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td>
+                                        <td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td>
+                                        <td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td>
+                                        <td class="p-3 text-right font-bold text-yellow-600" x-text="formatRupiah(item.totalProfit || 0)"></td>
+                                    </tr>
                                 </template>
                                 <tr x-show="itemReports.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada data penjualan tercatat.</td></tr>
                             </tbody>
@@ -453,6 +466,9 @@
                                             <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                         </td>
                                         <td class="p-3 text-sm text-gray-600 max-w-xs">
+                                            <template x-if="tx.invoice && tx.invoice.startsWith('PKT-')">
+                                                <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
+                                            </template>
                                             <template x-if="tx.invoice && tx.invoice.startsWith('DP-')">
                                                 <span class="inline-block bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">💰 DP PESANAN</span>
                                             </template>
@@ -778,14 +794,31 @@
                     } catch (e) {} finally { this.isLoading = false; setTimeout(() => { lucide.createIcons(); }, 10); }
                 },
 
-                // FUNGSI KERANJANG & CHECKOUT
+                // FUNGSI KERANJANG PINTAR (BISA MASUK MESKI STOK 0)
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
                 get filteredMasterProducts() { return this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); },
-                addToCart(product) { this.isCustomPackage = false; if (product.type === 'product' && product.stock <= 0) return alert('Stok gudang habis!'); const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); if (existing) { if (product.type === 'package' || existing.qty < product.stock) existing.qty++; else alert('Maksimal stok tercapai!'); } else { this.cart.unshift(itemToAdd); } },
-                increaseQty(index) { this.isCustomPackage = false; const item = this.cart[index]; const product = this.products.find(p => p.id === item.id && p.type === item.type); if (product.type === 'package' || item.qty < product.stock) item.qty++; },
+                
+                addToCart(product) { 
+                    this.isCustomPackage = false; 
+                    const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; 
+                    const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); 
+                    if (existing) { 
+                        existing.qty++; 
+                    } else { 
+                        this.cart.unshift(itemToAdd); 
+                    } 
+                },
+                
+                increaseQty(index) { this.isCustomPackage = false; this.cart[index].qty++; },
                 decreaseQty(index) { this.isCustomPackage = false; if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
                 removeFromCart(index) { this.isCustomPackage = false; this.cart.splice(index, 1); },
-                validateQty(index) { this.isCustomPackage = false; let item = this.cart[index]; let val = parseInt(item.qty); if (isNaN(val) || val < 1) val = 1; const product = this.products.find(p => p.id === item.id && p.type === item.type); if (product && product.type === 'product' && val > product.stock) { alert(`Stok sisa ${product.stock} pcs.`); val = product.stock; } this.cart[index].qty = val; },
+                
+                validateQty(index) { 
+                    this.isCustomPackage = false; 
+                    let val = parseInt(this.cart[index].qty); 
+                    if (isNaN(val) || val < 1) val = 1; 
+                    this.cart[index].qty = val; 
+                },
 
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
@@ -812,7 +845,29 @@
                     alert(`✅ SET BERHASIL! Silakan klik BAYAR ATAU SIMPAN PO.`);
                 },
                 
-                openPayment() { this.cashReceived = ''; this.mixCash = ''; this.paymentMethod = 'Tunai'; this.paymentStep = 'input'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
+                openPayment() { 
+                    // CEK STOK FISIK HANYA SAAT KLIK BAYAR LANGSUNG
+                    let stokKurang = false;
+                    let namaBarangKurang = '';
+                    
+                    for (let item of this.cart) {
+                        if (item.type === 'product') {
+                            const prod = this.products.find(p => p.id === item.id && p.type === item.type);
+                            if (prod && item.qty > prod.stock) {
+                                stokKurang = true;
+                                namaBarangKurang = item.name;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (stokKurang) {
+                        return alert(`❌ STOK TIDAK CUKUP!\n\nSisa stok fisik '${namaBarangKurang}' di etalase tidak mencukupi untuk dijual hari ini.\n\n💡 Jika ini pesanan untuk besok/lusa, silakan gunakan tombol "Simpan sbg PO".`);
+                    }
+
+                    this.cashReceived = ''; this.mixCash = ''; this.paymentMethod = 'Tunai'; this.paymentStep = 'input'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); 
+                },
+                
                 closePayment() { if (this.paymentStep === 'success') { this.resetCart(); } else { this.showPaymentModal = false; } },
                 
                 async processTransaction() {
