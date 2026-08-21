@@ -176,7 +176,6 @@ app.delete('/api/orders/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Gagal membatalkan pesanan' }); }
 });
 
-// ENDPOINT BARU: AMBIL DAFTAR PIUTANG (YANG BELUM LUNAS SAJA)
 app.get('/api/piutang', async (req, res) => {
     try {
         const sales = await prisma.sale.findMany({
@@ -214,10 +213,13 @@ app.get('/api/options', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// DIPERBARUI: Menerima kolom gambar foto asli
 app.post('/api/products', async (req, res) => {
-  const { name, categoryId, supplierId, buyPrice, sellPrice, stock } = req.body;
+  const { name, categoryId, supplierId, buyPrice, sellPrice, stock, image } = req.body;
   try {
-    const newProduct = await prisma.product.create({ data: { name, categoryId: parseInt(categoryId), supplierId: parseInt(supplierId), buyPrice: parseInt(buyPrice), sellPrice: parseInt(sellPrice), stock: parseInt(stock) } });
+    const newProduct = await prisma.product.create({ 
+        data: { name, categoryId: parseInt(categoryId), supplierId: parseInt(supplierId), buyPrice: parseInt(buyPrice), sellPrice: parseInt(sellPrice), stock: parseInt(stock), image: image || null } 
+    });
     if (parseInt(stock) > 0) { await prisma.stockHistory.create({ data: { productId: newProduct.id, productName: newProduct.name, qtyAdded: parseInt(stock), newTotal: parseInt(stock) } }); }
     res.json({ success: true, data: newProduct });
   } catch (error) { res.status(500).json({ success: false, message: 'Gagal menyimpan' }); }
