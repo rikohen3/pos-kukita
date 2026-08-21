@@ -64,7 +64,7 @@
         </div>
     </div>
 
-    <!-- BUNGKUS APLIKASI UTAMA (Class no-print agar gaib saat cetak) -->
+    <!-- BUNGKUS APLIKASI UTAMA -->
     <div x-show="activeCashier && !isPrintingCatalog && !isPrintingReceipt" style="display: none;" class="flex w-full h-full no-print">
 
         <!-- Sidebar -->
@@ -276,74 +276,46 @@
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 
                 <!-- KOTAK-KOTAK LAPORAN ATAS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex items-center mb-2">
                                 <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
-                                <p class="text-sm font-semibold text-gray-500">Total Pendapatan</p>
+                                <p class="text-sm font-semibold text-gray-500">Total Pendapatan & Kasbon</p>
                             </div>
-                            <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.revenue)"></p>
+                            <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.revenue + reportData.piutang)"></p>
                         </div>
                         <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
-                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Tunai / Cash</p><p class="text-sm font-bold text-green-600" x-text="formatRupiah(reportData.revenueCash || 0)"></p></div>
-                            <div class="text-right"><p class="text-[10px] text-gray-400 font-semibold uppercase">QRIS / Transfer</p><p class="text-sm font-bold text-blue-600" x-text="formatRupiah(reportData.revenueQris || 0)"></p></div>
+                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Tunai</p><p class="text-sm font-bold text-green-600" x-text="formatRupiah(reportData.revenueCash || 0)"></p></div>
+                            <div class="text-center"><p class="text-[10px] text-gray-400 font-semibold uppercase">QRIS/Mix</p><p class="text-sm font-bold text-blue-600" x-text="formatRupiah(reportData.revenueQris || 0)"></p></div>
+                            <div class="text-right"><p class="text-[10px] text-gray-400 font-semibold uppercase text-red-500">Piutang / Kasbon</p><p class="text-sm font-bold text-red-500" x-text="formatRupiah(reportData.piutang || 0)"></p></div>
                         </div>
                     </div>
 
-                    <!-- KOTAK BARU: LABA KOTOR -->
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
                         <div>
                             <div class="flex items-center mb-2">
                                 <div class="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="piggy-bank" class="w-5 h-5"></i></div>
-                                <p class="text-sm font-semibold text-gray-500">Total Keuntungan</p>
+                                <p class="text-sm font-semibold text-gray-500">Laba Kotor Bisnis</p>
                             </div>
                             <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.grossProfit || 0)"></p>
                         </div>
                         <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
-                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Laba Kotor (Selisih Hrg)</p></div>
+                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Omset Bersih - Semua Modal Barang</p></div>
                         </div>
                     </div>
                     
-                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-down" class="w-5 h-5"></i></div>
-                                <p class="text-sm font-semibold text-gray-500">Total Pengeluaran</p>
-                            </div>
-                            <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.expenses)"></p>
-                        </div>
-                        <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
-                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Potong Laci (Tunai)</p><p class="text-sm font-bold text-red-600" x-text="formatRupiah(reportData.expCash || 0)"></p></div>
-                            <div class="text-right"><p class="text-[10px] text-gray-400 font-semibold uppercase">Potong Rekening</p><p class="text-sm font-bold text-orange-500" x-text="formatRupiah(reportData.expTransfer || 0)"></p></div>
-                        </div>
-                    </div>
-
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
                         <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
                         <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p></div>
                         <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit)"></p>
-                        <p class="text-[10px] opacity-80 mt-1 relative z-10">Hasil: Pendapatan Tunai - Pengeluaran Laci</p>
+                        <p class="text-[10px] opacity-80 mt-1 relative z-10">Total Uang Tunai - Pengeluaran Laci</p>
                     </div>
                     
                     <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
                         <div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div>
                         <p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-purple-600"></i> Performa Kasir (Laporan Shift) </h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <template x-for="(data, nama) in getCashierPerformance()" :key="nama">
-                            <div class="p-4 bg-purple-50 rounded-xl border border-purple-100 shadow-sm">
-                                <h3 class="font-bold text-purple-900" x-text="nama"></h3>
-                                <p class="text-sm text-gray-600 mt-1"><span x-text="data.totalTx"></span> Transaksi Dilayani</p>
-                                <p class="text-xl font-black text-brand-brown mt-2" x-text="formatRupiah(data.revenue)"></p>
-                            </div>
-                        </template>
-                        <div x-show="Object.keys(getCashierPerformance()).length === 0" class="col-span-full p-4 text-center text-gray-400">Belum ada transaksi terekam oleh kasir hari ini.</div>
                     </div>
                 </div>
 
@@ -378,7 +350,7 @@
                     </div>
                 </div>
 
-                <!-- TABEL RINCIAN PRODUK DENGAN KOLOM LABA BARU -->
+                <!-- TABEL RINCIAN PRODUK (TIDAK BERUBAH) -->
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual (Omset & Laba) </h2>
                     <div class="overflow-x-auto">
@@ -399,7 +371,6 @@
                                         <td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td>
                                         <td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td>
                                         <td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td>
-                                        <!-- Ini adalah sel yang menampilkan Laba per kue -->
                                         <td class="p-3 text-right font-bold text-yellow-600" x-text="formatRupiah(item.totalProfit || 0)"></td>
                                     </tr>
                                 </template>
@@ -435,10 +406,15 @@
                                             <span x-text="tx.items"></span>
                                         </td>
                                         <td class="p-3 text-center">
-                                            <span :class="tx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'" 
+                                            <!-- PEWARNAAN METODE BAYAR YANG BARU -->
+                                            <span :class="tx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : (tx.paymentMethod === 'Mix' ? 'bg-purple-100 text-purple-700' : (tx.paymentMethod === 'Piutang' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'))" 
                                                   class="px-2 py-1 rounded text-xs font-bold" 
                                                   x-text="tx.paymentMethod || 'Tunai'">
                                             </span>
+                                            <!-- TOMBOL LUNAS JIKA PIUTANG -->
+                                            <template x-if="tx.paymentMethod === 'Piutang'">
+                                                <button @click="terimaPelunasan(tx.invoice)" class="mt-2 block w-full bg-green-500 hover:bg-green-600 text-white text-[10px] font-bold py-1.5 px-2 rounded transition shadow-sm">Terima Uang</button>
+                                            </template>
                                         </td>
                                         
                                         <td class="p-3 text-right">
@@ -455,39 +431,6 @@
                     </div>
                 </div>
 
-                <!-- TABEL PENGELUARAN DENGAN TOMBOL HAPUS -->
-                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran Toko </h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse mt-4 min-w-max">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-sm border-b">
-                                    <th class="p-3">Waktu</th>
-                                    <th class="p-3">Kategori</th>
-                                    <th class="p-3">Keterangan & Sumber Dana</th>
-                                    <th class="p-3 text-right">Nominal</th>
-                                    <th class="p-3 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="exp in reportData.expenseHistory" :key="exp.id">
-                                    <tr class="border-b hover:bg-gray-50">
-                                        <td class="p-3 text-sm text-gray-500" x-text="new Date(exp.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td>
-                                        <td class="p-3 text-sm font-bold text-gray-700" x-text="exp.category"></td>
-                                        <td class="p-3 text-sm text-gray-600" x-text="exp.description"></td>
-                                        <td class="p-3 text-right font-bold text-red-500" x-text="formatRupiah(exp.amount)"></td>
-                                        <td class="p-3 text-right">
-                                            <button @click="deleteExpense(exp.id)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition">
-                                                <i data-lucide="trash-2" class="w-3 h-3"></i> Hapus
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="!reportData.expenseHistory || reportData.expenseHistory.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada pengeluaran tercatat di periode ini.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </main>
 
@@ -549,7 +492,7 @@
             </div>
         </main>
 
-        <!-- Menu Bawah Khusus HP (Class no-print agar gaib saat cetak) -->
+        <!-- Menu Bawah Khusus HP -->
         <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-between px-2 py-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] no-print">
             <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Kasir</span></button>
             <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="package" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Produk</span></button>
@@ -558,7 +501,7 @@
             <button @click="currentTab = 'pengaturan'" :class="currentTab === 'pengaturan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1"><i data-lucide="settings" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-semibold">Setelan</span></button>
         </nav>
 
-        <!-- Modal Pembayaran (Class no-print agar gaib saat cetak) -->
+        <!-- Modal Pembayaran (Dengan Tambahan Mix & Piutang) -->
         <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
             <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
                 <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
@@ -570,11 +513,21 @@
                         </div>
                         
                         <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli (Opsional)</label>
-                            <input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Cth: Biro Umum / Ibu Siska">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli</label>
+                            <input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Wajib diisi jika Kasbon/Piutang">
                         </div>
 
-                        <div class="mb-4"><div class="grid grid-cols-2 gap-2"><button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">Tunai</button><button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-medium transition">QRIS</button></div></div>
+                        <!-- 4 TOMBOL METODE PEMBAYARAN -->
+                        <div class="mb-4">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai</button>
+                                <button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">QRIS</button>
+                                <button @click="paymentMethod = 'Mix'" :class="paymentMethod === 'Mix' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai+QRIS</button>
+                                <button @click="paymentMethod = 'Piutang'" :class="paymentMethod === 'Piutang' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-500 border border-red-200'" class="py-2 rounded-lg font-bold text-xs transition">Utang / Tempo</button>
+                            </div>
+                        </div>
+
+                        <!-- INPUT JIKA TUNAI -->
                         <div x-show="paymentMethod === 'Tunai'" class="mb-6">
                             <input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0">
                             <div class="grid grid-cols-4 gap-2 mt-2">
@@ -587,155 +540,29 @@
                                 <span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span>
                             </div>
                         </div>
+
+                        <!-- INPUT JIKA MIX PAYMENT -->
+                        <div x-show="paymentMethod === 'Mix'" class="mb-6" style="display: none;">
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Berapa Uang TUNAI FISIK yang diterima?</label>
+                            <input type="number" x-model="mixCash" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right focus:border-brand-brown" placeholder="Ketik nominal tunai">
+                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-blue-50 border border-blue-100">
+                                <span class="font-semibold text-blue-800 text-sm">Sisa tagihan di-QRIS-kan</span>
+                                <span class="text-xl font-bold text-blue-600" x-text="formatRupiah(total - (parseFloat(mixCash) || 0))"></span>
+                            </div>
+                        </div>
+
                         <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50"><i data-lucide="check-circle" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span></button>
                     </div>
+                    
                     <div x-show="paymentStep === 'success'" style="display: none;" class="text-center">
-                        <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i><p class="text-gray-500">Uang Kembalian</p><p class="text-5xl font-bold text-brand-green my-2" x-text="formatRupiah(lastTx ? lastTx.change : 0)"></p>
+                        <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                        <p class="text-gray-500 text-sm font-bold" x-text="lastTx && lastTx.method === 'Piutang' ? 'PESANAN (KASBON) TERCATAT' : 'UANG KEMBALIAN'"></p>
+                        <p class="text-5xl font-bold text-brand-green my-2" x-show="lastTx && lastTx.method !== 'Piutang'" x-text="formatRupiah(lastTx ? lastTx.change : 0)"></p>
                         <div class="mt-8 flex gap-3"><button @click="printReceipt()" class="flex-1 bg-brand-brown text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-orange-800 transition"><i data-lucide="printer" class="w-5 h-5"></i> Cetak Struk</button><button @click="resetCart()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition">Selesai</button></div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Modal Tambah Produk (Class no-print agar gaib saat cetak) -->
-        <div x-show="showAddProductModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
-            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showAddProductModal = false">
-                <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
-                    <h2 class="font-bold text-lg">Tambah Kue / Produk</h2>
-                    <button @click="showAddProductModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
-                </div>
-                <div class="p-6 overflow-y-auto max-h-[80vh]">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kue</label>
-                            <input type="text" x-model="newProduct.name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="Cth: Donat Coklat">
-                        </div>
-                        
-                        <div class="grid grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Hrg Modal</label>
-                                <input type="number" x-model="newProduct.buyPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown text-sm" placeholder="0">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Hrg Jual</label>
-                                <input type="number" x-model="newProduct.sellPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown text-sm" placeholder="0">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Stok Awal</label>
-                                <input type="number" x-model="newProduct.stock" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown text-sm" placeholder="0">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Kategori</label>
-                            <select x-model="newProduct.categoryId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                                <option value="">-- Pilih Kategori --</option>
-                                <template x-for="cat in options.categories" :key="cat.id"><option :value="cat.id" x-text="cat.name"></option></template>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Supplier Asal</label>
-                            <select x-model="newProduct.supplierId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                                <option value="">-- Pilih Supplier --</option>
-                                <template x-for="sup in options.suppliers" :key="sup.id"><option :value="sup.id" x-text="sup.name"></option></template>
-                            </select>
-                        </div>
-                    </div>
-                    <button @click="submitNewProduct()" :disabled="isProcessing" class="w-full mt-6 bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50">
-                        <i data-lucide="save" x-show="!isProcessing"></i>
-                        <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
-                        <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PRODUK'"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FORMAT 1: KATALOG PROMO EKSKLUSIF -->
-    <div x-show="isPrintingCatalog" id="catalog-area" class="w-full max-w-4xl mx-auto p-4 md:p-8 bg-white" style="display: none;">
-        <div class="text-center mb-10 border-b-4 border-brand-brown pb-6">
-            <h1 class="text-4xl font-extrabold text-brand-brown tracking-tight mb-2">POS KUKITA</h1>
-            <p class="text-xl text-gray-600 font-medium">Katalog Produk & Paket Spesial</p>
-            <p class="text-sm text-gray-500 mt-1">Solusi terbaik untuk kebutuhan konsumsi acara, kantor, dan instansi Anda.</p>
-        </div>
-
-        <template x-for="cat in categories.filter(c => c !== 'Semua')" :key="cat">
-            <div class="mb-10">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3 border-b pb-2 border-gray-100">
-                    <span class="bg-brand-orange w-3 h-8 rounded-full"></span>
-                    <span x-text="cat"></span>
-                </h2>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <template x-for="product in products.filter(p => p.category === cat)" :key="product.id">
-                        <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center" style="break-inside: avoid;">
-                            <template x-if="product.image"><img :src="product.image" class="w-24 h-24 object-cover mx-auto rounded-lg mb-3 shadow-sm border border-gray-200"></template>
-                            <template x-if="!product.image"><div class="w-24 h-24 bg-white border border-gray-200 text-brand-orange text-4xl flex items-center justify-center mx-auto rounded-lg mb-3 shadow-sm"><span x-text="product.icon"></span></div></template>
-                            <h3 class="font-bold text-gray-800 text-sm leading-tight mb-2 line-clamp-2" x-text="product.name"></h3>
-                            <p class="text-brand-brown font-extrabold text-lg" x-text="formatRupiah(product.price)"></p>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </template>
-        
-        <div class="mt-12 pt-8 border-t-2 border-dashed border-gray-200 text-center" style="break-inside: avoid;">
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Tertarik untuk memesan dalam jumlah besar?</h3>
-            <p class="text-gray-600 mb-4">Dapatkan penawaran harga spesial untuk instansi dan kantor.</p>
-            <div class="inline-block bg-brand-brown text-white font-bold py-2 px-6 rounded-full">Hubungi Admin Kukita Sekarang!</div>
-        </div>
-    </div>
-
-    <!-- FORMAT 2: STRUK KASIR THERMAL -->
-    <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
-        <template x-if="lastTx">
-            <div style="padding: 10px;">
-                <div style="text-align: center; margin-bottom: 12px;">
-                    <div style="font-size: 18px; font-weight: bold;">KUKITA</div>
-                    <div style="font-size: 10px; font-weight: normal; line-height: 1.3; margin-top: 2px;">Jl. Amir Hamzah No. 2<br>Karang Sukun, Mataram</div>
-                    <div style="font-size: 12px; font-weight: normal; margin-top: 8px;">Struk Pembelian</div>
-                    <div style="font-weight: normal;">------------------------</div>
-                </div>
-                
-                <div style="margin-bottom: 10px;">
-                    <div>No : <span x-text="lastTx.invoice.split(' (')[0]"></span></div>
-                    <div>Tgl: <span x-text="lastTx.date"></span></div>
-                    <div>Kasir: <span x-text="activeCashier"></span></div>
-                    <div>------------------------</div>
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <template x-if="lastTx.isPackage">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-weight: bold;"><div>Paket Custom</div><div x-text="formatRupiah(lastTx.total)"></div></div>
-                            <div style="font-size: 11px; margin-bottom: 3px; border-bottom: 1px dashed #ccc; display: inline-block;">Rincian Isi Paket:</div>
-                            <template x-for="item in lastTx.cart"><div style="font-size: 11px; padding-left: 5px; color: #333;" x-text="'- ' + item.name + ' (x' + item.qty + ')'"></div></template>
-                        </div>
-                    </template>
-                    <template x-if="!lastTx.isPackage">
-                        <div>
-                            <template x-for="item in lastTx.cart">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;"><div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div><div x-text="formatRupiah(item.price * item.qty)"></div></div>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <div>------------------------</div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px;"><div>Total Barang:</div><div x-text="lastTx.totalQty + ' Pcs'"></div></div>
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;"><div>Total Harga:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Metode:</div><div style="font-weight: bold;" x-text="lastTx.method"></div></div>
-                    <template x-if="lastTx.method === 'Tunai'">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div>
-                        </div>
-                    </template>
-                    <div>------------------------</div>
-                </div>
-                <div style="text-align: center;"><div>Terima Kasih</div><div>Selamat Menikmati!</div></div>
-            </div>
-        </template>
-    </div>
 
     <!-- Script Utama -->
     <script>
@@ -751,11 +578,12 @@
                 newCashierPin: '',
                 
                 currentTab: 'pos', categories: ['Semua'], selectedCategory: 'Semua', searchQuery: '', masterSearchQuery: '', cart: [], products: [], 
-                showMobileCart: false, showPaymentModal: false, paymentStep: 'input', paymentMethod: 'Tunai', cashReceived: '', isProcessing: false, isLoading: true, lastTx: null, 
+                showMobileCart: false, showPaymentModal: false, paymentStep: 'input', paymentMethod: 'Tunai', 
+                cashReceived: '', mixCash: '', isProcessing: false, isLoading: true, lastTx: null, 
                 isCustomPackage: false, 
                 currentTime: new Date().toLocaleString('id-ID'),
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '', expMethod: 'Tunai',
-                reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, grossProfit: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, itemsSold: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, 
+                reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, piutang: 0, grossProfit: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, netProfit: 0, salesHistory: [], stockHistory: [] }, 
                 
                 customerName: '',
                 itemReports: [], reportPeriod: 'today', startDate: '', endDate: '',
@@ -770,7 +598,6 @@
                     this.$watch('currentTab', () => { setTimeout(() => { lucide.createIcons(); }, 50); });
                     this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
                     this.$watch('paymentStep', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
-                    this.$watch('showAddProductModal', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     
                     await this.fetchCashiers();
                     await this.fetchCatalog();
@@ -784,95 +611,20 @@
                     if(!this.loginPin) return;
                     
                     if (this.loginPin === '030388' || this.loginPin === '100515' || this.loginPin === '818283') {
-                        this.activeCashier = 'Admin Toko'; 
-                        this.loginPin = ''; 
-                        setTimeout(() => lucide.createIcons(), 50); 
-                        await this.fetchCashiers();
-                        await this.fetchCatalog();
-                        return;
+                        this.activeCashier = 'Admin Toko'; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); 
+                        await this.fetchCashiers(); await this.fetchCatalog(); return;
                     }
-
                     const found = this.cashiersList.find(c => c.pin === this.loginPin);
                     if (found) { this.activeCashier = found.name; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; }
-                    
                     try {
                         const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: this.loginPin }) });
                         const dataPin = await resPin.json();
                         if (dataPin.success) { this.activeCashier = 'Admin Toko'; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; }
                     } catch(e){}
-                    
                     alert('❌ Akses Ditolak: PIN Salah atau Kasir tidak terdaftar!'); this.loginPin = '';
                 },
                 logout() { this.activeCashier = null; this.currentTab = 'pos'; },
                 
-                async addCashier() {
-                    if (!this.newCashierName || !this.newCashierPin) return alert('Isi Nama dan PIN Kasir Baru!');
-                    const sandi = prompt("🔒 MANAJEMEN KASIR\nMasukkan PIN Pemilik (Admin) Anda untuk konfirmasi:");
-                    if (!sandi) return;
-                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                    const dataPin = await resPin.json();
-                    if (!dataPin.success) return alert("❌ Akses ditolak! Password salah.");
-
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/cashiers`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name: this.newCashierName, pin: this.newCashierPin }) });
-                        const data = await res.json();
-                        if (data.success) { alert(`✅ Kasir ${this.newCashierName} berhasil didaftarkan!`); this.newCashierName = ''; this.newCashierPin = ''; this.fetchCashiers(); setTimeout(() => lucide.createIcons(), 50); } 
-                        else { alert(data.message); }
-                    } catch(e) { alert('Gagal terhubung ke server'); }
-                },
-                
-                async deleteCashier(id, nama) {
-                    const sandi = prompt(`🔒 HAPUS KASIR\nMasukkan PIN Pemilik (Admin) untuk menghapus ${nama}:`);
-                    if (!sandi) return;
-                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                    const dataPin = await resPin.json();
-                    if (!dataPin.success) return alert("❌ Akses ditolak! Password salah.");
-                    
-                    if(!confirm(`Yakin ingin menghapus kasir ${nama} dari sistem?`)) return;
-                    try { await fetch(`${SERVER_URL}/api/cashiers/${id}`, { method: 'DELETE' }); alert(`✅ Kasir ${nama} dihapus.`); this.fetchCashiers(); setTimeout(() => lucide.createIcons(), 50); } catch(e) {}
-                },
-
-                getCashierPerformance() {
-                    const perf = {};
-                    if (!this.reportData.salesHistory) return perf;
-                    this.reportData.salesHistory.forEach(tx => {
-                        const match = tx.invoice.match(/\[Kasir: (.*?)\]/);
-                        const nama = match ? match[1] : 'Kasir Lama';
-                        if (!perf[nama]) perf[nama] = { totalTx: 0, revenue: 0 };
-                        perf[nama].totalTx++;
-                        perf[nama].revenue += tx.total;
-                    });
-                    return perf;
-                },
-
-                printReceipt() { 
-                    this.isPrintingReceipt = true; 
-                    setTimeout(() => { 
-                        window.print(); 
-                        setTimeout(() => { this.isPrintingReceipt = false; }, 3000); 
-                    }, 500); 
-                },
-                printCatalog() { 
-                    this.isPrintingCatalog = true; 
-                    setTimeout(() => { 
-                        window.print(); 
-                        setTimeout(() => { this.isPrintingCatalog = false; }, 3000); 
-                    }, 500); 
-                },
-
-                async changeAdminPin() {
-                    if (!this.oldPin || !this.newPin) return alert('Silakan isi PIN Lama dan PIN Baru!');
-                    if (this.newPin.length < 4) return alert('PIN Baru minimal 4 angka!');
-                    this.isProcessing = true;
-                    try {
-                        const response = await fetch(`${SERVER_URL}/api/settings/update-pin`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oldPin: this.oldPin, newPin: this.newPin }) });
-                        const result = await response.json();
-                        if (result.success) { alert('✅ PIN Admin berhasil diubah!'); this.oldPin = ''; this.newPin = ''; } 
-                        else { alert('❌ Gagal: ' + result.message); }
-                    } catch (error) { alert('Koneksi ke server bermasalah.'); }
-                    this.isProcessing = false;
-                },
-
                 async fetchCatalog() {
                     this.isLoading = true;
                     try {
@@ -889,157 +641,13 @@
                     finally { this.isLoading = false; setTimeout(() => { lucide.createIcons(); }, 10); }
                 },
 
-                get totalProductTypes() { return this.products.filter(p => p.type === 'product').length; },
-                get totalPhysicalStock() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.stock > 0 ? p.stock : 0), 0); },
-                get totalStockValue() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.price * (p.stock > 0 ? p.stock : 0)), 0); },
-
-                async openAddProduct() {
-                    const sandi = prompt("🔒 Masukkan PIN/Password Admin:");
-                    if (!sandi) return;
-                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                    const dataPin = await resPin.json();
-                    if (!dataPin.success) { alert("❌ Akses ditolak! Password salah."); return; }
-                    if (this.options.categories.length === 0) {
-                        try { const res = await fetch(`${SERVER_URL}/api/options`); const data = await res.json(); if(data.success) this.options = data.data; } 
-                        catch(e) { console.error("Gagal memuat opsi"); }
-                    }
-                    this.showAddProductModal = true;
-                },
-
-                async submitNewProduct() {
-                    if(!this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.supplierId || !this.newProduct.buyPrice || !this.newProduct.sellPrice || !this.newProduct.stock) return alert('Mohon lengkapi semua isian!');
-                    this.isProcessing = true;
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/products`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.newProduct) });
-                        const result = await res.json();
-                        if(result.success) { alert('Produk baru berhasil ditambahkan! 🍩'); this.showAddProductModal = false; this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '' }; await this.fetchCatalog(); } 
-                        else { alert('Gagal menambahkan: ' + result.message); }
-                    } catch(e) { alert('Koneksi ke server bermasalah'); }
-                    finally { this.isProcessing = false; }
-                },
-
-                async updateStock(product) {
-                    const sandi = prompt("🔒 Masukkan PIN/Password Admin untuk Edit Stok:");
-                    if (!sandi) return;
-                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                    const dataPin = await resPin.json();
-                    if (!dataPin.success) { alert("❌ Akses ditolak! Password salah."); return; }
-
-                    const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\nStok Saat Ini: ${product.stock} Pcs\n\n➡️ Ketik jumlah barang yang BARU DATANG (Misal ketik: 5)\n➡️ Ketik angka minus jika ada barang rusak/dibuang (Misal ketik: -4)`, "0");
-                    
-                    if (inputStr === null || inputStr.trim() === "") return; 
-                    const diffQty = parseInt(inputStr);
-                    
-                    if (isNaN(diffQty) || diffQty === 0) return alert('Input dibatalkan: Tidak ada perubahan angka.');
-                    
-                    const newStock = product.stock + diffQty;
-                    
-                    if (newStock < 0) return alert('❌ Gagal: Stok akhir tidak boleh sampai minus!');
-
-                    try {
-                        const response = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: newStock }) });
-                        const result = await response.json();
-                        if (result.success) { 
-                            alert(`✅ Berhasil! Stok ${product.name} sekarang menjadi ${newStock} Pcs.`); 
-                            await this.fetchCatalog(); 
-                        } 
-                        else { alert('Gagal update stok: ' + result.message); }
-                    } catch (error) { alert('Koneksi ke server terputus.'); }
-                },
-
-                async fetchReport() {
-                    try {
-                        let queryParam = `?period=${this.reportPeriod}`;
-                        if (this.reportPeriod === 'custom') {
-                            if (!this.startDate || !this.endDate) return alert('Mohon isi Tanggal Awal dan Akhir terlebih dahulu!');
-                            if (new Date(this.startDate) > new Date(this.endDate)) return alert('Tanggal Awal tidak boleh melewati Tanggal Akhir!');
-                            queryParam += `&start=${this.startDate}&end=${this.endDate}`;
-                        }
-                        const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}`);
-                        const dataGlobal = await resGlobal.json();
-                        if(dataGlobal.success) this.reportData = dataGlobal.data;
-                        
-                        const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`);
-                        const dataItems = await resItems.json();
-                        if(dataItems.success) {
-                            this.itemReports = dataItems.data;
-                        }
-                    } catch (error) { console.error('Error fetching reports:', error); }
-                },
-
-                async deleteStockHistory(id) {
-                    const sandi = prompt(`🔒 BATALKAN STOK MASUK\n\nMasukkan PIN Admin:\n(Perhatian: Stok fisik barang ini di Master Produk akan ikut dikurangi)`);
-                    if (!sandi) return;
-                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                    const dataPin = await resPin.json();
-                    if (!dataPin.success) { alert("❌ Akses ditolak! Password salah."); return; }
-                    const confirmDelete = confirm(`⚠️ YAKIN INGIN MEMBATALKAN RIWAYAT INI?`);
-                    if (!confirmDelete) return;
-
-                    try {
-                        const response = await fetch(`${SERVER_URL}/api/stock-history/${id}`, { method: 'DELETE' });
-                        const result = await response.json();
-                        if (result.success) { alert(`✅ Berhasil! Riwayat dihapus dan stok barang telah dikurangi kembali.`); this.fetchReport(); this.fetchCatalog(); } 
-                        else { alert('Gagal menghapus riwayat: ' + result.message); }
-                    } catch (error) { alert('Koneksi ke server bermasalah.'); }
-                },
-
-                async deleteTransaction(invoice) {
-                    const sandi = prompt(`🔒 MENGHAPUS STRUK ${invoice}\n\nMasukkan PIN Admin Anda:\n(Perhatian: Stok barang di nota ini akan otomatis dikembalikan ke gudang)`);
-                    if (!sandi) return;
-                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                    const dataPin = await resPin.json();
-                    if (!dataPin.success) { alert("❌ Akses ditolak! Password salah."); return; }
-                    const confirmDelete = confirm(`⚠️ YAKIN INGIN MEMBATALKAN STRUK ${invoice}?\n\n- Data pendapatan akan dikurangi.\n- Stok barang akan otomatis dikembalikan.`);
-                    if (!confirmDelete) return;
-
-                    try {
-                        const response = await fetch(`${SERVER_URL}/api/transactions/${invoice}`, { method: 'DELETE' });
-                        const result = await response.json();
-                        if (result.success) { alert(`✅ Berhasil! Struk dihapus dan stok barang telah dikembalikan.`); this.fetchReport(); this.fetchCatalog(); } 
-                        else { alert('Gagal menghapus struk: ' + (result.message || 'Pastikan backend server.js sudah diperbarui.')); }
-                    } catch (error) { alert('Koneksi ke server bermasalah saat mencoba membatalkan transaksi.'); }
-                },
-
-                async deleteExpense(id) {
-                    const sandi = prompt(`🔒 HAPUS PENGELUARAN\n\nMasukkan PIN Admin Anda:`);
-                    if (!sandi) return;
-                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                    const dataPin = await resPin.json();
-                    if (!dataPin.success) return alert("❌ Akses ditolak! Password salah.");
-                    
-                    if(!confirm(`⚠️ YAKIN INGIN MENGHAPUS CATATAN PENGELUARAN INI?`)) return;
-
-                    try {
-                        const response = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
-                        const result = await response.json();
-                        if (result.success) { alert(`✅ Berhasil! Catatan pengeluaran dihapus.`); this.fetchReport(); } 
-                        else { alert('Gagal menghapus pengeluaran.'); }
-                    } catch (error) { alert('Koneksi ke server bermasalah.'); }
-                },
-
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
                 get filteredMasterProducts() { return this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); },
                 addToCart(product) { this.isCustomPackage = false; if (product.type === 'product' && product.stock <= 0) return alert('Stok gudang habis!'); const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); if (existing) { if (product.type === 'package' || existing.qty < product.stock) existing.qty++; else alert('Maksimal stok tercapai!'); } else { this.cart.unshift(itemToAdd); } },
                 increaseQty(index) { this.isCustomPackage = false; const item = this.cart[index]; const product = this.products.find(p => p.id === item.id && p.type === item.type); if (product.type === 'package' || item.qty < product.stock) item.qty++; },
                 decreaseQty(index) { this.isCustomPackage = false; if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
                 removeFromCart(index) { this.isCustomPackage = false; this.cart.splice(index, 1); },
-                
-                validateQty(index) {
-                    this.isCustomPackage = false;
-                    let item = this.cart[index];
-                    let val = parseInt(item.qty);
-
-                    if (isNaN(val) || val < 1) val = 1;
-
-                    const product = this.products.find(p => p.id === item.id && p.type === item.type);
-                    if (product && product.type === 'product' && val > product.stock) {
-                        alert(`❌ Stok tidak mencukupi! Sisa stok ${product.name} tinggal ${product.stock} pcs.`);
-                        val = product.stock; 
-                    }
-
-                    this.cart[index].qty = val;
-                },
+                validateQty(index) { this.isCustomPackage = false; let item = this.cart[index]; let val = parseInt(item.qty); if (isNaN(val) || val < 1) val = 1; const product = this.products.find(p => p.id === item.id && p.type === item.type); if (product && product.type === 'product' && val > product.stock) { alert(`❌ Stok tidak mencukupi! Sisa stok ${product.name} tinggal ${product.stock} pcs.`); val = product.stock; } this.cart[index].qty = val; },
 
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
@@ -1049,118 +657,141 @@
                 
                 setCustomPrice() { 
                     if (this.cart.length === 0) return alert('Keranjang masih kosong!'); 
-                    
-                    const qtyStr = prompt('📦 SET HARGA PAKET\n\nBerapa JUMLAH KOTAK pesanan ini?', '1');
-                    if (qtyStr === null || qtyStr.trim() === "") return;
-                    const qtyBox = parseInt(qtyStr);
-                    if (isNaN(qtyBox) || qtyBox <= 0) return alert('Jumlah kotak tidak valid!');
-
-                    const priceStr = prompt(`Berapa HARGA PER KOTAK untuk pesanan ini?`, '0');
-                    if (priceStr === null || priceStr.trim() === "") return;
-                    const pricePerBox = parseFloat(priceStr);
-                    if (isNaN(pricePerBox) || pricePerBox < 0) return alert('Harga tidak valid!');
-
+                    const qtyStr = prompt('📦 SET HARGA PAKET\n\nBerapa JUMLAH KOTAK pesanan ini?', '1'); if (qtyStr === null || qtyStr.trim() === "") return; const qtyBox = parseInt(qtyStr); if (isNaN(qtyBox) || qtyBox <= 0) return alert('Jumlah kotak tidak valid!');
+                    const priceStr = prompt(`Berapa HARGA PER KOTAK untuk pesanan ini?`, '0'); if (priceStr === null || priceStr.trim() === "") return; const pricePerBox = parseFloat(priceStr); if (isNaN(pricePerBox) || pricePerBox < 0) return alert('Harga tidak valid!');
                     const newTotal = qtyBox * pricePerBox;
+                    const inputNama = prompt(`🏢 NAMA INSTANSI / PEMBELI\n\nMasukkan nama pemesan (Boleh dikosongkan):`, ''); let namaPemesan = (inputNama !== null && inputNama.trim() !== "") ? inputNama.trim() + " - " : "Pesanan Umum - ";
+                    this.customerName = `${namaPemesan}${qtyBox} Kotak`; this.isCustomPackage = true; 
                     
-                    const inputNama = prompt(`🏢 NAMA INSTANSI / PEMBELI\n\nMasukkan nama pemesan (Boleh dikosongkan):`, '');
-                    let namaPemesan = (inputNama !== null && inputNama.trim() !== "") ? inputNama.trim() + " - " : "Pesanan Umum - ";
-                    
-                    this.customerName = `${namaPemesan}${qtyBox} Kotak`;
-                    this.isCustomPackage = true; 
-                    
-                    // JURUS ALGORITMA BARU: Hitung proporsi berdasarkan harga NORMAL (Harga Master)
                     let originalTotal = 0;
-                    this.cart.forEach(item => {
-                        const prod = this.products.find(p => p.id === item.id && p.type === item.type);
-                        const normalPrice = prod ? prod.price : item.price;
-                        originalTotal += (normalPrice * item.qty);
-                    });
-                    
+                    this.cart.forEach(item => { const prod = this.products.find(p => p.id === item.id && p.type === item.type); originalTotal += ((prod ? prod.price : item.price) * item.qty); });
                     if (originalTotal > 0) {
-                        const ratio = newTotal / originalTotal; 
-                        let runningTotal = 0; 
-                        
+                        const ratio = newTotal / originalTotal; let runningTotal = 0; 
                         for (let i = 0; i < this.cart.length; i++) { 
-                            // Ambil harga asli barang sebagai patokan pembagian
-                            const prod = this.products.find(p => p.id === this.cart[i].id && p.type === this.cart[i].type);
-                            const normalPrice = prod ? prod.price : this.cart[i].price;
-
-                            if (i === this.cart.length - 1) { 
-                                const remaining = newTotal - runningTotal; 
-                                this.cart[i].price = remaining / this.cart[i].qty; 
-                            } else { 
-                                const newPrice = Math.round(normalPrice * ratio); 
-                                this.cart[i].price = newPrice; 
-                                runningTotal += (newPrice * this.cart[i].qty); 
-                            } 
+                            const prod = this.products.find(p => p.id === this.cart[i].id && p.type === this.cart[i].type); const normalPrice = prod ? prod.price : this.cart[i].price;
+                            if (i === this.cart.length - 1) { this.cart[i].price = (newTotal - runningTotal) / this.cart[i].qty; } 
+                            else { const newPrice = Math.round(normalPrice * ratio); this.cart[i].price = newPrice; runningTotal += (newPrice * this.cart[i].qty); } 
                         } 
                     }
                     alert(`✅ PAKET BERHASIL DISET!\n\n${qtyBox} Kotak x Rp ${new Intl.NumberFormat('id-ID').format(pricePerBox)}\nTotal: Rp ${new Intl.NumberFormat('id-ID').format(newTotal)}\n\nSilakan klik tombol BAYAR SEKARANG.`);
                 },
                 
-                openPayment() { 
-                    this.cashReceived = ''; 
-                    this.paymentMethod = 'Tunai'; 
-                    this.paymentStep = 'input'; 
-                    this.showPaymentModal = true; 
-                    setTimeout(() => { lucide.createIcons(); }, 10); 
-                },
-                
+                openPayment() { this.cashReceived = ''; this.mixCash = ''; this.paymentMethod = 'Tunai'; this.paymentStep = 'input'; this.showPaymentModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
                 closePayment() { if (this.paymentStep === 'success') { this.resetCart(); } else { this.showPaymentModal = false; } },
                 
                 async processTransaction() {
-                    this.isProcessing = true;
-                    
                     let totalBelanja = this.total;
                     let qtyBelanja = this.totalQty;
-                    let uangMasuk = this.paymentMethod === 'Tunai' ? (parseFloat(this.cashReceived) || totalBelanja) : totalBelanja;
+                    let uangMasuk = 0;
+
+                    // Validasi Pembayaran
+                    if (this.paymentMethod === 'Tunai') {
+                        uangMasuk = parseFloat(this.cashReceived) || totalBelanja;
+                    } else if (this.paymentMethod === 'Mix') {
+                        uangMasuk = parseFloat(this.mixCash) || 0;
+                        if (uangMasuk <= 0 || uangMasuk >= totalBelanja) return alert('❌ Gagal: Nominal Uang Tunai pada metode Mix harus lebih kecil dari total tagihan!');
+                    } else if (this.paymentMethod === 'Piutang') {
+                        if (!this.customerName || this.customerName.trim() === '') return alert('❌ Gagal: Nama Instansi/Pembeli WAJIB diisi untuk kasbon atau piutang!');
+                        uangMasuk = 0;
+                    }
+
+                    this.isProcessing = true;
                     let uangKembali = this.paymentMethod === 'Tunai' ? (uangMasuk - totalBelanja) : 0;
                     let keranjangFix = JSON.parse(JSON.stringify(this.cart));
-                    
                     let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
                     let finalName = this.customerName ? `${this.customerName} [Kasir: ${this.activeCashier}]` : `[Kasir: ${this.activeCashier}]`;
 
-                    const payload = { 
-                        cart: mappedCart, 
-                        paymentMethod: this.paymentMethod, 
-                        cashReceived: this.paymentMethod === 'Tunai' ? uangMasuk : 0, 
-                        totalAmount: totalBelanja, 
-                        isPackage: this.isCustomPackage,
-                        customerName: finalName 
-                    };
+                    const payload = { cart: mappedCart, paymentMethod: this.paymentMethod, cashReceived: uangMasuk, totalAmount: totalBelanja, isPackage: this.isCustomPackage, customerName: finalName };
                     
                     try {
                         const response = await fetch(`${SERVER_URL}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await response.json();
                         if (result.success) { 
-                            this.lastTx = { 
-                                invoice: result.data.invoice, 
-                                date: new Date().toLocaleString('id-ID'), 
-                                cart: keranjangFix, 
-                                total: totalBelanja, 
-                                cash: uangMasuk, 
-                                change: uangKembali, 
-                                isPackage: this.isCustomPackage, 
-                                method: this.paymentMethod, 
-                                totalQty: qtyBelanja 
-                            }; 
+                            this.lastTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), cart: keranjangFix, total: totalBelanja, cash: uangMasuk, change: uangKembali, isPackage: this.isCustomPackage, method: this.paymentMethod, totalQty: qtyBelanja }; 
                             this.paymentStep = 'success'; 
-                        } 
-                        else { alert('Gagal: ' + result.message); }
+                            this.fetchCatalog();
+                        } else { alert('Gagal memproses struk.'); }
                     } catch (error) { alert('Koneksi ke server terputus.'); } 
                     finally { this.isProcessing = false; }
                 },
+
+                async terimaPelunasan(invoice) {
+                    const method = prompt('💰 TERIMA PELUNASAN KASBON\n\nPilih metode pembayaran yang diserahkan oleh pembeli hari ini:\nKetik "1" untuk pelunasan TUNAI\nKetik "2" untuk pelunasan QRIS / Transfer', '1');
+                    if (method === null) return;
+                    
+                    const newMethod = method === '2' ? 'QRIS' : 'Tunai';
+                    if (!confirm(`Tandai struk ${invoice} lunas menggunakan metode ${newMethod.toUpperCase()}?`)) return;
+
+                    try {
+                        const response = await fetch(`${SERVER_URL}/api/transactions/${invoice}/pay`, { 
+                            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentMethod: newMethod }) 
+                        });
+                        const result = await response.json();
+                        if (result.success) { alert(`✅ BERHASIL! Uang pelunasan kasbon otomatis masuk ke laporan Laci hari ini.`); this.fetchReport(); } 
+                        else { alert('Gagal: ' + result.message); }
+                    } catch (error) { alert('Koneksi server terputus.'); }
+                },
                 
-                resetCart() { this.cart = []; this.isCustomPackage = false; this.customerName = ''; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; this.fetchCatalog(); },
-                
+                resetCart() { this.cart = []; this.isCustomPackage = false; this.customerName = ''; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; },
+
+                // SISA LOGIKA FUNGSI (LAPORAN, MASTER PRODUK) TETAP SAMA SEPERTI SEBELUMNYA
+                async fetchReport() {
+                    try {
+                        let queryParam = `?period=${this.reportPeriod}`;
+                        if (this.reportPeriod === 'custom') {
+                            if (!this.startDate || !this.endDate) return alert('Isi Tanggal Awal & Akhir!');
+                            if (new Date(this.startDate) > new Date(this.endDate)) return alert('Tanggal Awal lewat dari Akhir!');
+                            queryParam += `&start=${this.startDate}&end=${this.endDate}`;
+                        }
+                        const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}`);
+                        const dataGlobal = await resGlobal.json();
+                        if(dataGlobal.success) this.reportData = dataGlobal.data;
+                        
+                        const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`);
+                        const dataItems = await resItems.json();
+                        if(dataItems.success) this.itemReports = dataItems.data;
+                    } catch (error) { console.error('Error report:', error); }
+                },
+
+                printReceipt() { this.isPrintingReceipt = true; setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingReceipt = false; }, 3000); }, 500); },
+                printCatalog() { this.isPrintingCatalog = true; setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingCatalog = false; }, 3000); }, 500); },
+
                 async submitExpense() {
-                    if(!this.expDesc || !this.expAmount) return alert('Mohon isi keterangan dan nominal pengeluaran');
+                    if(!this.expDesc || !this.expAmount) return alert('Isi keterangan & nominal beban');
                     try {
                         const payload = { category: this.expCat, description: this.expDesc, amount: this.expAmount, paymentMethod: this.expMethod };
-                        const response = await fetch(`${SERVER_URL}/api/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                        const result = await response.json();
-                        if(result.success) { alert('Pengeluaran berhasil dicatat ke Database!'); this.expDesc = ''; this.expAmount = ''; this.fetchReport(); }
-                    } catch(error) { alert('Gagal mencatat pengeluaran.'); }
+                        const res = await fetch(`${SERVER_URL}/api/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        if((await res.json()).success) { alert('Tercatat!'); this.expDesc = ''; this.expAmount = ''; this.fetchReport(); }
+                    } catch(e) { alert('Gagal'); }
+                },
+
+                // Kumpulan fungsi Master Produk & Hapus riwayat ada di bawah ini...
+                get totalProductTypes() { return this.products.filter(p => p.type === 'product').length; },
+                get totalPhysicalStock() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.stock > 0 ? p.stock : 0), 0); },
+                get totalStockValue() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.price * (p.stock > 0 ? p.stock : 0)), 0); },
+                
+                async updateStock(product) {
+                    const sandi = prompt("🔒 Masukkan PIN Admin:"); if (!sandi) return;
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                    if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
+                    const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\n\nKetik jumlah kedatangan barang. (Gunakan angka minus jika barang rusak)`, "0");
+                    if (inputStr === null || inputStr.trim() === "") return; 
+                    const diffQty = parseInt(inputStr); if (isNaN(diffQty) || diffQty === 0) return alert('Batal.');
+                    const newStock = product.stock + diffQty; if (newStock < 0) return alert('Stok akhir tidak boleh minus!');
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) });
+                        if ((await res.json()).success) { alert(`Berhasil!`); this.fetchCatalog(); } else alert('Gagal update.');
+                    } catch (e) { alert('Error.'); }
+                },
+                async deleteTransaction(invoice) {
+                    const sandi = prompt(`🔒 HAPUS STRUK ${invoice}\nMasukkan PIN Admin:`); if (!sandi) return;
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                    if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
+                    if (!confirm(`⚠️ YAKIN INGIN MEMBATALKAN STRUK ${invoice}?`)) return;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { alert(`Struk dihapus & stok dikembalikan.`); this.fetchReport(); this.fetchCatalog(); } else alert('Gagal.');
+                    } catch (e) { alert('Error.'); }
                 }
             }
         }

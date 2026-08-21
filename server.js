@@ -50,7 +50,28 @@ app.post('/api/checkout', async (req, res) => {
   } catch (error) { res.status(400).json({ success: false, error: error.message }); }
 });
 
-// 3. ENDPOINT: PENGELUARAN (PISAH TUNAI & TRANSFER)
+// 3. ENDPOINT BARU: TERIMA PELUNASAN PIUTANG
+app.put('/api/transactions/:invoice/pay', async (req, res) => {
+    const { invoice } = req.params;
+    const { paymentMethod } = req.body;
+    try {
+        const sales = await prisma.sale.findMany({ where: { invoice } });
+        if(sales.length === 0) return res.json({ success: false, message: 'Struk tidak ditemukan' });
+        
+        const sale = sales[0];
+        
+        await prisma.sale.update({
+            where: { id: sale.id },
+            data: { 
+                paymentMethod: paymentMethod, 
+                cashReceived: paymentMethod === 'Tunai' ? sale.totalAmount : 0 
+            } 
+        });
+        res.json({ success: true, message: 'Pelunasan berhasil dicatat!' });
+    } catch (error) { res.status(500).json({ success: false, message: 'Gagal memproses pelunasan' }); }
+});
+
+// 4. ENDPOINT: PENGELUARAN (PISAH TUNAI & TRANSFER)
 app.post('/api/expenses', async (req, res) => {
   const { category, description, amount, paymentMethod } = req.body;
   const finalDesc = paymentMethod === 'Transfer' ? `[Transfer] ${description}` : `[Tunai] ${description}`;
@@ -60,7 +81,7 @@ app.post('/api/expenses', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 4. ENDPOINT: OPSI KATEGORI & SUPPLIER 
+// 5. ENDPOINT: OPSI KATEGORI & SUPPLIER 
 app.get('/api/options', async (req, res) => {
   try {
     const categories = await prisma.category.findMany();
@@ -69,7 +90,7 @@ app.get('/api/options', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 5. ENDPOINT: TAMBAH PRODUK DENGAN HARGA BELI
+// 6. ENDPOINT: TAMBAH PRODUK DENGAN HARGA BELI
 app.post('/api/products', async (req, res) => {
   const { name, categoryId, supplierId, buyPrice, sellPrice, stock } = req.body;
   try {
@@ -86,7 +107,7 @@ app.post('/api/products', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, message: 'Gagal menyimpan produk' }); }
 });
 
-// 6. ENDPOINT: UPDATE STOK V2 & RIWAYAT MASUK
+// 7. ENDPOINT: UPDATE STOK V2 & RIWAYAT MASUK
 app.put('/api/products/:id/stock-v2', async (req, res) => {
     const { id } = req.params;
     const { newStock } = req.body;
@@ -106,7 +127,7 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Gagal update stok' }); }
 });
 
-// 7. ENDPOINT: LAPORAN GLOBAL & RIWAYAT STRUK (TERMASUK LABA)
+// 8. ENDPOINT: LAPORAN GLOBAL, PIUTANG & MIX PAYMENT
 app.get('/api/reports', async (req, res) => {
   const { period, start, end } = req.query;
   let dateFilter = {};
@@ -133,13 +154,26 @@ app.get('/api/reports', async (req, res) => {
     const expenses = await prisma.expense.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } }); 
     const stockHistory = await prisma.stockHistory.findMany({ where: dateFilter, orderBy: { createdAt: 'desc' } });
     
-    const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
-    const totalCash = sales.filter(s => s.paymentMethod === 'Tunai').reduce((sum, s) => sum + s.totalAmount, 0);
-    const totalQris = sales.filter(s => s.paymentMethod === 'QRIS').reduce((sum, s) => sum + s.totalAmount, 0);
-
-    // MENGHITUNG MODAL (HPP) UNTUK LABA
+    let totalRevenue = 0, totalCash = 0, totalQris = 0, totalPiutang = 0;
     let totalCOGS = 0;
+
     sales.forEach(s => {
+        // PERHITUNGAN OMSET & METODE PEMBAYARAN
+        if (s.paymentMethod === 'Piutang') {
+            totalPiutang += s.totalAmount;
+        } else {
+            totalRevenue += s.totalAmount;
+            if (s.paymentMethod === 'Tunai') {
+                totalCash += s.totalAmount;
+            } else if (s.paymentMethod === 'QRIS') {
+                totalQris += s.totalAmount;
+            } else if (s.paymentMethod === 'Mix') {
+                totalCash += s.cashReceived; 
+                totalQris += (s.totalAmount - s.cashReceived); 
+            }
+        }
+
+        // PERHITUNGAN MODAL (HPP)
         s.items.forEach(i => {
             if (i.product) {
                 totalCOGS += (i.product.buyPrice || 0) * i.qty;
@@ -152,7 +186,9 @@ app.get('/api/reports', async (req, res) => {
             }
         });
     });
-    const grossProfit = totalRevenue - totalCOGS; // Laba Kotor
+
+    // LABA KOTOR (Omset Tunai/QRIS + Piutang) dikurangi Modal Fisik Keluar
+    const grossProfit = (totalRevenue + totalPiutang) - totalCOGS; 
 
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     const expTransfer = expenses.filter(e => (e.description || '').includes('[Transfer]') || (e.description || '').includes('[QRIS]')).reduce((sum, e) => sum + e.amount, 0);
@@ -166,8 +202,8 @@ app.get('/api/reports', async (req, res) => {
     res.json({
       success: true,
       data: { 
-        revenue: totalRevenue, revenueCash: totalCash, revenueQris: totalQris,
-        grossProfit: grossProfit, // Data Laba Baru
+        revenue: totalRevenue, revenueCash: totalCash, revenueQris: totalQris, piutang: totalPiutang,
+        grossProfit: grossProfit,
         expenses: totalExpenses, expCash: expCash, expTransfer: expTransfer,
         netProfit: totalCash - expCash, transactions: sales.length, 
         salesHistory, expenseHistory: expenses, stockHistory 
@@ -176,7 +212,7 @@ app.get('/api/reports', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
-// 8. ENDPOINT: LAPORAN ITEM TERJUAL (TERMASUK LABA PER ITEM)
+// 9. ENDPOINT: LAPORAN ITEM TERJUAL
 app.get('/api/reports/items', async (req, res) => {
   const { period, start, end } = req.query;
   let dateFilter = {};
@@ -193,7 +229,7 @@ app.get('/api/reports/items', async (req, res) => {
       if (!itemSummary[key]) { itemSummary[key] = { id: key, name: produk.name + (label === 'Bijian' ? '' : ` (${label})`), supplier: produk.supplier ? produk.supplier.name : 'Unknown', qtySold: 0, totalSales: 0, totalProfit: 0 }; }
       itemSummary[key].qtySold += qtyTerjual; 
       itemSummary[key].totalSales += omset;
-      itemSummary[key].totalProfit += (omset - (produk.buyPrice * qtyTerjual)); // Laba Item
+      itemSummary[key].totalProfit += (omset - (produk.buyPrice * qtyTerjual)); 
     };
     saleItems.forEach(item => {
       if (item.product) { const label = (item.price !== item.product.sellPrice) ? 'Paket Snack Box' : 'Bijian'; catatBarang(item.product, item.qty, item.subtotal, label); } 
@@ -203,7 +239,7 @@ app.get('/api/reports/items', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 9. ENDPOINT: HAPUS STRUK & KEMBALIKAN STOK
+// 10. ENDPOINT: HAPUS STRUK & KEMBALIKAN STOK
 app.delete('/api/transactions/:invoice', async (req, res) => {
     const { invoice } = req.params;
     try {
@@ -221,7 +257,7 @@ app.delete('/api/transactions/:invoice', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Terjadi kesalahan sistem saat membatalkan struk.' }); }
 });
 
-// 10. ENDPOINT: PENGATURAN PIN ADMIN (3 PIN UTAMA)
+// 11. ENDPOINT: PENGATURAN PIN ADMIN 
 app.post('/api/settings/verify-pin', async (req, res) => {
     const { pin } = req.body;
     try {
@@ -247,7 +283,7 @@ app.put('/api/settings/update-pin', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Gagal mengubah PIN' }); }
 });
 
-// 11. ENDPOINT: HAPUS RIWAYAT STOK
+// 12. ENDPOINT: HAPUS RIWAYAT STOK
 app.delete('/api/stock-history/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -262,7 +298,7 @@ app.delete('/api/stock-history/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'Gagal membatalkan riwayat' }); }
 });
 
-// 12. ENDPOINT: MANAJEMEN KASIR
+// 13. ENDPOINT: MANAJEMEN KASIR
 app.get('/api/cashiers', async (req, res) => {
   try { const cashiers = await prisma.cashier.findMany(); res.json({ success: true, data: cashiers }); } 
   catch (error) { res.status(500).json({ success: false }); }
@@ -278,7 +314,7 @@ app.delete('/api/cashiers/:id', async (req, res) => {
   catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 13. ENDPOINT BARU: HAPUS PENGELUARAN
+// 14. ENDPOINT BARU: HAPUS PENGELUARAN
 app.delete('/api/expenses/:id', async (req, res) => {
   const { id } = req.params;
   try {
