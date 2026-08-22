@@ -78,8 +78,8 @@
                 <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="calendar-days" class="w-6 h-6 lg:mr-3 text-purple-500"></i><span class="hidden lg:block font-bold">Buku Pesanan (PO)</span></button>
                 <button @click="currentTab = 'piutang'; fetchPiutang();" :class="currentTab === 'piutang' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="book-down" class="w-6 h-6 lg:mr-3 text-red-500"></i><span class="hidden lg:block font-bold">Buku Piutang</span></button>
                 
-                <!-- MENU BARU: TERIMA BARANG -->
-                <button @click="currentTab = 'restock'; fetchOptions();" :class="currentTab === 'restock' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="truck" class="w-6 h-6 lg:mr-3 text-blue-500"></i><span class="hidden lg:block font-bold">Terima Barang</span></button>
+                <!-- MENU TERIMA BARANG (HANYA MUNCUL UNTUK ADMIN) -->
+                <button x-show="activeCashier === 'Admin Toko'" @click="currentTab = 'restock'; fetchOptions();" :class="currentTab === 'restock' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="truck" class="w-6 h-6 lg:mr-3 text-blue-500"></i><span class="hidden lg:block font-bold">Terima Barang</span></button>
 
                 <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="package" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Master Produk</span></button>
                 <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="wallet" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Pengeluaran</span></button>
@@ -698,7 +698,10 @@
         <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-between px-1 py-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] no-print overflow-x-auto gap-1">
             <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Kasir</span></button>
             <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'text-purple-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="calendar-days" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">PO</span></button>
-            <button @click="currentTab = 'restock'; fetchOptions();" :class="currentTab === 'restock' ? 'text-blue-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="truck" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Masuk</span></button>
+            
+            <!-- MENU TERIMA BARANG MOBILE (HANYA MUNCUL UNTUK ADMIN) -->
+            <button x-show="activeCashier === 'Admin Toko'" @click="currentTab = 'restock'; fetchOptions();" :class="currentTab === 'restock' ? 'text-blue-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="truck" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Masuk</span></button>
+            
             <button @click="currentTab = 'piutang'; fetchPiutang();" :class="currentTab === 'piutang' ? 'text-red-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="book-down" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Piutang</span></button>
             <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Laporan</span></button>
         </nav>
@@ -935,7 +938,7 @@
                 poList: [], piutangList: [], showPoModal: false,
                 poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
 
-                // VARIABEL BUKU TERIMA BARANG (VENDOR) BARU
+                // VARIABEL BUKU TERIMA BARANG (VENDOR)
                 restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
 
                 async init() {
@@ -967,7 +970,6 @@
                     try {
                         const res = await fetch(`${SERVER_URL}/api/catalog`); const result = await res.json();
                         if(result.success) {
-                            // JURUS BARU: MEMBAWA ID SUPPLIER UNTUK MENU TERIMA BARANG
                             const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, supplierId: p.supplier.id, price: p.sellPrice, buyPrice: p.buyPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product' }));
                             const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', supplierId: null, price: p.sellPrice, stock: 999, image: p.image || null, icon: '🎁', type: 'package' }));
                             this.products = [...prodList, ...pkgList]; this.categories = ['Semua', ...Array.from(new Set(this.products.map(p => p.category)))];
