@@ -1094,7 +1094,19 @@
                     } catch(e) {}
                 },
 
-                openAddProduct() {
+                async openAddProduct() {
+                    const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin Anda untuk menambah produk baru ke dalam sistem:"); 
+                    if (!sandi) return;
+                    
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { 
+                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) 
+                        });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN yang dimasukkan salah.");
+                    } catch(e) {
+                        return alert("Gagal memverifikasi PIN. Pastikan internet lancar.");
+                    }
+
                     this.fetchOptions();
                     this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' };
                     this.showAddProductModal = true;
