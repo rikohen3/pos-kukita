@@ -20,7 +20,7 @@ app.get('/api/catalog', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, message: 'Gagal mengambil katalog' }); }
 });
 
-// 2. ENDPOINT: CHECKOUT / TRANSAKSI HARIAN
+// 2. ENDPOINT: CHECKOUT / TRANSAKSI HARIAN KASIR
 app.post('/api/checkout', async (req, res) => {
   const { cart, paymentMethod, cashReceived, totalAmount, isPackage, customerName } = req.body;
   try {
@@ -68,16 +68,11 @@ app.put('/api/transactions/:invoice/pay', async (req, res) => {
 });
 
 // ==========================================
-// ENDPOINT KHUSUS: BUKU PESANAN & PIUTANG
+// ENDPOINT: BUKU PESANAN & PIUTANG
 // ==========================================
-
 app.get('/api/orders', async (req, res) => {
     try {
-        const orders = await prisma.order.findMany({
-            where: { status: 'Menunggu' },
-            include: { items: { include: { product: true, package: true } } },
-            orderBy: { pickupDate: 'asc' }
-        });
+        const orders = await prisma.order.findMany({ where: { status: 'Menunggu' }, include: { items: { include: { product: true, package: true } } }, orderBy: { pickupDate: 'asc' } });
         res.json({ success: true, data: orders });
     } catch (error) { res.status(500).json({ success: false }); }
 });
@@ -91,32 +86,14 @@ app.post('/api/orders', async (req, res) => {
             const ongkir = parseInt(shippingCost) || 0;
             const dp = parseInt(downPayment) || 0;
 
-            const order = await tx.order.create({
-                data: {
-                    invoice, customerName, customerPhone, pickupDate: new Date(pickupDate),
-                    totalAmount, shippingCost: ongkir, downPayment: dp, paymentMethod, notes, cashierName, 
-                    status: 'Menunggu', paymentStatus: (dp >= totalAmount + ongkir) ? 'Lunas' : 'Belum Lunas'
-                }
-            });
+            const order = await tx.order.create({ data: { invoice, customerName, customerPhone, pickupDate: new Date(pickupDate), totalAmount, shippingCost: ongkir, downPayment: dp, paymentMethod, notes, cashierName, status: 'Menunggu', paymentStatus: (dp >= totalAmount + ongkir) ? 'Lunas' : 'Belum Lunas' } });
 
             for (const item of cart) {
-                if (item.type === 'product') {
-                    await tx.orderItem.create({ data: { orderId: order.id, productId: item.id, qty: item.qty, price: item.price, subtotal: item.price * item.qty } });
-                } else {
-                    await tx.orderItem.create({ data: { orderId: order.id, packageId: item.id, qty: item.qty, price: item.price, subtotal: item.price * item.qty } });
-                }
+                if (item.type === 'product') { await tx.orderItem.create({ data: { orderId: order.id, productId: item.id, qty: item.qty, price: item.price, subtotal: item.price * item.qty } }); } 
+                else { await tx.orderItem.create({ data: { orderId: order.id, packageId: item.id, qty: item.qty, price: item.price, subtotal: item.price * item.qty } }); }
             }
 
-            if (dp > 0) {
-                await tx.sale.create({
-                    data: {
-                        invoice: `DP-${invoice} (${customerName})`,
-                        totalAmount: dp,
-                        paymentMethod: paymentMethod || 'Tunai',
-                        cashReceived: (paymentMethod || 'Tunai') === 'Tunai' ? dp : 0
-                    }
-                });
-            }
+            if (dp > 0) { await tx.sale.create({ data: { invoice: `DP-${invoice} (${customerName})`, totalAmount: dp, paymentMethod: paymentMethod || 'Tunai', cashReceived: (paymentMethod || 'Tunai') === 'Tunai' ? dp : 0 } }); }
             return order;
         });
         res.json({ success: true, data: result });
@@ -130,13 +107,11 @@ app.put('/api/orders/:id/complete', async (req, res) => {
         const result = await prisma.$transaction(async (tx) => {
             const order = await tx.order.findUnique({ where: { id: parseInt(id) }, include: { items: true } });
             if (!order) throw new Error('Pesanan tidak ditemukan');
-
             await tx.order.update({ where: { id: parseInt(id) }, data: { status: 'Selesai', paymentStatus: 'Lunas' } });
 
             for (const item of order.items) {
-                if (item.productId) {
-                    await tx.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.qty } } });
-                } else if (item.packageId) {
+                if (item.productId) { await tx.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.qty } } }); } 
+                else if (item.packageId) {
                     const pkg = await tx.package.findUnique({ where: { id: item.packageId }, include: { items: true } });
                     for (const pkgItem of pkg.items) { await tx.product.update({ where: { id: pkgItem.productId }, data: { stock: { decrement: pkgItem.qty * item.qty } } }); }
                 }
@@ -145,18 +120,8 @@ app.put('/api/orders/:id/complete', async (req, res) => {
             const remainingBalance = (order.totalAmount + order.shippingCost) - order.downPayment;
             const finalPaymentMethod = paymentMethod || order.paymentMethod || 'Tunai';
             
-            const sale = await tx.sale.create({
-                data: {
-                    invoice: `LUNAS-${order.invoice} (${order.customerName})`,
-                    totalAmount: remainingBalance,
-                    paymentMethod: finalPaymentMethod,
-                    cashReceived: finalPaymentMethod === 'Tunai' ? remainingBalance : 0
-                }
-            });
-
-            for (const item of order.items) {
-                await tx.saleItem.create({ data: { saleId: sale.id, productId: item.productId, packageId: item.packageId, qty: item.qty, price: item.price, subtotal: item.subtotal } });
-            }
+            const sale = await tx.sale.create({ data: { invoice: `LUNAS-${order.invoice} (${order.customerName})`, totalAmount: remainingBalance, paymentMethod: finalPaymentMethod, cashReceived: finalPaymentMethod === 'Tunai' ? remainingBalance : 0 } });
+            for (const item of order.items) { await tx.saleItem.create({ data: { saleId: sale.id, productId: item.productId, packageId: item.packageId, qty: item.qty, price: item.price, subtotal: item.subtotal } }); }
             return order;
         });
         res.json({ success: true, message: 'Pesanan Selesai!', data: result });
@@ -178,20 +143,48 @@ app.delete('/api/orders/:id', async (req, res) => {
 
 app.get('/api/piutang', async (req, res) => {
     try {
-        const sales = await prisma.sale.findMany({
-            where: { paymentMethod: 'Piutang' },
-            orderBy: { createdAt: 'desc' },
-            include: { items: { include: { product: true, package: true } } }
-        });
-        const formatted = sales.map(s => ({
-            id: s.id,
-            invoice: s.invoice,
-            time: s.createdAt,
-            total: s.totalAmount,
-            items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ')
-        }));
+        const sales = await prisma.sale.findMany({ where: { paymentMethod: 'Piutang' }, orderBy: { createdAt: 'desc' }, include: { items: { include: { product: true, package: true } } } });
+        const formatted = sales.map(s => ({ id: s.id, invoice: s.invoice, time: s.createdAt, total: s.totalAmount, items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ') }));
         res.json({ success: true, data: formatted });
     } catch (error) { res.status(500).json({ success: false }); }
+});
+
+// ==========================================
+// ENDPOINT BARU: PENERIMAAN BARANG / NOTA VENDOR
+// ==========================================
+app.post('/api/restock', async (req, res) => {
+    const { supplierId, supplierName, items, discount, paymentMethod, notes } = req.body;
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            let totalCost = 0;
+            const historyEntries = [];
+            
+            // 1. Tambah stok kue dan buat riwayat
+            for (const item of items) {
+                const product = await tx.product.update({
+                    where: { id: item.id },
+                    data: { stock: { increment: parseInt(item.qty) } }
+                });
+                historyEntries.push({ productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock });
+                totalCost += ((item.buyPrice || 0) * item.qty);
+            }
+            
+            if (historyEntries.length > 0) { await tx.stockHistory.createMany({ data: historyEntries }); }
+            
+            // 2. Hitung Total dan Potongan
+            const grandTotal = totalCost - (parseInt(discount) || 0);
+            const desc = `[Datang Barang - ${supplierName}] ${notes ? notes : ''}`;
+            const finalDesc = paymentMethod === 'Transfer' ? `[Transfer] ${desc}` : `[Tunai] ${desc}`;
+            
+            // 3. Catat sebagai Pengeluaran Toko otomatis
+            const expense = await tx.expense.create({
+                data: { category: 'Pembelian Stok / Restock', description: finalDesc, amount: grandTotal }
+            });
+            
+            return { totalCost, discount, grandTotal, expense, invoice: `NOTA-${Date.now()}` };
+        });
+        res.json({ success: true, data: result });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
 // ==========================================
@@ -213,13 +206,10 @@ app.get('/api/options', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// DIPERBARUI: Menerima kolom gambar foto asli
 app.post('/api/products', async (req, res) => {
   const { name, categoryId, supplierId, buyPrice, sellPrice, stock, image } = req.body;
   try {
-    const newProduct = await prisma.product.create({ 
-        data: { name, categoryId: parseInt(categoryId), supplierId: parseInt(supplierId), buyPrice: parseInt(buyPrice), sellPrice: parseInt(sellPrice), stock: parseInt(stock), image: image || null } 
-    });
+    const newProduct = await prisma.product.create({ data: { name, categoryId: parseInt(categoryId), supplierId: parseInt(supplierId), buyPrice: parseInt(buyPrice), sellPrice: parseInt(sellPrice), stock: parseInt(stock), image: image || null } });
     if (parseInt(stock) > 0) { await prisma.stockHistory.create({ data: { productId: newProduct.id, productName: newProduct.name, qtyAdded: parseInt(stock), newTotal: parseInt(stock) } }); }
     res.json({ success: true, data: newProduct });
   } catch (error) { res.status(500).json({ success: false, message: 'Gagal menyimpan' }); }
@@ -237,7 +227,6 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// LAPORAN GLOBAL
 app.get('/api/reports', async (req, res) => {
   const { period, start, end } = req.query;
   let dateFilter = {};

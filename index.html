@@ -37,14 +37,17 @@
             .catalog-mode @page { margin: 10mm; size: A4 portrait; }
             body.receipt-mode #print-area { display: block !important; width: 58mm; font-family: monospace; font-size: 12px; color: black; margin: 0; padding: 0; }
             body.catalog-mode #catalog-area { display: block !important; }
+            body.vendor-mode @page { margin: 0; }
+            body.vendor-mode #print-area-vendor { display: block !important; width: 58mm; font-family: monospace; font-size: 11px; color: black; margin: 0; padding: 0; }
         }
     </style>
 </head>
 <body class="text-gray-800" 
       :class="{
-          'bg-gray-50 flex h-screen overflow-hidden': !isPrintingCatalog && !isPrintingReceipt, 
+          'bg-gray-50 flex h-screen overflow-hidden': !isPrintingCatalog && !isPrintingReceipt && !isPrintingVendor, 
           'bg-white h-auto overflow-visible receipt-mode': isPrintingReceipt,
-          'bg-white h-auto overflow-visible catalog-mode': isPrintingCatalog
+          'bg-white h-auto overflow-visible catalog-mode': isPrintingCatalog,
+          'bg-white h-auto overflow-visible vendor-mode': isPrintingVendor
       }" 
       x-data="posApp()">
 
@@ -63,7 +66,7 @@
     </div>
 
     <!-- BUNGKUS APLIKASI -->
-    <div x-show="activeCashier && !isPrintingCatalog && !isPrintingReceipt" style="display: none;" class="flex w-full h-full no-print">
+    <div x-show="activeCashier && !isPrintingCatalog && !isPrintingReceipt && !isPrintingVendor" style="display: none;" class="flex w-full h-full no-print">
 
         <!-- Sidebar -->
         <aside class="w-20 lg:w-64 flex-shrink-0 bg-white border-r flex flex-col shadow-sm hidden md:flex transition-all z-20">
@@ -74,6 +77,10 @@
                 <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="layout-dashboard" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">POS Kasir</span></button>
                 <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="calendar-days" class="w-6 h-6 lg:mr-3 text-purple-500"></i><span class="hidden lg:block font-bold">Buku Pesanan (PO)</span></button>
                 <button @click="currentTab = 'piutang'; fetchPiutang();" :class="currentTab === 'piutang' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="book-down" class="w-6 h-6 lg:mr-3 text-red-500"></i><span class="hidden lg:block font-bold">Buku Piutang</span></button>
+                
+                <!-- MENU BARU: TERIMA BARANG -->
+                <button @click="currentTab = 'restock'; fetchOptions();" :class="currentTab === 'restock' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="truck" class="w-6 h-6 lg:mr-3 text-blue-500"></i><span class="hidden lg:block font-bold">Terima Barang</span></button>
+
                 <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="package" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Master Produk</span></button>
                 <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="wallet" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Pengeluaran</span></button>
                 <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="bar-chart-3" class="w-6 h-6 lg:mr-3"></i><span class="hidden lg:block font-medium">Laporan & Analitik</span></button>
@@ -168,6 +175,109 @@
                     </div>
                     <span class="font-bold border-l border-orange-400 pl-3" x-show="cart.length > 0" x-text="formatRupiah(total)"></span>
                 </button>
+            </div>
+        </main>
+
+        <!-- TAB BARU: TERIMA BARANG (RESTOCK VENDOR) -->
+        <main x-show="currentTab === 'restock'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+                <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="truck" class="text-blue-500"></i> Terima Barang (Nota Vendor)</h1>
+            </header>
+            
+            <div class="flex flex-1 overflow-hidden relative flex-col md:flex-row">
+                <!-- Kiri: Pilih Supplier & Produk -->
+                <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
+                    <div class="p-4 bg-white border-b shadow-sm z-10">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">1. Pilih Supplier (Vendor Asal)</label>
+                        <select x-model="restockSupplierId" @change="restockSupplierName = $event.target.options[$event.target.selectedIndex].text; restockCart = [];" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
+                            <option value="">-- Sentuh untuk Pilih Supplier --</option>
+                            <template x-for="sup in options.suppliers" :key="sup.id">
+                                <option :value="sup.id" x-text="sup.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="flex-1 p-4 overflow-y-auto pb-24 bg-gray-50">
+                        <div x-show="!restockSupplierId" class="flex flex-col items-center justify-center h-full text-gray-400">
+                            <i data-lucide="store" class="w-16 h-16 mb-4 opacity-30"></i>
+                            <p class="font-medium">Pilih supplier di atas terlebih dahulu.</p>
+                        </div>
+                        <div x-show="restockSupplierId" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                            <template x-for="product in products.filter(p => p.type === 'product' && p.supplierId == restockSupplierId)" :key="product.id">
+                                <div @click="addToRestockCart(product)" class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition flex flex-col relative group">
+                                    <div class="absolute top-2 right-2 bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i data-lucide="plus" class="w-4 h-4"></i></div>
+                                    <h3 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6" x-text="product.name"></h3>
+                                    <p class="text-[10px] text-gray-500 mt-1">Stok Saat Ini: <span class="font-bold" x-text="product.stock"></span></p>
+                                    <p class="text-blue-600 font-bold mt-2 text-sm" x-text="'Modal: ' + formatRupiah(product.buyPrice || 0)"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kanan: Keranjang Nota Vendor -->
+                <aside class="flex-shrink-0 bg-white flex flex-col w-full md:w-80 lg:w-96 shadow-xl z-20">
+                    <div class="h-12 flex items-center justify-center px-4 border-b bg-blue-50 text-blue-800 font-bold text-sm">
+                        <i data-lucide="clipboard-list" class="w-4 h-4 mr-2"></i> Rincian Nota Datang
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+                        <template x-if="restockCart.length === 0">
+                            <div class="text-center text-gray-400 mt-10"><i data-lucide="box" class="w-10 h-10 mx-auto mb-2 opacity-30"></i><p class="text-xs">Klik kue di sebelah kiri<br>untuk memasukkan ke nota.</p></div>
+                        </template>
+                        <template x-for="(item, index) in restockCart" :key="index">
+                            <div class="p-2 border rounded-lg bg-gray-50 border-gray-200">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-xs text-gray-800 line-clamp-2 pr-2" x-text="item.name"></h4>
+                                    <button @click="restockCart.splice(index, 1)" class="text-red-400 hover:text-red-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                </div>
+                                <div class="flex items-center justify-between mt-1">
+                                    <div class="flex items-center bg-white border rounded-md shadow-sm">
+                                        <button @click="if(item.qty>1) item.qty--" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-l-md text-sm font-bold text-gray-600">-</button>
+                                        <input type="number" x-model.number="item.qty" class="w-10 text-center text-xs font-bold border-x outline-none p-0 h-7" min="1">
+                                        <button @click="item.qty++" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-r-md text-sm font-bold text-gray-600">+</button>
+                                    </div>
+                                    <span class="text-xs font-bold text-blue-600" x-text="formatRupiah(item.buyPrice * item.qty)"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <div class="p-4 border-t bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                        <div class="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-gray-600 font-semibold">Subtotal (<span x-text="restockCart.reduce((s,i)=>s+i.qty,0)"></span> pcs)</span>
+                                <span class="font-bold text-gray-800" x-text="formatRupiah(restockTotal)"></span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-gray-600 font-semibold">Potongan (Rp)</span>
+                                <input type="number" x-model="restockDiscount" placeholder="0" class="w-24 p-1.5 border border-gray-300 rounded text-right text-xs outline-none focus:border-red-500 text-red-500 font-bold bg-white">
+                            </div>
+                            <div class="flex items-center justify-between text-xs pt-2 border-t border-dashed border-gray-300">
+                                <span class="text-gray-800 font-extrabold">Total Bayar Vendor</span>
+                                <span class="font-extrabold text-lg text-blue-600" x-text="formatRupiah(restockGrandTotal)"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Metode Lunas</label>
+                                <select x-model="restockMethod" class="w-full p-2 border border-gray-300 rounded text-xs font-bold outline-none focus:border-blue-500 bg-white">
+                                    <option value="Tunai">Tunai Laci</option>
+                                    <option value="Transfer">Transfer Bank</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Catatan</label>
+                                <input type="text" x-model="restockNotes" placeholder="Misal: Sisa kemarin" class="w-full p-2 border border-gray-300 rounded text-xs outline-none focus:border-blue-500 bg-white">
+                            </div>
+                        </div>
+                        
+                        <button @click="submitRestock()" :disabled="restockCart.length === 0 || isProcessing" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md">
+                            <i data-lucide="printer" class="w-4 h-4" x-show="!isProcessing"></i>
+                            <i data-lucide="loader-2" class="w-4 h-4 animate-spin" x-show="isProcessing"></i>
+                            <span>SIMPAN & CETAK NOTA VENDOR</span>
+                        </button>
+                    </div>
+                </aside>
             </div>
         </main>
 
@@ -347,9 +457,10 @@
 
         <!-- TAB 3: PENGELUARAN -->
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran</h1></header>
+            <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran Lain-lain</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                    <p class="text-sm text-gray-500 mb-4 bg-yellow-50 p-2 rounded border border-yellow-100"><i data-lucide="info" class="w-4 h-4 inline mr-1 text-yellow-600"></i> Untuk pembayaran <b>Nota Datang Barang (Supplier/Vendor)</b>, silakan gunakan menu <b>Terima Barang</b> agar stok otomatis bertambah.</p>
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Metode Uang</label>
@@ -587,12 +698,12 @@
         <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-between px-1 py-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] no-print overflow-x-auto gap-1">
             <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Kasir</span></button>
             <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'text-purple-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="calendar-days" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">PO</span></button>
+            <button @click="currentTab = 'restock'; fetchOptions();" :class="currentTab === 'restock' ? 'text-blue-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="truck" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Masuk</span></button>
             <button @click="currentTab = 'piutang'; fetchPiutang();" :class="currentTab === 'piutang' ? 'text-red-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="book-down" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Piutang</span></button>
-            <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="package" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Kue</span></button>
             <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Laporan</span></button>
         </nav>
 
-        <!-- JENDELA TAMBAH PRODUK BARU (MODAL) -->
+        <!-- JENDELA TAMBAH PRODUK BARU -->
         <div x-show="showAddProductModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
             <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closeAddProduct()">
                 <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
@@ -601,78 +712,34 @@
                 </div>
                 <div class="p-6 overflow-y-auto max-h-[80vh]">
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kue / Produk <span class="text-red-500">*</span></label>
-                            <input type="text" x-model="newProduct.name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="Contoh: Sosis Solo Ayam">
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kue / Produk <span class="text-red-500">*</span></label><input type="text" x-model="newProduct.name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"></div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label><select x-model="newProduct.categoryId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"><option value="">Pilih...</option><template x-for="cat in options.categories" :key="cat.id"><option :value="cat.id" x-text="cat.name"></option></template></select></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Supplier Asal <span class="text-red-500">*</span></label><select x-model="newProduct.supplierId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown"><option value="">Pilih...</option><template x-for="sup in options.suppliers" :key="sup.id"><option :value="sup.id" x-text="sup.name"></option></template></select></div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
-                                <select x-model="newProduct.categoryId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                                    <option value="">Pilih...</option>
-                                    <template x-for="cat in options.categories" :key="cat.id">
-                                        <option :value="cat.id" x-text="cat.name"></option>
-                                    </template>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Supplier Asal <span class="text-red-500">*</span></label>
-                                <select x-model="newProduct.supplierId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                                    <option value="">Pilih...</option>
-                                    <template x-for="sup in options.suppliers" :key="sup.id">
-                                        <option :value="sup.id" x-text="sup.name"></option>
-                                    </template>
-                                </select>
-                            </div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Harga Modal</label><input type="number" x-model="newProduct.buyPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0"></div>
+                            <div><label class="block text-sm font-semibold text-gray-700 mb-1">Harga Jual <span class="text-red-500">*</span></label><input type="number" x-model="newProduct.sellPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0"></div>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Modal</label>
-                                <input type="number" x-model="newProduct.buyPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Jual <span class="text-red-500">*</span></label>
-                                <input type="number" x-model="newProduct.sellPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Stok Fisik Awal</label>
-                            <input type="number" x-model="newProduct.stock" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
-                        </div>
-
-                        <!-- KOLOM LINK GAMBAR BARU -->
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-1">Stok Fisik Awal</label><input type="number" x-model="newProduct.stock" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0"></div>
                         <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Link Foto (Opsional)</label>
-                            <input type="text" x-model="newProduct.image" class="w-full p-2 border border-orange-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown text-sm bg-white" placeholder="Paste link dari postimages.org di sini...">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Link Foto (Opsional)</label><input type="text" x-model="newProduct.image" class="w-full p-2 border border-orange-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown text-sm bg-white" placeholder="Paste link dari postimages.org...">
                             <p class="text-[10px] text-gray-500 mt-1"><i data-lucide="info" class="w-3 h-3 inline"></i> Kosongkan jika ingin menggunakan gambar kartun bawaan.</p>
                         </div>
-
                     </div>
-                    <button @click="submitProduct()" :disabled="isProcessing" class="w-full mt-6 bg-brand-brown text-white py-3 rounded-xl font-bold text-lg hover:bg-orange-800 disabled:opacity-50 flex justify-center items-center gap-2">
-                        <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
-                        <i data-lucide="save" x-show="!isProcessing"></i>
-                        <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PRODUK'"></span>
-                    </button>
+                    <button @click="submitProduct()" :disabled="isProcessing" class="w-full mt-6 bg-brand-brown text-white py-3 rounded-xl font-bold text-lg hover:bg-orange-800 disabled:opacity-50 flex justify-center items-center gap-2"><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><i data-lucide="save" x-show="!isProcessing"></i><span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PRODUK'"></span></button>
                 </div>
             </div>
         </div>
 
-        <!-- JENDELA PEMBAYARAN -->
+        <!-- JENDELA PEMBAYARAN KASIR -->
         <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
             <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
                 <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
                 <div class="p-6">
                     <div x-show="paymentStep === 'input'">
-                        <div class="text-center mb-6">
-                            <p class="text-gray-500 text-sm">Total Tagihan (<span x-text="cart.length"></span> Item | <span x-text="totalQty"></span> Pcs)</p>
-                            <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli</label>
-                            <input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Wajib diisi jika Kasbon/Piutang">
-                        </div>
-
+                        <div class="text-center mb-6"><p class="text-gray-500 text-sm">Total Tagihan (<span x-text="cart.length"></span> Item | <span x-text="totalQty"></span> Pcs)</p><p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p></div>
+                        <div class="mb-4"><label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli</label><input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Wajib diisi jika Kasbon/Piutang"></div>
                         <div class="mb-4">
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                                 <button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai</button>
@@ -681,29 +748,16 @@
                                 <button @click="paymentMethod = 'Piutang'" :class="paymentMethod === 'Piutang' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-500 border border-red-200'" class="py-2 rounded-lg font-bold text-xs transition">Utang / Tempo</button>
                             </div>
                         </div>
-
                         <div x-show="paymentMethod === 'Tunai'" class="mb-6">
                             <input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0">
-                            <div class="grid grid-cols-4 gap-2 mt-2">
-                                <button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button>
-                                <button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button>
-                                <button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button>
-                            </div>
-                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50">
-                                <span class="font-semibold text-gray-600">Kembalian</span>
-                                <span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span>
-                            </div>
+                            <div class="grid grid-cols-4 gap-2 mt-2"><button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button><button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button><button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button></div>
+                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50"><span class="font-semibold text-gray-600">Kembalian</span><span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span></div>
                         </div>
-
                         <div x-show="paymentMethod === 'Mix'" class="mb-6" style="display: none;">
                             <label class="block text-xs font-semibold text-gray-500 mb-1">Berapa Uang TUNAI FISIK yang diterima?</label>
                             <input type="number" x-model="mixCash" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right focus:border-brand-brown" placeholder="Ketik nominal tunai">
-                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-blue-50 border border-blue-100">
-                                <span class="font-semibold text-blue-800 text-sm">Sisa tagihan di-QRIS-kan</span>
-                                <span class="text-xl font-bold text-blue-600" x-text="formatRupiah(total - (parseFloat(mixCash) || 0))"></span>
-                            </div>
+                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-blue-50 border border-blue-100"><span class="font-semibold text-blue-800 text-sm">Sisa tagihan di-QRIS-kan</span><span class="text-xl font-bold text-blue-600" x-text="formatRupiah(total - (parseFloat(mixCash) || 0))"></span></div>
                         </div>
-
                         <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50"><i data-lucide="check-circle" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span></button>
                     </div>
                     
@@ -717,67 +771,32 @@
             </div>
         </div>
 
-        <!-- MODAL FORM PO (TIDAK BERUBAH) -->
+        <!-- MODAL FORM PO -->
         <div x-show="showPoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
             <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showPoModal = false">
                 <div class="bg-purple-600 p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="calendar-plus"></i> Simpan Buku Pesanan</h2><button @click="showPoModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
                 <div class="p-6 overflow-y-auto max-h-[80vh]">
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemesan / Instansi</label>
-                            <input type="text" x-model="poForm.name" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50" placeholder="Wajib diisi">
-                        </div>
+                        <div><label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemesan / Instansi</label><input type="text" x-model="poForm.name" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50" placeholder="Wajib diisi"></div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Waktu Diambil (Hari H)</label>
-                                <input type="datetime-local" x-model="poForm.pickupDate" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">No. HP (Opsional)</label>
-                                <input type="text" x-model="poForm.phone" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="08...">
-                            </div>
+                            <div><label class="block text-xs font-semibold text-gray-700 mb-1">Waktu Diambil (Hari H)</label><input type="datetime-local" x-model="poForm.pickupDate" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-xs font-bold"></div>
+                            <div><label class="block text-xs font-semibold text-gray-700 mb-1">No. HP (Opsional)</label><input type="text" x-model="poForm.phone" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="08..."></div>
                         </div>
-                        
                         <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Biaya Ongkos Kirim (Opsional)</label>
-                            <input type="number" x-model="poForm.shippingCost" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0 (Kosongkan jika ambil sendiri)">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Biaya Ongkos Kirim (Opsional)</label><input type="number" x-model="poForm.shippingCost" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0">
                         </div>
-
                         <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Titip DP / Uang Muka</label>
-                                <input type="number" x-model="poForm.dp" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Metode Bayar DP</label>
-                                <select x-model="poForm.paymentMethod" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm">
-                                    <option value="Tunai">Tunai</option>
-                                    <option value="QRIS">QRIS / Transfer</option>
-                                </select>
-                            </div>
+                            <div><label class="block text-xs font-semibold text-gray-700 mb-1">Titip DP / Uang Muka</label><input type="number" x-model="poForm.dp" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0"></div>
+                            <div><label class="block text-xs font-semibold text-gray-700 mb-1">Metode Bayar DP</label><select x-model="poForm.paymentMethod" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm"><option value="Tunai">Tunai</option><option value="QRIS">QRIS / Transfer</option></select></div>
                         </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Catatan Tambahan (Misal: Pita merah)</label>
-                            <input type="text" x-model="poForm.notes" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm">
-                        </div>
+                        <div><label class="block text-xs font-semibold text-gray-700 mb-1">Catatan Tambahan (Misal: Pita merah)</label><input type="text" x-model="poForm.notes" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm"></div>
                     </div>
-
                     <div class="mt-6 border-t pt-4">
                         <div class="flex justify-between text-sm text-gray-600 mb-1"><span>Harga Kue Saja</span><span x-text="formatRupiah(total)"></span></div>
                         <div class="flex justify-between text-sm text-gray-600 mb-1"><span>Ongkir</span><span x-text="formatRupiah(parseInt(poForm.shippingCost) || 0)"></span></div>
                         <div class="flex justify-between text-sm text-gray-600 mb-3 border-b pb-2"><span>Titip DP</span><span class="text-red-500" x-text="'- ' + formatRupiah(parseInt(poForm.dp) || 0)"></span></div>
-                        
-                        <div class="flex justify-between items-center mb-6">
-                            <span class="font-bold text-gray-800">Sisa Tagihan</span>
-                            <span class="text-xl font-bold text-brand-orange" x-text="formatRupiah((total + (parseInt(poForm.shippingCost) || 0)) - (parseInt(poForm.dp) || 0))"></span>
-                        </div>
-
-                        <button @click="submitPo()" :disabled="isProcessing" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-purple-700 disabled:opacity-50">
-                            <i data-lucide="save" x-show="!isProcessing"></i>
-                            <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
-                            <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PESANAN (PO)'"></span>
-                        </button>
+                        <div class="flex justify-between items-center mb-6"><span class="font-bold text-gray-800">Sisa Tagihan</span><span class="text-xl font-bold text-brand-orange" x-text="formatRupiah((total + (parseInt(poForm.shippingCost) || 0)) - (parseInt(poForm.dp) || 0))"></span></div>
+                        <button @click="submitPo()" :disabled="isProcessing" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-purple-700 disabled:opacity-50"><i data-lucide="save" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PESANAN (PO)'"></span></button>
                     </div>
                 </div>
             </div>
@@ -785,7 +804,7 @@
 
     </div>
 
-    <!-- FORMAT STRUK -->
+    <!-- FORMAT STRUK KASIR / PO -->
     <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
         <template x-if="lastTx">
             <div style="padding: 10px;">
@@ -836,6 +855,63 @@
         </template>
     </div>
 
+    <!-- FORMAT STRUK NOTA VENDOR -->
+    <div x-show="isPrintingVendor" id="print-area-vendor" style="display: none;">
+        <template x-if="lastVendorTx">
+            <div style="padding: 10px;">
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <div style="font-size: 14px; font-weight: bold;">BUKTI TERIMA BARANG</div>
+                    <div style="font-size: 10px;">TOKO KUKITA</div>
+                    <div>------------------------</div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
+                    <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
+                    <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                    <tr style="border-bottom: 1px dashed black; border-top: 1px dashed black;">
+                        <th style="text-align: left; padding: 2px 0; width: 15%;">Bnyk</th>
+                        <th style="text-align: left; width: 50%;">Nama</th>
+                        <th style="text-align: right; width: 35%;">Jumlah</th>
+                    </tr>
+                    <template x-for="item in lastVendorTx.cart">
+                        <tr>
+                            <td style="vertical-align: top; padding-top: 3px;" x-text="item.qty"></td>
+                            <td style="vertical-align: top; padding-top: 3px;"><div x-text="item.name"></div><div style="font-size: 9px;" x-text="'@ ' + formatRupiah(item.buyPrice)"></div></td>
+                            <td style="text-align: right; vertical-align: top; padding-top: 3px;" x-text="formatRupiah(item.buyPrice * item.qty)"></td>
+                        </tr>
+                    </template>
+                </table>
+                
+                <div style="border-top: 1px dashed black; padding-top: 5px; margin-bottom: 5px;">
+                    <div x-show="lastVendorTx.discount > 0" style="display: flex; justify-content: space-between;">
+                        <div>Subtotal:</div>
+                        <div x-text="formatRupiah(lastVendorTx.total)"></div>
+                    </div>
+                    <div x-show="lastVendorTx.discount > 0" style="display: flex; justify-content: space-between; color: red;">
+                        <div>Potongan:</div>
+                        <div x-text="'- ' + formatRupiah(lastVendorTx.discount)"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 3px;">
+                        <div>Jumlah Rp:</div>
+                        <div x-text="formatRupiah(lastVendorTx.grandTotal)"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                        <div>Status:</div>
+                        <div style="font-weight: bold;" x-text="'Lunas ' + lastVendorTx.method"></div>
+                    </div>
+                </div>
+                <div x-show="lastVendorTx.notes" style="margin-bottom: 10px; font-size: 10px; font-style: italic;" x-text="'Ket: ' + lastVendorTx.notes"></div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 20px; text-align: center;">
+                    <div><div style="margin-bottom: 25px;">Tanda Terima</div><div>(................)</div></div>
+                    <div><div style="margin-bottom: 25px;">Hormat Kami</div><div x-text="activeCashier"></div></div>
+                </div>
+            </div>
+        </template>
+    </div>
+
     <!-- Script Utama -->
     <script>
         const SERVER_URL = 'https://pos-kukita.vercel.app';
@@ -853,23 +929,20 @@
                 customerName: '', itemReports: [], reportPeriod: 'today', startDate: '', endDate: '',
                 oldPin: '', newPin: '', isPrintingReceipt: false, isPrintingCatalog: false,
                 showAddProductModal: false, options: { categories: [], suppliers: [] }, 
-                
-                // DATA PRODUK BARU TERMASUK GAMBAR
                 newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' },
 
-                // VARIABEL BUKU PESANAN (PO) & PIUTANG
-                poList: [], piutangList: [],
-                showPoModal: false,
+                // VARIABEL BUKU PESANAN & PIUTANG
+                poList: [], piutangList: [], showPoModal: false,
                 poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
+
+                // VARIABEL BUKU TERIMA BARANG (VENDOR) BARU
+                restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
 
                 async init() {
                     setTimeout(() => { lucide.createIcons(); }, 100);
                     setInterval(() => { this.currentTime = new Date().toLocaleString('id-ID'); }, 1000);
                     this.$watch('currentTab', () => { setTimeout(() => { lucide.createIcons(); }, 50); });
                     this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
-                    this.$watch('paymentStep', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
-                    this.$watch('showPoModal', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
-                    this.$watch('showAddProductModal', () => { setTimeout(() => { lucide.createIcons(); }, 10); });
                     
                     await this.fetchCashiers(); await this.fetchCatalog();
                 },
@@ -894,14 +967,14 @@
                     try {
                         const res = await fetch(`${SERVER_URL}/api/catalog`); const result = await res.json();
                         if(result.success) {
-                            const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, price: p.sellPrice, buyPrice: p.buyPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product' }));
-                            const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', price: p.sellPrice, stock: 999, image: p.image || null, icon: '🎁', type: 'package' }));
+                            // JURUS BARU: MEMBAWA ID SUPPLIER UNTUK MENU TERIMA BARANG
+                            const prodList = result.data.products.map(p => ({ id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, supplierId: p.supplier.id, price: p.sellPrice, buyPrice: p.buyPrice, stock: p.stock, image: p.image || null, icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product' }));
+                            const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', supplierId: null, price: p.sellPrice, stock: 999, image: p.image || null, icon: '🎁', type: 'package' }));
                             this.products = [...prodList, ...pkgList]; this.categories = ['Semua', ...Array.from(new Set(this.products.map(p => p.category)))];
                         }
                     } catch (e) {} finally { this.isLoading = false; setTimeout(() => { lucide.createIcons(); }, 10); }
                 },
 
-                // FUNGSI KERANJANG PINTAR
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
                 get filteredMasterProducts() { return this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); },
                 
@@ -915,7 +988,6 @@
                 increaseQty(index) { this.isCustomPackage = false; this.cart[index].qty++; },
                 decreaseQty(index) { this.isCustomPackage = false; if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
                 removeFromCart(index) { this.isCustomPackage = false; this.cart.splice(index, 1); },
-                
                 validateQty(index) { this.isCustomPackage = false; let val = parseInt(this.cart[index].qty); if (isNaN(val) || val < 1) val = 1; this.cart[index].qty = val; },
 
                 get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
@@ -986,20 +1058,8 @@
                 // ==========================================
                 openPoForm() { this.poForm = { name: this.customerName || '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' }; this.showPoModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
                 
-                async fetchOrders() {
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/orders`); const data = await res.json();
-                        if (data.success) { this.poList = data.data; setTimeout(() => { lucide.createIcons(); }, 10); }
-                    } catch (error) {}
-                },
-                
-                async fetchPiutang() {
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/piutang`); const result = await res.json();
-                        if(result.success) { this.piutangList = result.data; setTimeout(() => { lucide.createIcons(); }, 10); }
-                    } catch(e) {}
-                },
-
+                async fetchOrders() { try { const res = await fetch(`${SERVER_URL}/api/orders`); const data = await res.json(); if (data.success) { this.poList = data.data; setTimeout(() => { lucide.createIcons(); }, 10); } } catch (error) {} },
+                async fetchPiutang() { try { const res = await fetch(`${SERVER_URL}/api/piutang`); const result = await res.json(); if(result.success) { this.piutangList = result.data; setTimeout(() => { lucide.createIcons(); }, 10); } } catch(e) {} },
                 isPast(dateString) { return new Date(dateString) < new Date(); },
 
                 async submitPo() {
@@ -1051,7 +1111,51 @@
 
                 resetCart() { this.cart = []; this.isCustomPackage = false; this.customerName = ''; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; },
 
-                // SISA FUNGSI BAWAAN (LAPORAN, MASTER, PENGELUARAN)
+                // ==========================================
+                // FUNGSI TERIMA BARANG VENDOR (BARU)
+                // ==========================================
+                
+                addToRestockCart(product) { 
+                    if(!product.buyPrice || product.buyPrice <= 0) return alert('❌ Harga Modal produk ini masih 0 atau belum diisi. Silakan edit terlebih dahulu di menu Master Produk!');
+                    const existing = this.restockCart.find(item => item.id === product.id); 
+                    if (existing) { existing.qty++; } else { this.restockCart.unshift({ ...product, qty: 1 }); } 
+                },
+                get restockTotal() { return this.restockCart.reduce((sum, i) => sum + ((i.buyPrice || 0) * i.qty), 0); },
+                get restockGrandTotal() { return this.restockTotal - (parseInt(this.restockDiscount) || 0); },
+                
+                async submitRestock() {
+                    if(this.restockCart.length === 0) return alert('Keranjang penerimaan kosong!');
+                    if(!this.restockSupplierId) return alert('Silakan pilih Supplier/Vendor terlebih dahulu!');
+                    
+                    const sandi = prompt("🔒 PIN ADMIN\n\nMasukkan PIN Admin untuk menyetujui penerimaan barang & pengeluaran kas:"); 
+                    if (!sandi) return;
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ PIN Salah.");
+                    } catch(e) { return alert("Gagal verifikasi PIN."); }
+
+                    this.isProcessing = true;
+                    try {
+                        const payload = { supplierId: this.restockSupplierId, supplierName: this.restockSupplierName, items: this.restockCart, discount: this.restockDiscount, paymentMethod: this.restockMethod, notes: this.restockNotes };
+                        const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const result = await res.json();
+                        
+                        if(result.success) {
+                            this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: JSON.parse(JSON.stringify(this.restockCart)), total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.restockNotes };
+                            alert('✅ Barang Diterima!\nStok etalase telah ditambahkan dan total bayar telah dicatat sebagai Pengeluaran Toko.');
+                            this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
+                            this.fetchCatalog(); this.fetchReport();
+                            
+                            this.isPrintingVendor = true;
+                            setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
+                        } else alert('Gagal.');
+                    } catch(e) { alert('Error koneksi.'); }
+                    finally { this.isProcessing = false; }
+                },
+
+                // ==========================================
+                // SISA FUNGSI BAWAAN (LAPORAN, MASTER)
+                // ==========================================
                 async fetchReport() {
                     try {
                         let queryParam = `?period=${this.reportPeriod}`;
@@ -1083,29 +1187,19 @@
                     } catch(e) {}
                 },
 
-                // ==========================================
-                // FUNGSI FORM TAMBAH PRODUK BARU
-                // ==========================================
                 async fetchOptions() {
                     try {
-                        const res = await fetch(`${SERVER_URL}/api/options`);
-                        const data = await res.json();
+                        const res = await fetch(`${SERVER_URL}/api/options`); const data = await res.json();
                         if (data.success) { this.options.categories = data.data.categories; this.options.suppliers = data.data.suppliers; }
                     } catch(e) {}
                 },
 
                 async openAddProduct() {
-                    const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin Anda untuk menambah produk baru ke dalam sistem:"); 
-                    if (!sandi) return;
-                    
+                    const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin Anda untuk menambah produk baru ke dalam sistem:"); if (!sandi) return;
                     try {
-                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { 
-                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) 
-                        });
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
                         if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN yang dimasukkan salah.");
-                    } catch(e) {
-                        return alert("Gagal memverifikasi PIN. Pastikan internet lancar.");
-                    }
+                    } catch(e) { return alert("Gagal memverifikasi PIN. Pastikan internet lancar."); }
 
                     this.fetchOptions();
                     this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' };
@@ -1116,25 +1210,14 @@
                 closeAddProduct() { this.showAddProductModal = false; },
 
                 async submitProduct() {
-                    if (!this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.supplierId || !this.newProduct.sellPrice) {
-                        return alert('Silakan lengkapi data produk (Nama, Kategori, Supplier, dan Harga Jual)!');
-                    }
+                    if (!this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.supplierId || !this.newProduct.sellPrice) return alert('Lengkapi data wajib (*)');
                     this.isProcessing = true;
                     try {
-                        const res = await fetch(`${SERVER_URL}/api/products`, {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.newProduct)
-                        });
+                        const res = await fetch(`${SERVER_URL}/api/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.newProduct) });
                         const result = await res.json();
-                        if (result.success) {
-                            alert('✅ Produk berhasil ditambahkan!');
-                            this.closeAddProduct();
-                            this.fetchCatalog();
-                        } else { alert('Gagal menambahkan produk.'); }
-                    } catch (e) { alert('Error koneksi.'); }
-                    finally { this.isProcessing = false; }
+                        if (result.success) { alert('✅ Produk berhasil ditambahkan!'); this.closeAddProduct(); this.fetchCatalog(); } else { alert('Gagal.'); }
+                    } catch (e) {} finally { this.isProcessing = false; }
                 },
-
-                // ==========================================
 
                 get totalProductTypes() { return this.products.filter(p => p.type === 'product').length; },
                 get totalPhysicalStock() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.stock > 0 ? p.stock : 0), 0); },
