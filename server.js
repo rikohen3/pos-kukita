@@ -124,34 +124,56 @@ app.get('/api/piutang', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// LOGIKA TITIP JUAL DITAMBAHKAN DI SINI
+// MEMBUAT SISTEM PENYIMPANAN RINCIAN NOTA VENDOR
 app.post('/api/restock', async (req, res) => {
     const { supplierId, supplierName, items, discount, paymentMethod, notes, printNow } = req.body;
     try {
         const result = await prisma.$transaction(async (tx) => {
             let totalCost = 0; const historyEntries = [];
+            const rincianNota = []; // Menyimpan teks rincian kue untuk laporan
             
             for (const item of items) {
-                // JIKA ITEM INI BARU DITAMBAHKAN (BUKAN DRAFT LAMA YG SUDAH MASUK STOK)
                 if(!item.alreadyInStock) {
                     const product = await tx.product.update({ where: { id: item.id }, data: { stock: { increment: parseInt(item.qty) } } });
                     historyEntries.push({ productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock });
                 }
                 totalCost += ((item.buyPrice || 0) * item.qty);
+                // Tambahkan rincian kue ke memori
+                rincianNota.push(`${item.name} (x${item.qty})`);
             }
             if (historyEntries.length > 0) { await tx.stockHistory.createMany({ data: historyEntries }); }
             
             const grandTotal = totalCost - (parseInt(discount) || 0);
-            
             let expense = null;
-            // JIKA DICETAK & DIBAYAR SEKARANG, BUAT PENGELUARAN
+            const notaID = `NOTA-${Date.now()}`;
+            
+            // JIKA DICETAK & DIBAYAR SEKARANG, BUAT PENGELUARAN PLUS SIMPAN RINCIANNYA
             if (printNow && paymentMethod !== 'Titip Jual') {
-                const desc = `[Nota Vendor Lunas - ${supplierName}] ${notes ? notes : ''}`;
+                const desc = `[Nota Vendor Lunas - ${supplierName}] ${notaID}`;
                 const finalDesc = paymentMethod === 'Transfer' ? `[Transfer] ${desc}` : `[Tunai] ${desc}`;
-                expense = await tx.expense.create({ data: { category: 'Pembelian Stok / Restock', description: finalDesc, amount: grandTotal } });
+                
+                expense = await tx.expense.create({ 
+                    data: { 
+                        category: 'Pembelian Stok / Restock', 
+                        description: finalDesc, 
+                        amount: grandTotal,
+                        // KITA SIMPAN SEMUA DATA LENGKAP NOTA DI KOLOM 'notes' SUPAYA BISA DIPANGGIL LAGI
+                        notes: JSON.stringify({ 
+                            supplier: supplierName, 
+                            invoice: notaID,
+                            cart: items.map(i => ({name: i.name, qty: i.qty, buyPrice: i.buyPrice})),
+                            total: totalCost,
+                            discount: parseInt(discount) || 0,
+                            grandTotal: grandTotal,
+                            method: paymentMethod,
+                            keteranganManual: notes,
+                            rincianTeks: rincianNota.join(', ')
+                        }) 
+                    } 
+                });
             }
             
-            return { totalCost, discount, grandTotal, expense, method: paymentMethod, invoice: `NOTA-${Date.now()}` };
+            return { totalCost, discount, grandTotal, expense, method: paymentMethod, invoice: notaID };
         });
         res.json({ success: true, data: result });
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
@@ -183,6 +205,7 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// UPDATE LAPORAN UNTUK MEMISAHKAN PENGELUARAN BIASA DENGAN NOTA VENDOR
 app.get('/api/reports', async (req, res) => {
   const { period, start, end } = req.query; let dateFilter = {};
   if (period === 'today') { const s = new Date(); s.setHours(0,0,0,0); const e = new Date(); e.setHours(23,59,59,999); dateFilter = { createdAt: { gte: s, lte: e } }; }
@@ -214,7 +237,22 @@ app.get('/api/reports', async (req, res) => {
     const expCash = totalExpenses - expTransfer;
     const salesHistory = sales.map(s => ({ invoice: s.invoice, time: s.createdAt, paymentMethod: s.paymentMethod, total: s.totalAmount, items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ') }));
 
-    res.json({ success: true, data: { revenue: totalRevenue, revenueCash: totalCash, revenueQris: totalQris, piutang: totalPiutang, grossProfit: (totalRevenue + totalPiutang) - totalCOGS, expenses: totalExpenses, expCash: expCash, expTransfer: expTransfer, netProfit: totalCash - expCash, transactions: sales.length, salesHistory, expenseHistory: expenses, stockHistory } });
+    // PISAHKAN PENGELUARAN BIASA DENGAN NOTA VENDOR
+    const regularExpenses = [];
+    const vendorInvoices = [];
+    
+    expenses.forEach(e => {
+        if(e.category === 'Pembelian Stok / Restock' && e.notes) {
+            try {
+                const parsedData = JSON.parse(e.notes);
+                vendorInvoices.push({ id: e.id, time: e.createdAt, amount: e.amount, rawDesc: e.description, detailNota: parsedData });
+            } catch(err) { regularExpenses.push(e); }
+        } else {
+            regularExpenses.push(e);
+        }
+    });
+
+    res.json({ success: true, data: { revenue: totalRevenue, revenueCash: totalCash, revenueQris: totalQris, piutang: totalPiutang, grossProfit: (totalRevenue + totalPiutang) - totalCOGS, expenses: totalExpenses, expCash: expCash, expTransfer: expTransfer, netProfit: totalCash - expCash, transactions: sales.length, salesHistory, expenseHistory: regularExpenses, vendorHistory: vendorInvoices, stockHistory } });
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
