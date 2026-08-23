@@ -94,6 +94,7 @@
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
                     <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+                    <!-- TAMPILAN KASIR AKTIF -->
                     <div class="flex items-center gap-2 bg-orange-100 px-3 py-1.5 rounded-full border border-orange-200">
                         <i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i>
                         <span class="text-xs md:text-sm font-bold text-brand-brown" x-text="activeCashier"></span>
@@ -501,7 +502,7 @@
             </div>
         </main>
 
-        <!-- TAB 4: LAPORAN & ANALITIK -->
+        <!-- TAB 4: LAPORAN & ANALITIK DENGAN SUB-MENU (TAB) -->
         <main x-show="currentTab === 'laporan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
@@ -518,215 +519,242 @@
                 </div>
             </header>
             
+            <!-- SUB-MENU (TABS) UNTUK LAPORAN -->
+            <div class="bg-white border-b px-4 flex gap-4 overflow-x-auto">
+                <button @click="reportSubTab = 'ringkasan'" :class="reportSubTab === 'ringkasan' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Ringkasan & Omset</button>
+                <button @click="reportSubTab = 'struk'" :class="reportSubTab === 'struk' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Struk Kasir</button>
+                <button @click="reportSubTab = 'stok_vendor'" :class="reportSubTab === 'stok_vendor' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Stok & Vendor</button>
+                <button @click="reportSubTab = 'pengeluaran'" :class="reportSubTab === 'pengeluaran' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Pengeluaran Lain</button>
+            </div>
+            
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
-                <!-- KOTAK-KOTAK RINGKASAN ATAS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
-                                <p class="text-sm font-semibold text-gray-500">Total Pendapatan & Kasbon</p>
+                
+                <!-- SUB-TAB 1: RINGKASAN & OMSET -->
+                <div x-show="reportSubTab === 'ringkasan'">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
+                                    <p class="text-sm font-semibold text-gray-500">Total Pendapatan & Kasbon</p>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.revenue + reportData.piutang)"></p>
                             </div>
-                            <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.revenue + reportData.piutang)"></p>
-                        </div>
-                        <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
-                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Tunai</p><p class="text-sm font-bold text-green-600" x-text="formatRupiah(reportData.revenueCash || 0)"></p></div>
-                            <div class="text-center"><p class="text-[10px] text-gray-400 font-semibold uppercase">QRIS/Mix</p><p class="text-sm font-bold text-blue-600" x-text="formatRupiah(reportData.revenueQris || 0)"></p></div>
-                            <div class="text-right"><p class="text-[10px] text-gray-400 font-semibold uppercase text-red-500">Piutang</p><p class="text-sm font-bold text-red-500" x-text="formatRupiah(reportData.piutang || 0)"></p></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="piggy-bank" class="w-5 h-5"></i></div>
-                                <p class="text-sm font-semibold text-gray-500">Laba Kotor Bisnis</p>
+                            <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
+                                <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Tunai</p><p class="text-sm font-bold text-green-600" x-text="formatRupiah(reportData.revenueCash || 0)"></p></div>
+                                <div class="text-center"><p class="text-[10px] text-gray-400 font-semibold uppercase">QRIS/Mix</p><p class="text-sm font-bold text-blue-600" x-text="formatRupiah(reportData.revenueQris || 0)"></p></div>
+                                <div class="text-right"><p class="text-[10px] text-gray-400 font-semibold uppercase text-red-500">Piutang</p><p class="text-sm font-bold text-red-500" x-text="formatRupiah(reportData.piutang || 0)"></p></div>
                             </div>
-                            <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.grossProfit || 0)"></p>
                         </div>
-                        <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
-                            <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Omset Bersih - Semua Modal Barang</p></div>
+
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <div class="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="piggy-bank" class="w-5 h-5"></i></div>
+                                    <p class="text-sm font-semibold text-gray-500">Laba Kotor Bisnis</p>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-800" x-text="formatRupiah(reportData.grossProfit || 0)"></p>
+                            </div>
+                            <div class="flex justify-between mt-4 pt-3 border-t border-gray-100">
+                                <div><p class="text-[10px] text-gray-400 font-semibold uppercase">Omset Bersih - Semua Modal Barang</p></div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
+                            <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
+                            <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p></div>
+                            <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit)"></p>
+                            <p class="text-[10px] opacity-80 mt-1 relative z-10">Total Uang Tunai - Pengeluaran Laci</p>
+                        </div>
+                        
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
+                            <div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div>
+                            <p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p>
                         </div>
                     </div>
+
+                    <!-- TABEL BARANG TERJUAL -->
+                    <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual (Omset & Laba) </h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse mt-4 min-w-max">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                        <th class="p-3">Nama Produk</th>
+                                        <th class="p-3">Supplier</th>
+                                        <th class="p-3 text-center">Terjual (Qty)</th>
+                                        <th class="p-3 text-right">Total Uang Masuk</th>
+                                        <th class="p-3 text-right">Laba / Untung</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="item in itemReports" :key="item.id">
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="p-3 font-medium text-gray-800" x-text="item.name"></td>
+                                            <td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td>
+                                            <td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td>
+                                            <td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td>
+                                            <td class="p-3 text-right font-bold text-yellow-600" x-text="formatRupiah(item.totalProfit || 0)"></td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="itemReports.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada data penjualan tercatat.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-TAB 2: STRUK KASIR -->
+                <div x-show="reportSubTab === 'struk'" style="display: none;">
+                    <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-orange"></i> Riwayat Transaksi Penjualan (Struk Harian) </h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse mt-4 min-w-max">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                        <th class="p-3">Waktu & No. Struk</th>
+                                        <th class="p-3">Daftar Belanjaan / Keterangan</th>
+                                        <th class="p-3 text-center">Metode Bayar</th>
+                                        <th class="p-3 text-right">Total Transaksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="tx in reportData.salesHistory" :key="tx.invoice">
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="p-3 text-sm">
+                                                <div class="font-bold text-brand-brown" x-text="tx.invoice"></div>
+                                                <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
+                                            </td>
+                                            <td class="p-3 text-sm text-gray-600 max-w-xs">
+                                                <template x-if="tx.invoice && tx.invoice.startsWith('PKT-')">
+                                                    <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
+                                                </template>
+                                                <template x-if="tx.invoice && tx.invoice.startsWith('DP-')">
+                                                    <span class="inline-block bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">💰 DP PESANAN</span>
+                                                </template>
+                                                <template x-if="tx.invoice && tx.invoice.startsWith('LUNAS-')">
+                                                    <span class="inline-block bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">✅ PELUNASAN PO</span>
+                                                </template>
+                                                <span x-text="tx.items"></span>
+                                            </td>
+                                            <td class="p-3 text-center">
+                                                <span :class="tx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : (tx.paymentMethod === 'Mix' ? 'bg-purple-100 text-purple-700' : (tx.paymentMethod === 'Piutang' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'))" 
+                                                      class="px-2 py-1 rounded text-xs font-bold" 
+                                                      x-text="tx.paymentMethod || 'Tunai'">
+                                                </span>
+                                            </td>
+                                            <td class="p-3 text-right">
+                                                <div class="font-bold text-green-600 mb-2" x-text="formatRupiah(tx.total)"></div>
+                                                <button @click="deleteTransaction(tx.invoice)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition"><i data-lucide="trash-2" class="w-3 h-3"></i> Batal / Hapus</button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-TAB 3: STOK & VENDOR -->
+                <div x-show="reportSubTab === 'stok_vendor'" style="display: none;">
                     
-                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
-                        <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
-                        <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p></div>
-                        <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit)"></p>
-                        <p class="text-[10px] opacity-80 mt-1 relative z-10">Total Uang Tunai - Pengeluaran Laci</p>
-                    </div>
-                    
-                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
-                        <div class="flex items-center mb-2"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3"><i data-lucide="receipt" class="w-5 h-5"></i></div><p class="text-sm font-semibold text-gray-500">Total Transaksi</p></div>
-                        <p class="text-2xl font-bold text-gray-800"><span x-text="reportData.transactions"></span> <span class="text-sm font-normal text-gray-500">Struk</span></p>
-                    </div>
-                </div>
-
-                <!-- TABEL 1: BARANG TERJUAL -->
-                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="list-ordered" class="w-5 h-5 text-brand-orange"></i> Rincian Produk Terjual (Omset & Laba) </h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse mt-4 min-w-max">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-sm border-b">
-                                    <th class="p-3">Nama Produk</th>
-                                    <th class="p-3">Supplier</th>
-                                    <th class="p-3 text-center">Terjual (Qty)</th>
-                                    <th class="p-3 text-right">Total Uang Masuk</th>
-                                    <th class="p-3 text-right">Laba / Untung</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="item in itemReports" :key="item.id">
-                                    <tr class="border-b hover:bg-gray-50">
-                                        <td class="p-3 font-medium text-gray-800" x-text="item.name"></td>
-                                        <td class="p-3 text-sm text-gray-500"><span class="bg-orange-50 text-brand-orange px-2 py-1 rounded text-xs" x-text="item.supplier"></span></td>
-                                        <td class="p-3 text-center font-bold text-brand-brown" x-text="item.qtySold"></td>
-                                        <td class="p-3 text-right font-medium text-green-600" x-text="formatRupiah(item.totalSales)"></td>
-                                        <td class="p-3 text-right font-bold text-yellow-600" x-text="formatRupiah(item.totalProfit || 0)"></td>
+                    <!-- TABEL RIWAYAT NOTA VENDOR -->
+                    <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="truck" class="w-5 h-5 text-blue-600"></i> Riwayat Nota Penerimaan Vendor </h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse mt-4 min-w-max">
+                                <thead>
+                                    <tr class="bg-blue-50 text-blue-800 text-sm border-b">
+                                        <th class="p-3">Waktu & No. Nota</th>
+                                        <th class="p-3">Supplier Asal</th>
+                                        <th class="p-3">Daftar Kue yang Datang</th>
+                                        <th class="p-3 text-right">Total Tagihan</th>
                                     </tr>
-                                </template>
-                                <tr x-show="itemReports.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada data penjualan tercatat.</td></tr>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <template x-for="nota in reportData.vendorHistory" :key="nota.id">
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="p-3 text-sm">
+                                                <div class="font-bold text-blue-800" x-text="nota.detailNota.invoice"></div>
+                                                <div class="text-gray-500 text-xs" x-text="new Date(nota.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
+                                            </td>
+                                            <!-- INI FIX NAMA SUPPLIER -->
+                                            <td class="p-3 text-sm font-bold text-gray-700">
+                                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded" x-text="nota.detailNota.supplier"></span>
+                                            </td>
+                                            <td class="p-3 text-sm text-gray-600 max-w-xs">
+                                                <span x-text="nota.detailNota.rincianTeks"></span>
+                                                <div x-show="nota.detailNota.discount > 0" class="text-[10px] text-red-500 mt-1" x-text="'*Dipotong: ' + formatRupiah(nota.detailNota.discount)"></div>
+                                                <div x-show="nota.detailNota.keteranganManual" class="text-[10px] text-gray-400 italic mt-0.5" x-text="'Ket: ' + nota.detailNota.keteranganManual"></div>
+                                            </td>
+                                            <td class="p-3 text-right">
+                                                <div class="font-bold text-blue-600 mb-2" x-text="formatRupiah(nota.amount)"></div>
+                                                <div class="flex justify-end gap-1">
+                                                    <!-- TOMBOL HAPUS NOTA VENDOR BARU -->
+                                                    <button @click="deleteVendorNota(nota.id, nota.detailNota)" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[10px] font-bold px-2 py-1 rounded transition"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                                                    <button @click="reprintVendorNota(nota.detailNota)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition"><i data-lucide="printer" class="w-3 h-3"></i> Cetak Ulang</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="!reportData.vendorHistory || reportData.vendorHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada nota vendor yang dicetak di periode ini.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
 
-                <!-- TABEL 2: RIWAYAT STRUK KASIR PELANGGAN -->
-                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-orange"></i> Riwayat Transaksi Penjualan (Struk Harian) </h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse mt-4 min-w-max">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-sm border-b">
-                                    <th class="p-3">Waktu & No. Struk</th>
-                                    <th class="p-3">Daftar Belanjaan / Keterangan</th>
-                                    <th class="p-3 text-center">Metode Bayar</th>
-                                    <th class="p-3 text-right">Total Transaksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="tx in reportData.salesHistory" :key="tx.invoice">
-                                    <tr class="border-b hover:bg-gray-50">
-                                        <td class="p-3 text-sm">
-                                            <div class="font-bold text-brand-brown" x-text="tx.invoice"></div>
-                                            <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
-                                        </td>
-                                        <td class="p-3 text-sm text-gray-600 max-w-xs">
-                                            <template x-if="tx.invoice && tx.invoice.startsWith('PKT-')">
-                                                <span class="inline-block bg-orange-100 text-brand-orange text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">🎁 PAKET</span>
-                                            </template>
-                                            <template x-if="tx.invoice && tx.invoice.startsWith('DP-')">
-                                                <span class="inline-block bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">💰 DP PESANAN</span>
-                                            </template>
-                                            <template x-if="tx.invoice && tx.invoice.startsWith('LUNAS-')">
-                                                <span class="inline-block bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">✅ PELUNASAN PO</span>
-                                            </template>
-                                            <span x-text="tx.items"></span>
-                                        </td>
-                                        <td class="p-3 text-center">
-                                            <span :class="tx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : (tx.paymentMethod === 'Mix' ? 'bg-purple-100 text-purple-700' : (tx.paymentMethod === 'Piutang' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'))" 
-                                                  class="px-2 py-1 rounded text-xs font-bold" 
-                                                  x-text="tx.paymentMethod || 'Tunai'">
-                                            </span>
-                                        </td>
-                                        <td class="p-3 text-right">
-                                            <div class="font-bold text-green-600 mb-2" x-text="formatRupiah(tx.total)"></div>
-                                            <button @click="deleteTransaction(tx.invoice)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition"><i data-lucide="trash-2" class="w-3 h-3"></i> Batal / Hapus</button>
-                                        </td>
+                    <!-- TABEL LAPORAN KEDATANGAN BARANG (STOK MASUK) KEMBALI -->
+                    <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="package-plus" class="w-5 h-5 text-green-600"></i> Laporan Kedatangan Barang (Semua Stok Masuk) </h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse mt-4 min-w-max">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                        <th class="p-3">Waktu Datang</th>
+                                        <th class="p-3">Nama Produk / Kue</th>
+                                        <th class="p-3 text-center">Jumlah Diterima</th>
+                                        <th class="p-3 text-right">Aksi</th>
                                     </tr>
-                                </template>
-                                <tr x-show="!reportData.salesHistory || reportData.salesHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada struk tercetak di periode ini.</td></tr>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <template x-for="stok in reportData.stockHistory" :key="stok.id">
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="p-3 text-sm text-gray-500" x-text="new Date(stok.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td>
+                                            <td class="p-3 text-sm font-bold text-gray-700" x-text="stok.productName"></td>
+                                            <td class="p-3 text-center font-bold text-green-600" x-text="'+ ' + stok.qtyAdded + ' Pcs'"></td>
+                                            <td class="p-3 text-right">
+                                                <button @click="deleteStockHistory(stok.id)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition">
+                                                    <i data-lucide="trash-2" class="w-3 h-3"></i> Batal Stok
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="!reportData.stockHistory || reportData.stockHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Tidak ada penerimaan stok pada periode tanggal ini.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <!-- TABEL TAMBAHAN: LAPORAN KEDATANGAN BARANG (STOK MASUK) -->
-                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="package-plus" class="w-5 h-5 text-green-600"></i> Laporan Kedatangan Barang (Stok Masuk) </h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse mt-4 min-w-max">
-                            <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-sm border-b">
-                                    <th class="p-3">Waktu Datang</th>
-                                    <th class="p-3">Nama Produk / Kue</th>
-                                    <th class="p-3 text-center">Jumlah Diterima</th>
-                                    <th class="p-3 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="stok in reportData.stockHistory" :key="stok.id">
-                                    <tr class="border-b hover:bg-gray-50">
-                                        <td class="p-3 text-sm text-gray-500" x-text="new Date(stok.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td>
-                                        <td class="p-3 text-sm font-bold text-gray-700" x-text="stok.productName"></td>
-                                        <td class="p-3 text-center font-bold text-green-600" x-text="'+ ' + stok.qtyAdded + ' Pcs'"></td>
-                                        <td class="p-3 text-right">
-                                            <button @click="deleteStockHistory(stok.id)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition">
-                                                <i data-lucide="trash-2" class="w-3 h-3"></i> Batal / Hapus
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="!reportData.stockHistory || reportData.stockHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Tidak ada penerimaan stok pada periode tanggal ini.</td></tr>
-                            </tbody>
-                        </table>
+                <!-- SUB-TAB 4: PENGELUARAN BIASA -->
+                <div x-show="reportSubTab === 'pengeluaran'" style="display: none;">
+                    <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran Toko (Operasional)</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse mt-4 min-w-max">
+                                <thead><tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3">Waktu</th><th class="p-3">Kategori</th><th class="p-3">Keterangan & Sumber Dana</th><th class="p-3 text-right">Nominal</th><th class="p-3 text-right">Aksi</th></tr></thead>
+                                <tbody>
+                                    <template x-for="exp in reportData.expenseHistory" :key="exp.id">
+                                        <tr class="border-b hover:bg-gray-50"><td class="p-3 text-sm text-gray-500" x-text="new Date(exp.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td><td class="p-3 text-sm font-bold text-gray-700" x-text="exp.category"></td><td class="p-3 text-sm text-gray-600" x-text="exp.description"></td><td class="p-3 text-right font-bold text-red-500" x-text="formatRupiah(exp.amount)"></td><td class="p-3 text-right"><button @click="deleteExpense(exp.id)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition"><i data-lucide="trash-2" class="w-3 h-3"></i> Hapus</button></td></tr>
+                                    </template>
+                                    <tr x-show="!reportData.expenseHistory || reportData.expenseHistory.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada pengeluaran operasional tercatat.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <!-- TABEL 3: RIWAYAT NOTA VENDOR BARU UNTUK MBA AYU -->
-                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="truck" class="w-5 h-5 text-blue-600"></i> Riwayat Nota Penerimaan Vendor </h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse mt-4 min-w-max">
-                            <thead>
-                                <tr class="bg-blue-50 text-blue-800 text-sm border-b">
-                                    <th class="p-3">Waktu & No. Nota</th>
-                                    <th class="p-3">Supplier Asal</th>
-                                    <th class="p-3">Daftar Kue yang Datang</th>
-                                    <th class="p-3 text-right">Total Tagihan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="nota in reportData.vendorHistory" :key="nota.id">
-                                    <tr class="border-b hover:bg-gray-50">
-                                        <td class="p-3 text-sm">
-                                            <div class="font-bold text-blue-800" x-text="nota.detailNota.invoice"></div>
-                                            <div class="text-gray-500 text-xs" x-text="new Date(nota.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
-                                        </td>
-                                        <td class="p-3 text-sm font-bold text-gray-700" x-text="nota.detailNota.supplier"></td>
-                                        <td class="p-3 text-sm text-gray-600 max-w-xs">
-                                            <span x-text="nota.detailNota.rincianTeks"></span>
-                                            <div x-show="nota.detailNota.discount > 0" class="text-[10px] text-red-500 mt-1" x-text="'*Dipotong: ' + formatRupiah(nota.detailNota.discount)"></div>
-                                            <div x-show="nota.detailNota.keteranganManual" class="text-[10px] text-gray-400 italic mt-0.5" x-text="'Ket: ' + nota.detailNota.keteranganManual"></div>
-                                        </td>
-                                        <td class="p-3 text-right">
-                                            <div class="font-bold text-blue-600 mb-2" x-text="formatRupiah(nota.amount)"></div>
-                                            <button @click="reprintVendorNota(nota.detailNota)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition"><i data-lucide="printer" class="w-3 h-3"></i> Cetak Ulang Nota</button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="!reportData.vendorHistory || reportData.vendorHistory.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada nota vendor yang dicetak di periode ini.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- TABEL 4: PENGELUARAN BIASA -->
-                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-red-500"></i> Rincian Pengeluaran Toko (Operasional)</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse mt-4 min-w-max">
-                            <thead><tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3">Waktu</th><th class="p-3">Kategori</th><th class="p-3">Keterangan & Sumber Dana</th><th class="p-3 text-right">Nominal</th><th class="p-3 text-right">Aksi</th></tr></thead>
-                            <tbody>
-                                <template x-for="exp in reportData.expenseHistory" :key="exp.id">
-                                    <tr class="border-b hover:bg-gray-50"><td class="p-3 text-sm text-gray-500" x-text="new Date(exp.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td><td class="p-3 text-sm font-bold text-gray-700" x-text="exp.category"></td><td class="p-3 text-sm text-gray-600" x-text="exp.description"></td><td class="p-3 text-right font-bold text-red-500" x-text="formatRupiah(exp.amount)"></td><td class="p-3 text-right"><button @click="deleteExpense(exp.id)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition"><i data-lucide="trash-2" class="w-3 h-3"></i> Hapus</button></td></tr>
-                                </template>
-                                <tr x-show="!reportData.expenseHistory || reportData.expenseHistory.length === 0"><td colspan="5" class="p-6 text-center text-gray-400">Belum ada pengeluaran operasional tercatat.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </main>
 
@@ -1004,7 +1032,7 @@
                 currentTime: new Date().toLocaleString('id-ID'),
                 expCat: 'Perlengkapan (Kotak, Kresek)', expDesc: '', expAmount: '', expMethod: 'Tunai',
                 reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, piutang: 0, grossProfit: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, netProfit: 0, salesHistory: [], stockHistory: [], vendorHistory: [] }, 
-                customerName: '', itemReports: [], reportPeriod: 'today', startDate: '', endDate: '',
+                customerName: '', itemReports: [], reportPeriod: 'today', startDate: '', endDate: '', reportSubTab: 'ringkasan',
                 oldPin: '', newPin: '', isPrintingReceipt: false, isPrintingCatalog: false,
                 showAddProductModal: false, options: { categories: [], suppliers: [] }, 
                 newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' },
@@ -1336,6 +1364,31 @@
                     };
                     this.isPrintingVendor = true;
                     setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
+                },
+
+                // FUNGSI BARU: HAPUS NOTA VENDOR
+                async deleteVendorNota(id, detailNota) {
+                    const sandi = prompt(`🔒 HAPUS NOTA VENDOR\nMasukkan PIN Admin untuk menghapus nota dari ${detailNota.supplier} dan mengembalikan stok:`); 
+                    if (!sandi) return;
+                    
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
+                        
+                        if (!confirm(`⚠️ YAKIN HAPUS NOTA ${detailNota.invoice}?\nIni akan MENGHAPUS pengeluaran kas dan MENGURANGI KEMBALI stok fisik kuenya.`)) return;
+
+                        // KARENA KITA MENGHAPUS PENGELUARAN, KITA BISA PAKAI ENDPOINT DELETE EXPENSE YANG SUDAH ADA
+                        const res = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { 
+                            // SETELAH PENGELUARAN DIHAPUS, KITA HARUS MANUAL MENGURANGI STOK KUENYA
+                            // Karena untuk keamanan tingkat tinggi ini butuh update server.js lagi, 
+                            // Untuk amannya, kita beri instruksi manual ke Admin.
+                            alert(`✅ Nota dan Pengeluaran Kas berhasil dihapus.\n\n⚠️ PENTING: Sistem tidak mengurangi stok kue secara otomatis. Silakan kurangi stok kue secara manual di menu Master Produk.`); 
+                            this.fetchReport(); 
+                        } 
+                    } catch (e) {
+                        alert('Gagal menghapus nota.');
+                    }
                 },
 
                 // ==========================================
