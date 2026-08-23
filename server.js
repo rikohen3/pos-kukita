@@ -124,42 +124,46 @@ app.get('/api/piutang', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// MEMPERBAIKI CARA MENYIMPAN RINCIAN NOTA AGAR TIDAK ERROR (DISIMPAN DI DESCRIPTION)
+// MEMPERBAIKI CARA SIMPAN AGAR TIDAK ERROR PANJANG KARAKTER DATABASE
 app.post('/api/restock', async (req, res) => {
     const { supplierId, supplierName, items, discount, paymentMethod, notes, printNow } = req.body;
     try {
         const result = await prisma.$transaction(async (tx) => {
-            let totalCost = 0; const historyEntries = [];
+            let totalCost = 0; 
             const rincianNota = []; 
             
             for (const item of items) {
                 if(!item.alreadyInStock) {
-                    const product = await tx.product.update({ where: { id: item.id }, data: { stock: { increment: parseInt(item.qty) } } });
-                    historyEntries.push({ productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock });
+                    const product = await tx.product.update({ 
+                        where: { id: parseInt(item.id) }, 
+                        data: { stock: { increment: parseInt(item.qty) } } 
+                    });
+                    await tx.stockHistory.create({ 
+                        data: { productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock } 
+                    });
                 }
-                totalCost += ((item.buyPrice || 0) * item.qty);
+                totalCost += ((item.buyPrice || 0) * parseInt(item.qty));
                 rincianNota.push(`${item.name} (x${item.qty})`);
             }
-            if (historyEntries.length > 0) { await tx.stockHistory.createMany({ data: historyEntries }); }
             
             const grandTotal = totalCost - (parseInt(discount) || 0);
             let expense = null;
             const notaID = `NOTA-${Date.now()}`;
             
             if (printNow && paymentMethod !== 'Titip Jual') {
+                // KOMPRESI TINGKAT TINGGI AGAR MUAT DI DATABASE
                 const notaData = { 
-                    supplier: supplierName, 
-                    invoice: notaID,
-                    cart: items.map(i => ({name: i.name, qty: i.qty, buyPrice: i.buyPrice})),
-                    total: totalCost,
-                    discount: parseInt(discount) || 0,
-                    grandTotal: grandTotal,
-                    method: paymentMethod,
-                    keteranganManual: notes,
-                    rincianTeks: rincianNota.join(', ')
+                    sup: supplierName, 
+                    inv: notaID,
+                    c: items.map(i => [parseInt(i.id), parseInt(i.qty), parseInt(i.buyPrice||0)]), // Format mini array
+                    tot: totalCost,
+                    disc: parseInt(discount) || 0,
+                    gTot: grandTotal,
+                    met: paymentMethod,
+                    ket: notes || '',
+                    rin: rincianNota.join(', ').substring(0, 100) // Batasi teks rincian
                 };
                 
-                // Disimpan dengan aman di laci description, karena laci notes tidak ada di database Pengeluaran
                 expense = await tx.expense.create({ 
                     data: { 
                         category: 'Pembelian Stok / Restock', 
@@ -173,7 +177,6 @@ app.post('/api/restock', async (req, res) => {
         });
         res.json({ success: true, data: result });
     } catch (error) { 
-        console.log(error);
         res.status(500).json({ success: false, message: error.message }); 
     }
 });
@@ -204,7 +207,7 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// UPDATE LAPORAN UNTUK MEMBACA DARI LACI DESCRIPTION
+// MEMBACA KOMPRESI DATA DARI DATABASE
 app.get('/api/reports', async (req, res) => {
   const { period, start, end } = req.query; let dateFilter = {};
   if (period === 'today') { const s = new Date(); s.setHours(0,0,0,0); const e = new Date(); e.setHours(23,59,59,999); dateFilter = { createdAt: { gte: s, lte: e } }; }
@@ -241,37 +244,37 @@ app.get('/api/reports', async (req, res) => {
         totalExpenses += e.amount;
         if(e.category === 'Pembelian Stok / Restock') {
             try {
-                // Membaca json yang disembunyikan di description
-                const parsedData = JSON.parse(e.description);
-                vendorInvoices.push({ id: e.id, time: e.createdAt, amount: e.amount, rawDesc: e.description, detailNota: parsedData });
+                const p = JSON.parse(e.description);
+                // Terjemahkan format mini JSON agar bisa dibaca web
+                const detailNota = {
+                    supplier: p.sup || p.supplier,
+                    invoice: p.inv || p.invoice,
+                    total: p.tot || p.total,
+                    discount: p.disc !== undefined ? p.disc : p.discount,
+                    grandTotal: p.gTot || p.grandTotal,
+                    method: p.met || p.method,
+                    keteranganManual: p.ket || p.keteranganManual,
+                    rincianTeks: p.rin || p.rincianTeks,
+                    cart: (p.c || p.cart || []).map(item => {
+                        if (Array.isArray(item)) return { id: item[0], qty: item[1], buyPrice: item[2] };
+                        return item;
+                    })
+                };
+                vendorInvoices.push({ id: e.id, time: e.createdAt, amount: e.amount, rawDesc: e.description, detailNota: detailNota });
                 
-                // Menghitung jenis bayar transfer/kas
-                if (parsedData.method === 'Transfer' || parsedData.method === 'QRIS') {
-                    expTransfer += e.amount;
-                } else {
-                    expCash += e.amount;
-                }
+                if (detailNota.method === 'Transfer' || detailNota.method === 'QRIS') { expTransfer += e.amount; } 
+                else { expCash += e.amount; }
             } catch(err) { 
-                // Jika error, artinya ini pengeluaran manual lama
                 regularExpenses.push(e); 
-                if ((e.description || '').includes('[Transfer]') || (e.description || '').includes('[QRIS]')) {
-                    expTransfer += e.amount;
-                } else {
-                    expCash += e.amount;
-                }
+                if ((e.description || '').includes('[Transfer]')) { expTransfer += e.amount; } else { expCash += e.amount; }
             }
         } else {
             regularExpenses.push(e);
-            if ((e.description || '').includes('[Transfer]') || (e.description || '').includes('[QRIS]')) {
-                expTransfer += e.amount;
-            } else {
-                expCash += e.amount;
-            }
+            if ((e.description || '').includes('[Transfer]')) { expTransfer += e.amount; } else { expCash += e.amount; }
         }
     });
 
     const grossProfit = (totalRevenue + totalPiutang) - totalCOGS; 
-
     const salesHistory = sales.map(s => ({ invoice: s.invoice, time: s.createdAt, paymentMethod: s.paymentMethod, total: s.totalAmount, items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ') }));
 
     res.json({ success: true, data: { revenue: totalRevenue, revenueCash: totalCash, revenueQris: totalQris, piutang: totalPiutang, grossProfit: grossProfit, expenses: totalExpenses, expCash: expCash, expTransfer: expTransfer, netProfit: totalCash - expCash, transactions: sales.length, salesHistory, expenseHistory: regularExpenses, vendorHistory: vendorInvoices, stockHistory } });

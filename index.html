@@ -1257,6 +1257,7 @@
                         const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await res.json();
                         
+                        // MENAMBAHKAN PENDETEKSI ERROR LENGKAP
                         if(result.success) {
                             if (isPrintingMalam) {
                                 this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: JSON.parse(JSON.stringify(this.restockCart)), total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.restockNotes };
@@ -1274,18 +1275,27 @@
                                 this.saveDraftLocally();
                             }
                             this.fetchCatalog(); 
-                        } else alert('Gagal menyimpan.');
+                        } else {
+                            // MUNCULKAN ALASAN ERRORNYA APA
+                            alert('Gagal menyimpan!\nAlasan Server: ' + (result.message || 'Error Database Tidak Dikenal'));
+                        }
                     } catch(e) { alert('Error koneksi.'); }
                     finally { this.isProcessing = false; }
                 },
 
                 // FUNGSI BARU: CETAK ULANG NOTA VENDOR DARI LAPORAN
                 reprintVendorNota(notaDetail) {
+                    const reconstructedCart = notaDetail.cart.map(c => {
+                        if(c.name) return c; // Kalau masih pakai format lama
+                        const prod = this.products.find(p => p.id === c.id || p.id === c[0]); // Format kompresi baru
+                        return { name: prod ? prod.name : 'Produk', qty: c.qty || c[1], buyPrice: c.buyPrice || c[2] };
+                    });
+                    
                     this.lastVendorTx = {
                         invoice: notaDetail.invoice,
-                        date: new Date().toLocaleString('id-ID'), // Tanggal cetak ulang
+                        date: new Date().toLocaleString('id-ID'), 
                         supplier: notaDetail.supplier,
-                        cart: notaDetail.cart,
+                        cart: reconstructedCart,
                         total: notaDetail.total,
                         discount: notaDetail.discount,
                         grandTotal: notaDetail.grandTotal,
