@@ -124,13 +124,13 @@ app.get('/api/piutang', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// MEMBUAT SISTEM PENYIMPANAN RINCIAN NOTA VENDOR
+// MEMPERBAIKI CARA MENYIMPAN RINCIAN NOTA AGAR TIDAK ERROR (DISIMPAN DI DESCRIPTION)
 app.post('/api/restock', async (req, res) => {
     const { supplierId, supplierName, items, discount, paymentMethod, notes, printNow } = req.body;
     try {
         const result = await prisma.$transaction(async (tx) => {
             let totalCost = 0; const historyEntries = [];
-            const rincianNota = []; // Menyimpan teks rincian kue untuk laporan
+            const rincianNota = []; 
             
             for (const item of items) {
                 if(!item.alreadyInStock) {
@@ -138,7 +138,6 @@ app.post('/api/restock', async (req, res) => {
                     historyEntries.push({ productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock });
                 }
                 totalCost += ((item.buyPrice || 0) * item.qty);
-                // Tambahkan rincian kue ke memori
                 rincianNota.push(`${item.name} (x${item.qty})`);
             }
             if (historyEntries.length > 0) { await tx.stockHistory.createMany({ data: historyEntries }); }
@@ -147,28 +146,25 @@ app.post('/api/restock', async (req, res) => {
             let expense = null;
             const notaID = `NOTA-${Date.now()}`;
             
-            // JIKA DICETAK & DIBAYAR SEKARANG, BUAT PENGELUARAN PLUS SIMPAN RINCIANNYA
             if (printNow && paymentMethod !== 'Titip Jual') {
-                const desc = `[Nota Vendor Lunas - ${supplierName}] ${notaID}`;
-                const finalDesc = paymentMethod === 'Transfer' ? `[Transfer] ${desc}` : `[Tunai] ${desc}`;
+                const notaData = { 
+                    supplier: supplierName, 
+                    invoice: notaID,
+                    cart: items.map(i => ({name: i.name, qty: i.qty, buyPrice: i.buyPrice})),
+                    total: totalCost,
+                    discount: parseInt(discount) || 0,
+                    grandTotal: grandTotal,
+                    method: paymentMethod,
+                    keteranganManual: notes,
+                    rincianTeks: rincianNota.join(', ')
+                };
                 
+                // Disimpan dengan aman di laci description, karena laci notes tidak ada di database Pengeluaran
                 expense = await tx.expense.create({ 
                     data: { 
                         category: 'Pembelian Stok / Restock', 
-                        description: finalDesc, 
-                        amount: grandTotal,
-                        // KITA SIMPAN SEMUA DATA LENGKAP NOTA DI KOLOM 'notes' SUPAYA BISA DIPANGGIL LAGI
-                        notes: JSON.stringify({ 
-                            supplier: supplierName, 
-                            invoice: notaID,
-                            cart: items.map(i => ({name: i.name, qty: i.qty, buyPrice: i.buyPrice})),
-                            total: totalCost,
-                            discount: parseInt(discount) || 0,
-                            grandTotal: grandTotal,
-                            method: paymentMethod,
-                            keteranganManual: notes,
-                            rincianTeks: rincianNota.join(', ')
-                        }) 
+                        description: JSON.stringify(notaData), 
+                        amount: grandTotal
                     } 
                 });
             }
@@ -176,7 +172,10 @@ app.post('/api/restock', async (req, res) => {
             return { totalCost, discount, grandTotal, expense, method: paymentMethod, invoice: notaID };
         });
         res.json({ success: true, data: result });
-    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+    } catch (error) { 
+        console.log(error);
+        res.status(500).json({ success: false, message: error.message }); 
+    }
 });
 
 app.post('/api/expenses', async (req, res) => {
@@ -205,7 +204,7 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// UPDATE LAPORAN UNTUK MEMISAHKAN PENGELUARAN BIASA DENGAN NOTA VENDOR
+// UPDATE LAPORAN UNTUK MEMBACA DARI LACI DESCRIPTION
 app.get('/api/reports', async (req, res) => {
   const { period, start, end } = req.query; let dateFilter = {};
   if (period === 'today') { const s = new Date(); s.setHours(0,0,0,0); const e = new Date(); e.setHours(23,59,59,999); dateFilter = { createdAt: { gte: s, lte: e } }; }
@@ -232,27 +231,50 @@ app.get('/api/reports', async (req, res) => {
         });
     });
 
-    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-    const expTransfer = expenses.filter(e => (e.description || '').includes('[Transfer]') || (e.description || '').includes('[QRIS]')).reduce((sum, e) => sum + e.amount, 0);
-    const expCash = totalExpenses - expTransfer;
-    const salesHistory = sales.map(s => ({ invoice: s.invoice, time: s.createdAt, paymentMethod: s.paymentMethod, total: s.totalAmount, items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ') }));
-
-    // PISAHKAN PENGELUARAN BIASA DENGAN NOTA VENDOR
+    let totalExpenses = 0;
+    let expTransfer = 0;
+    let expCash = 0;
     const regularExpenses = [];
     const vendorInvoices = [];
-    
+
     expenses.forEach(e => {
-        if(e.category === 'Pembelian Stok / Restock' && e.notes) {
+        totalExpenses += e.amount;
+        if(e.category === 'Pembelian Stok / Restock') {
             try {
-                const parsedData = JSON.parse(e.notes);
+                // Membaca json yang disembunyikan di description
+                const parsedData = JSON.parse(e.description);
                 vendorInvoices.push({ id: e.id, time: e.createdAt, amount: e.amount, rawDesc: e.description, detailNota: parsedData });
-            } catch(err) { regularExpenses.push(e); }
+                
+                // Menghitung jenis bayar transfer/kas
+                if (parsedData.method === 'Transfer' || parsedData.method === 'QRIS') {
+                    expTransfer += e.amount;
+                } else {
+                    expCash += e.amount;
+                }
+            } catch(err) { 
+                // Jika error, artinya ini pengeluaran manual lama
+                regularExpenses.push(e); 
+                if ((e.description || '').includes('[Transfer]') || (e.description || '').includes('[QRIS]')) {
+                    expTransfer += e.amount;
+                } else {
+                    expCash += e.amount;
+                }
+            }
         } else {
             regularExpenses.push(e);
+            if ((e.description || '').includes('[Transfer]') || (e.description || '').includes('[QRIS]')) {
+                expTransfer += e.amount;
+            } else {
+                expCash += e.amount;
+            }
         }
     });
 
-    res.json({ success: true, data: { revenue: totalRevenue, revenueCash: totalCash, revenueQris: totalQris, piutang: totalPiutang, grossProfit: (totalRevenue + totalPiutang) - totalCOGS, expenses: totalExpenses, expCash: expCash, expTransfer: expTransfer, netProfit: totalCash - expCash, transactions: sales.length, salesHistory, expenseHistory: regularExpenses, vendorHistory: vendorInvoices, stockHistory } });
+    const grossProfit = (totalRevenue + totalPiutang) - totalCOGS; 
+
+    const salesHistory = sales.map(s => ({ invoice: s.invoice, time: s.createdAt, paymentMethod: s.paymentMethod, total: s.totalAmount, items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ') }));
+
+    res.json({ success: true, data: { revenue: totalRevenue, revenueCash: totalCash, revenueQris: totalQris, piutang: totalPiutang, grossProfit: grossProfit, expenses: totalExpenses, expCash: expCash, expTransfer: expTransfer, netProfit: totalCash - expCash, transactions: sales.length, salesHistory, expenseHistory: regularExpenses, vendorHistory: vendorInvoices, stockHistory } });
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
