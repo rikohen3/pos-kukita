@@ -188,7 +188,6 @@
                 <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
                     <div class="p-4 bg-white border-b shadow-sm z-10">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">1. Pilih Supplier (Vendor Asal)</label>
-                        <!-- KUNCI PERBAIKAN: Mengambil nama supplier secara dinamis saat dipilih -->
                         <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
                             <option value="">-- Sentuh untuk Pilih Supplier --</option>
                             <template x-for="sup in options.suppliers" :key="sup.id">
@@ -1307,7 +1306,6 @@
                     if(this.restockCart.length === 0) return alert('Keranjang penerimaan kosong!');
                     if(!this.restockSupplierId) return alert('Silakan pilih Supplier/Vendor terlebih dahulu!');
                     
-                    // MEMASTIKAN NAMA SUPPLIER TIDAK KOSONG SAAT DIKIRIM KE DATABASE
                     const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
                     this.restockSupplierName = selectedSup ? selectedSup.name : 'Vendor Tidak Diketahui';
 
@@ -1358,7 +1356,6 @@
                     finally { this.isProcessing = false; }
                 },
 
-                // FUNGSI BARU: CETAK ULANG NOTA VENDOR DARI LAPORAN
                 reprintVendorNota(notaDetail) {
                     const reconstructedCart = notaDetail.cart.map(c => {
                         if(c.name) return c; 
@@ -1369,7 +1366,6 @@
                     this.lastVendorTx = {
                         invoice: notaDetail.invoice,
                         date: new Date().toLocaleString('id-ID'), 
-                        // FALLBACK JIKA NAMA SUPPLIER DARI DATA LAMA KOSONG
                         supplier: notaDetail.supplier || 'Data Lama (Tanpa Nama)',
                         cart: reconstructedCart,
                         total: notaDetail.total,
@@ -1382,7 +1378,6 @@
                     setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
                 },
 
-                // FUNGSI BARU: HAPUS NOTA VENDOR
                 async deleteVendorNota(id, detailNota) {
                     const namaSup = detailNota.supplier || 'Vendor';
                     const sandi = prompt(`🔒 HAPUS NOTA VENDOR\nMasukkan PIN Admin untuk menghapus nota dari ${namaSup} dan mengembalikan stok:`); 
@@ -1401,6 +1396,30 @@
                         } 
                     } catch (e) {
                         alert('Gagal menghapus nota.');
+                    }
+                },
+
+                // INI DIA FUNGSI YANG KELUPAAN! SEKARANG TOMBOL "BATAL STOK" SUDAH AKTIF
+                async deleteStockHistory(id) {
+                    const sandi = prompt(`🔒 BATALKAN STOK MASUK\nMasukkan PIN Admin untuk menghapus riwayat dan mengurangi stok kue di etalase:`); 
+                    if (!sandi) return;
+                    
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
+                        
+                        if (!confirm(`⚠️ YAKIN MEMBATALKAN STOK INI?\nStok fisik produk ini di etalase akan otomatis dikurangi/ditarik kembali.`)) return;
+
+                        const res = await fetch(`${SERVER_URL}/api/stock-history/${id}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { 
+                            alert(`✅ Berhasil! Riwayat penerimaan barang dihapus dan stok kue telah dikurangi.`); 
+                            this.fetchReport(); 
+                            this.fetchCatalog(); 
+                        } else {
+                            alert('Gagal menghapus riwayat stok.');
+                        }
+                    } catch (e) {
+                        alert('Error saat menghapus riwayat stok.');
                     }
                 },
 
