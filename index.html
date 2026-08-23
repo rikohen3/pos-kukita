@@ -188,6 +188,7 @@
                 <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
                     <div class="p-4 bg-white border-b shadow-sm z-10">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">1. Pilih Supplier (Vendor Asal)</label>
+                        <!-- KUNCI PERBAIKAN: Mengambil nama supplier secara dinamis saat dipilih -->
                         <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
                             <option value="">-- Sentuh untuk Pilih Supplier --</option>
                             <template x-for="sup in options.suppliers" :key="sup.id">
@@ -339,7 +340,6 @@
                                 <div x-show="order.notes" class="bg-yellow-50 p-2 rounded text-xs text-yellow-800 border border-yellow-100 flex gap-2 items-start"><i data-lucide="info" class="w-4 h-4 flex-shrink-0 mt-0.5"></i> <span x-text="order.notes"></span></div>
                             </div>
 
-                            <!-- TAMPILAN ONGKIR DI KARTU PO -->
                             <div class="p-4 border-t bg-gray-50 space-y-1 text-sm">
                                 <div class="flex justify-between text-gray-500">
                                     <span>Total Harga Kue</span> 
@@ -691,9 +691,13 @@
                                             <td class="p-3 text-right">
                                                 <div class="font-bold text-blue-600 mb-2" x-text="formatRupiah(nota.amount)"></div>
                                                 <div class="flex justify-end gap-1">
-                                                    <!-- TOMBOL HAPUS NOTA VENDOR BARU -->
-                                                    <button @click="deleteVendorNota(nota.id, nota.detailNota)" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[10px] font-bold px-2 py-1 rounded transition"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                                                    <button @click="reprintVendorNota(nota.detailNota)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition"><i data-lucide="printer" class="w-3 h-3"></i> Cetak Ulang</button>
+                                                    <!-- TOMBOL HAPUS NOTA VENDOR DIPERJELAS -->
+                                                    <button @click="deleteVendorNota(nota.id, nota.detailNota)" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition">
+                                                        <i data-lucide="trash-2" class="w-3 h-3"></i> Hapus Nota
+                                                    </button>
+                                                    <button @click="reprintVendorNota(nota.detailNota)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition">
+                                                        <i data-lucide="printer" class="w-3 h-3"></i> Cetak Ulang
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -704,7 +708,7 @@
                         </div>
                     </div>
 
-                    <!-- TABEL LAPORAN KEDATANGAN BARANG (STOK MASUK) KEMBALI -->
+                    <!-- TABEL LAPORAN KEDATANGAN BARANG (STOK MASUK) -->
                     <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                         <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="package-plus" class="w-5 h-5 text-green-600"></i> Laporan Kedatangan Barang (Semua Stok Masuk) </h2>
                         <div class="overflow-x-auto">
@@ -972,6 +976,7 @@
                 </div>
                 <div style="margin-bottom: 8px;">
                     <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
+                    <!-- NAMA SUPPLIER AKAN MUNCUL DI SINI DENGAN BENAR -->
                     <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
                     <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
                 </div>
@@ -1240,6 +1245,14 @@
                 // ==========================================
                 
                 loadDraftSupplier() {
+                    // MEMPERBAIKI NAMA SUPPLIER YANG KOSONG
+                    if(this.restockSupplierId) {
+                        const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
+                        this.restockSupplierName = selectedSup ? selectedSup.name : '';
+                    } else {
+                        this.restockSupplierName = '';
+                    }
+
                     this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
                     if(!this.restockSupplierId) return;
                     const savedDraft = localStorage.getItem(`draft_restock_${this.restockSupplierId}`);
@@ -1294,6 +1307,10 @@
                     if(this.restockCart.length === 0) return alert('Keranjang penerimaan kosong!');
                     if(!this.restockSupplierId) return alert('Silakan pilih Supplier/Vendor terlebih dahulu!');
                     
+                    // MEMASTIKAN NAMA SUPPLIER TIDAK KOSONG SAAT DIKIRIM KE DATABASE
+                    const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
+                    this.restockSupplierName = selectedSup ? selectedSup.name : 'Vendor Tidak Diketahui';
+
                     const pesan = isPrintingMalam ? 
                         "🔒 TUTUP NOTA MALAM\n\nMasukkan PIN Admin untuk menyetujui Pembayaran ke Vendor & Cetak Nota:" : 
                         "🔒 SIMPAN DRAFT PAGI/SIANG\n\nMasukkan PIN Admin untuk menyetujui Penambahan Stok tanpa mengeluarkan uang:";
@@ -1317,7 +1334,6 @@
                         const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await res.json();
                         
-                        // MENAMBAHKAN PENDETEKSI ERROR LENGKAP
                         if(result.success) {
                             if (isPrintingMalam) {
                                 this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: JSON.parse(JSON.stringify(this.restockCart)), total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.restockNotes };
@@ -1336,7 +1352,6 @@
                             }
                             this.fetchCatalog(); 
                         } else {
-                            // MUNCULKAN ALASAN ERRORNYA APA
                             alert('Gagal menyimpan!\nAlasan Server: ' + (result.message || 'Error Database Tidak Dikenal'));
                         }
                     } catch(e) { alert('Error koneksi.'); }
@@ -1346,15 +1361,16 @@
                 // FUNGSI BARU: CETAK ULANG NOTA VENDOR DARI LAPORAN
                 reprintVendorNota(notaDetail) {
                     const reconstructedCart = notaDetail.cart.map(c => {
-                        if(c.name) return c; // Kalau masih pakai format lama
-                        const prod = this.products.find(p => p.id === c.id || p.id === c[0]); // Format kompresi baru
+                        if(c.name) return c; 
+                        const prod = this.products.find(p => p.id === c.id || p.id === c[0]); 
                         return { name: prod ? prod.name : 'Produk', qty: c.qty || c[1], buyPrice: c.buyPrice || c[2] };
                     });
                     
                     this.lastVendorTx = {
                         invoice: notaDetail.invoice,
                         date: new Date().toLocaleString('id-ID'), 
-                        supplier: notaDetail.supplier,
+                        // FALLBACK JIKA NAMA SUPPLIER DARI DATA LAMA KOSONG
+                        supplier: notaDetail.supplier || 'Data Lama (Tanpa Nama)',
                         cart: reconstructedCart,
                         total: notaDetail.total,
                         discount: notaDetail.discount,
@@ -1368,22 +1384,19 @@
 
                 // FUNGSI BARU: HAPUS NOTA VENDOR
                 async deleteVendorNota(id, detailNota) {
-                    const sandi = prompt(`🔒 HAPUS NOTA VENDOR\nMasukkan PIN Admin untuk menghapus nota dari ${detailNota.supplier} dan mengembalikan stok:`); 
+                    const namaSup = detailNota.supplier || 'Vendor';
+                    const sandi = prompt(`🔒 HAPUS NOTA VENDOR\nMasukkan PIN Admin untuk menghapus nota dari ${namaSup} dan mengembalikan stok:`); 
                     if (!sandi) return;
                     
                     try {
                         const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
                         if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
                         
-                        if (!confirm(`⚠️ YAKIN HAPUS NOTA ${detailNota.invoice}?\nIni akan MENGHAPUS pengeluaran kas dan MENGURANGI KEMBALI stok fisik kuenya.`)) return;
+                        if (!confirm(`⚠️ YAKIN HAPUS NOTA ${detailNota.invoice}?\nIni akan MENGHAPUS pengeluaran kas. Stok kue mohon dikurangi manual di Master Produk.`)) return;
 
-                        // KARENA KITA MENGHAPUS PENGELUARAN, KITA BISA PAKAI ENDPOINT DELETE EXPENSE YANG SUDAH ADA
                         const res = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
                         if ((await res.json()).success) { 
-                            // SETELAH PENGELUARAN DIHAPUS, KITA HARUS MANUAL MENGURANGI STOK KUENYA
-                            // Karena untuk keamanan tingkat tinggi ini butuh update server.js lagi, 
-                            // Untuk amannya, kita beri instruksi manual ke Admin.
-                            alert(`✅ Nota dan Pengeluaran Kas berhasil dihapus.\n\n⚠️ PENTING: Sistem tidak mengurangi stok kue secara otomatis. Silakan kurangi stok kue secara manual di menu Master Produk.`); 
+                            alert(`✅ Nota dan Pengeluaran Kas berhasil dihapus.\n\n⚠️ PENTING: Sistem tidak mengurangi stok kue secara otomatis. Silakan kurangi stok kue secara manual di menu Master Produk jika perlu.`); 
                             this.fetchReport(); 
                         } 
                     } catch (e) {
