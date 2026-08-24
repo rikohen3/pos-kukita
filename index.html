@@ -559,22 +559,23 @@
                             </div>
                         </div>
                         
-                        <!-- KOTAK SISA UANG FISIK (DENGAN INPUT SALDO AWAL) -->
+                        <!-- KOTAK SISA UANG FISIK DENGAN TOMBOL EDIT PIN -->
                         <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
                             <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
                             <div class="flex items-center mb-2 relative z-10">
                                 <p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p>
                             </div>
                             
-                            <!-- HITUNGAN BARU: Net Profit + Saldo Awal -->
                             <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit + parseInt(saldoAwalLaci || 0))"></p>
                             
-                            <!-- INPUT SALDO AWAL -->
+                            <!-- TAMPILAN SALDO AWAL YANG DIKUNCI -->
                             <div class="mt-3 relative z-10 bg-white bg-opacity-20 p-2 rounded-lg flex items-center justify-between">
                                 <span class="text-[10px] font-bold uppercase tracking-wider">Saldo Awal (Modal Laci):</span>
-                                <div class="flex items-center">
-                                    <span class="text-xs mr-1 font-bold">Rp</span>
-                                    <input type="number" x-model="saldoAwalLaci" @input="saveSaldo()" class="w-20 p-1 text-xs font-bold text-gray-800 rounded outline-none text-right shadow-inner bg-white bg-opacity-90 focus:bg-white transition-all">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-bold" x-text="formatRupiah(parseInt(saldoAwalLaci || 0))"></span>
+                                    <button @click="setSaldoAwal()" class="bg-white text-orange-600 hover:bg-orange-100 p-1 rounded shadow-sm text-[10px] font-bold transition flex items-center gap-1">
+                                        <i data-lucide="edit-2" class="w-3 h-3"></i> Set
+                                    </button>
                                 </div>
                             </div>
 
@@ -988,6 +989,7 @@
                 </div>
                 <div style="margin-bottom: 8px;">
                     <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
+                    <!-- NAMA SUPPLIER AKAN MUNCUL DI SINI DENGAN BENAR -->
                     <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
                     <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
                 </div>
@@ -1072,9 +1074,30 @@
                     await this.fetchCashiers(); await this.fetchCatalog();
                 },
 
-                // FUNGSI SIMPAN SALDO AWAL
-                saveSaldo() {
-                    localStorage.setItem('saldo_laci', this.saldoAwalLaci);
+                // FUNGSI UPDATE SALDO AWAL DENGAN PIN
+                async setSaldoAwal() {
+                    const sandi = prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin untuk mengatur modal kasir:");
+                    if (!sandi) return;
+                    
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
+                        
+                        const nominal = prompt("Masukkan jumlah Saldo Awal (Modal Laci) pagi ini:", this.saldoAwalLaci || "0");
+                        if (nominal !== null) {
+                            const parsed = parseInt(nominal);
+                            if(!isNaN(parsed)) {
+                                this.saldoAwalLaci = parsed;
+                                localStorage.setItem('saldo_laci', parsed);
+                                alert(`✅ Saldo awal berhasil diset menjadi Rp ${new Intl.NumberFormat('id-ID').format(parsed)}`);
+                                this.fetchReport(); 
+                            } else {
+                                alert("Nominal tidak valid!");
+                            }
+                        }
+                    } catch(e) {
+                        alert("Gagal verifikasi PIN. Pastikan internet menyala.");
+                    }
                 },
 
                 // LOGIKA KASIR
