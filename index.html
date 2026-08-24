@@ -90,7 +90,7 @@
 
         <!-- TAB 1: POS KASIR -->
         <main x-show="currentTab === 'pos'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden relative">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
                     <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
@@ -179,7 +179,7 @@
 
         <!-- TAB TERIMA BARANG VENDOR (DRAFT MALAM) -->
         <main x-show="currentTab === 'restock'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="truck" class="text-blue-500"></i> Terima Barang (Nota Vendor)</h1>
             </header>
             
@@ -294,7 +294,7 @@
 
         <!-- TAB BUKU PESANAN (PO) -->
         <main x-show="currentTab === 'po'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div>
                     <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="calendar-clock" class="text-purple-600"></i> Buku Pesanan</h1>
                     <p class="text-sm text-gray-500 hidden md:block">Daftar pesanan aktif. Stok kue tidak akan dipotong sampai pesanan selesai diambil.</p>
@@ -372,7 +372,7 @@
 
         <!-- TAB BUKU PIUTANG -->
         <main x-show="currentTab === 'piutang'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div>
                     <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="book-down" class="text-red-500"></i> Buku Piutang (Kasbon)</h1>
                     <p class="text-sm text-gray-500 hidden md:block">Daftar tagihan yang belum dilunasi oleh instansi/pelanggan.</p>
@@ -413,7 +413,7 @@
 
         <!-- TAB 2: MASTER PRODUK -->
         <main x-show="currentTab === 'produk'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div>
                     <h1 class="text-xl font-bold text-gray-800">Master Produk</h1>
                     <p class="text-sm text-gray-500 hidden md:block">Gunakan tombol Edit Stok saat penerimaan barang.</p>
@@ -480,7 +480,7 @@
 
         <!-- TAB 3: PENGELUARAN -->
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran Lain-lain</h1></header>
+            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran Lain-lain</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                     <p class="text-sm text-gray-500 mb-4 bg-yellow-50 p-2 rounded border border-yellow-100"><i data-lucide="info" class="w-4 h-4 inline mr-1 text-yellow-600"></i> Untuk pembayaran <b>Nota Datang Barang (Supplier/Vendor)</b>, silakan gunakan menu <b>Terima Barang</b> agar stok otomatis bertambah.</p>
@@ -503,7 +503,7 @@
 
         <!-- TAB 4: LAPORAN & ANALITIK DENGAN SUB-MENU (TAB) -->
         <main x-show="currentTab === 'laporan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
                 <h1 class="text-lg font-bold text-gray-800 md:hidden">Laporan</h1>
                 <div class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -518,8 +518,8 @@
                 </div>
             </header>
             
-            <!-- SUB-MENU (TABS) UNTUK LAPORAN -->
-            <div class="bg-white border-b px-4 flex gap-4 overflow-x-auto">
+            <!-- SUB-MENU (TABS) UNTUK LAPORAN (Diberi flex-shrink-0 agar tidak tergencet) -->
+            <div class="flex-shrink-0 bg-white border-b px-4 flex gap-4 overflow-x-auto">
                 <button @click="reportSubTab = 'ringkasan'" :class="reportSubTab === 'ringkasan' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Ringkasan & Omset</button>
                 <button @click="reportSubTab = 'struk'" :class="reportSubTab === 'struk' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Struk Kasir</button>
                 <button @click="reportSubTab = 'stok_vendor'" :class="reportSubTab === 'stok_vendor' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Stok & Vendor</button>
@@ -777,7 +777,7 @@
 
         <!-- TAB 5: PENGATURAN -->
         <main x-show="currentTab === 'pengaturan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Pengaturan Toko</h1></header>
+            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Pengaturan Toko</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <div class="bg-white rounded-xl shadow-sm border p-6 w-full">
                     <h2 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2"><i data-lucide="lock" class="text-brand-brown"></i> Keamanan (Ganti PIN)</h2>
