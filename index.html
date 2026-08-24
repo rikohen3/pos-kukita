@@ -90,7 +90,6 @@
 
         <!-- TAB 1: POS KASIR -->
         <main x-show="currentTab === 'pos'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden relative">
-            <!-- PELINDUNG ANTI GEPENG DITAMBAHKAN DI SINI -->
             <header class="flex-shrink-0 h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
@@ -425,6 +424,7 @@
                     <button @click="printCatalog()" class="bg-orange-100 text-brand-orange hover:bg-orange-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
                         <i data-lucide="book-open" class="w-4 h-4"></i> <span class="hidden md:inline">Katalog Promo</span>
                     </button>
+                    <!-- TOMBOL TAMBAH PRODUK -->
                     <button @click="openAddProduct()" class="bg-brand-brown hover:bg-orange-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i> <span class="hidden md:inline">Tambah Produk</span>
                     </button>
@@ -520,7 +520,7 @@
                 </div>
             </header>
             
-            <!-- PELINDUNG ANTI GEPENG DITAMBAHKAN DI SINI -->
+            <!-- PELINDUNG ANTI GEPENG -->
             <div class="flex-shrink-0 bg-white border-b px-4 flex gap-4 overflow-x-auto">
                 <button @click="reportSubTab = 'ringkasan'" :class="reportSubTab === 'ringkasan' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Ringkasan & Omset</button>
                 <button @click="reportSubTab = 'struk'" :class="reportSubTab === 'struk' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Struk Kasir</button>
@@ -561,16 +561,23 @@
                             </div>
                         </div>
                         
-                        <!-- KOTAK SISA UANG FISIK (DENGAN INPUT SALDO AWAL) -->
+                        <!-- KOTAK SISA UANG FISIK (DENGAN INPUT SALDO AWAL TERKUNCI PIN) -->
                         <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
                             <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
                             <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p></div>
                             
-                            <!-- HITUNGAN BARU: Net Profit + Saldo Awal -->
                             <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit + parseInt(saldoAwalLaci || 0))"></p>
                             
-                            <!-- INPUT SALDO AWAL -->
-                            <div class="mt-3 relative z-10 bg-white bg-opacity-20 p-2 rounded-lg flex items-center justify-between"><span class="text-[10px] font-bold uppercase tracking-wider">Saldo Awal (Modal):</span><div class="flex items-center"><span class="text-xs mr-1 font-bold">Rp</span><input type="number" x-model="saldoAwalLaci" @input="saveSaldo()" class="w-20 p-1 text-xs font-bold text-gray-800 rounded outline-none text-right shadow-inner bg-white bg-opacity-90 focus:bg-white transition-all"></div></div>
+                            <!-- INPUT SALDO AWAL (MENGGUNAKAN TOMBOL GEMBOK) -->
+                            <div class="mt-3 relative z-10 bg-white bg-opacity-20 p-2 rounded-lg flex items-center justify-between">
+                                <span class="text-[10px] font-bold uppercase tracking-wider">Saldo Awal (Modal):</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold" x-text="formatRupiah(parseInt(saldoAwalLaci || 0))"></span>
+                                    <button @click="editSaldoAwal()" class="bg-white text-brand-brown hover:bg-gray-100 px-2 py-1 rounded text-[10px] font-bold transition flex items-center gap-1 shadow-sm">
+                                        <i data-lucide="lock" class="w-3 h-3"></i> Set
+                                    </button>
+                                </div>
+                            </div>
                             <p class="text-[9px] opacity-80 mt-2 relative z-10">(Saldo Awal + Pendapatan Tunai) - Pengeluaran</p>
                         </div>
                         
@@ -981,7 +988,6 @@
                 </div>
                 <div style="margin-bottom: 8px;">
                     <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
-                    <!-- NAMA SUPPLIER AKAN MUNCUL DI SINI DENGAN BENAR -->
                     <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
                     <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
                 </div>
@@ -1081,7 +1087,28 @@
                     }
                 },
 
-                saveSaldo() { localStorage.setItem('saldo_laci', this.saldoAwalLaci); },
+                // FUNGSI BARU: MENGUNCI SALDO AWAL DENGAN PIN
+                async editSaldoAwal() {
+                    const sandi = prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin untuk mengubah modal laci:"); 
+                    if (!sandi) return;
+                    
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
+                        
+                        const inputStr = prompt("💰 MASUKKAN SALDO AWAL LACI\nKetik jumlah uang kas di laci pagi ini:", this.saldoAwalLaci);
+                        if (inputStr === null || inputStr.trim() === "") return;
+                        
+                        const nominal = parseInt(inputStr);
+                        if (isNaN(nominal) || nominal < 0) return alert('Nominal tidak valid!');
+                        
+                        this.saldoAwalLaci = nominal;
+                        localStorage.setItem('saldo_laci', this.saldoAwalLaci);
+                        alert('✅ Saldo Awal berhasil disimpan!');
+                    } catch (e) {
+                        alert('Gagal memverifikasi PIN.');
+                    }
+                },
 
                 // LOGIKA KASIR
                 async fetchCashiers() { try { const res = await fetch(`${SERVER_URL}/api/cashiers`); const data = await res.json(); if(data.success) this.cashiersList = data.data; } catch(e){} },
@@ -1125,7 +1152,6 @@
                 removeFromCart(index) { this.restorePrices(); this.cart.splice(index, 1); },
                 validateQty(index) { this.restorePrices(); let val = parseInt(this.cart[index].qty); if (isNaN(val) || val < 1) val = 1; this.cart[index].qty = val; },
 
-                // FIX TOTAL: MEMBACA ANGKA BULAT DARI PAKET JIKA AKTIF
                 get total() { return this.isCustomPackage ? this.packageTotal : this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
                 get change() { return parseFloat(this.cashReceived || 0) - this.total; },
@@ -1139,7 +1165,7 @@
                     const inputNama = prompt(`Nama Pemesan:`, ''); let namaPemesan = inputNama ? inputNama.trim() + " - " : "Pesanan Umum - ";
                     this.customerName = `${namaPemesan}${qtyBox} Kotak`; 
                     this.isCustomPackage = true; 
-                    this.packageTotal = newTotal; // <--- KUNCI PENYELAMAT! 
+                    this.packageTotal = newTotal; 
                     
                     let originalTotal = 0; this.cart.forEach(item => { const prod = this.products.find(p => p.id === item.id && p.type === item.type); originalTotal += ((prod ? prod.price : item.price) * item.qty); });
                     if (originalTotal > 0) {
@@ -1204,7 +1230,6 @@
                     if (!this.poForm.name || !this.poForm.pickupDate) return alert('Nama dan Waktu Pengambilan Wajib Diisi!');
                     this.isProcessing = true;
                     let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
-                    // FIX: KITA MEMAKSA TOTAL PO SAMA DENGAN HARGA PAKET BULAT DARI DEPAN
                     const payload = { customerName: this.poForm.name, customerPhone: this.poForm.phone, pickupDate: this.poForm.pickupDate, shippingCost: this.poForm.shippingCost, downPayment: this.poForm.dp, paymentMethod: this.poForm.paymentMethod, notes: this.poForm.notes, cashierName: this.activeCashier, cart: mappedCart, totalAmount: this.total };
 
                     try {
@@ -1274,7 +1299,6 @@
                 // ==========================================
                 
                 loadDraftSupplier() {
-                    // MEMPERBAIKI NAMA SUPPLIER YANG KOSONG
                     if(this.restockSupplierId) {
                         const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
                         this.restockSupplierName = selectedSup ? selectedSup.name : '';
@@ -1362,7 +1386,6 @@
                         const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                         const result = await res.json();
                         
-                        // MENAMBAHKAN PENDETEKSI ERROR LENGKAP
                         if(result.success) {
                             if (isPrintingMalam) {
                                 this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: JSON.parse(JSON.stringify(this.restockCart)), total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.restockNotes };
