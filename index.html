@@ -398,11 +398,11 @@
                             </div>
                             <div class="p-4 flex-1">
                                 <p class="text-[11px] font-bold text-gray-400 uppercase mb-2">Rincian Belanja:</p>
-                                <!-- MEMPERBAIKI TAMPILAN RINCIAN ITEM PIUTANG -->
+                                <!-- MEMPERBAIKI TAMPILAN RINCIAN ITEM PIUTANG MENJADI LEBIH DETAIL (NAMA, QTY x HARGA) -->
                                 <ul class="text-sm text-gray-600 mb-4 space-y-1">
                                     <template x-for="itm in p.detailedItems" :key="itm.name + itm.qty">
                                         <li class="flex justify-between border-b border-dashed border-gray-100 pb-1">
-                                            <span x-text="itm.name + ' (x' + itm.qty + ')'"></span>
+                                            <span x-text="itm.name + ' (' + itm.qty + ' x ' + new Intl.NumberFormat('id-ID').format(itm.price) + ')'"></span>
                                             <span class="font-medium" x-text="formatRupiah(itm.subtotal)"></span>
                                         </li>
                                     </template>
@@ -413,7 +413,6 @@
                                     <p class="text-[10px] text-gray-400 font-bold uppercase">Total Tagihan</p>
                                     <p class="font-bold text-xl text-red-600" x-text="formatRupiah(p.total)"></p>
                                 </div>
-                                <!-- MENAMBAHKAN TOMBOL HAPUS PIUTANG -->
                                 <div class="flex gap-2">
                                     <button @click="batalPiutang(p.invoice)" class="bg-white text-red-500 border border-red-200 font-bold py-2 px-3 rounded-lg text-sm hover:bg-red-50 transition shadow-sm flex items-center gap-1" title="Batalkan Kasbon"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                     <button @click="terimaPelunasan(p.invoice)" class="bg-green-500 text-white font-bold py-2 px-3 rounded-lg text-sm hover:bg-green-600 transition shadow-md flex items-center gap-1"><i data-lucide="banknote" class="w-4 h-4"></i> Lunas</button>
@@ -532,6 +531,7 @@
                 </div>
             </header>
             
+            <!-- PELINDUNG ANTI GEPENG -->
             <div class="flex-shrink-0 bg-white border-b px-4 flex gap-4 overflow-x-auto">
                 <button @click="reportSubTab = 'ringkasan'" :class="reportSubTab === 'ringkasan' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Ringkasan & Omset</button>
                 <button @click="reportSubTab = 'struk'" :class="reportSubTab === 'struk' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Struk Kasir</button>
@@ -572,12 +572,14 @@
                             </div>
                         </div>
                         
+                        <!-- KOTAK SISA UANG FISIK (DENGAN INPUT SALDO AWAL TERKUNCI PIN) -->
                         <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
                             <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
                             <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p></div>
                             
                             <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit + parseInt(saldoAwalLaci || 0))"></p>
                             
+                            <!-- INPUT SALDO AWAL (MENGGUNAKAN TOMBOL GEMBOK) -->
                             <div class="mt-3 relative z-10 bg-white bg-opacity-20 p-2 rounded-lg flex items-center justify-between">
                                 <span class="text-[10px] font-bold uppercase tracking-wider">Saldo Awal (Modal):</span>
                                 <div class="flex items-center gap-2">
@@ -713,6 +715,7 @@
                                             <td class="p-3 text-right">
                                                 <div class="font-bold text-blue-600 mb-2" x-text="formatRupiah(nota.amount)"></div>
                                                 <div class="flex justify-end gap-1">
+                                                    <!-- TOMBOL HAPUS NOTA VENDOR DIPERJELAS -->
                                                     <button @click="deleteVendorNota(nota.id, nota.detailNota)" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition">
                                                         <i data-lucide="trash-2" class="w-3 h-3"></i> Hapus Nota
                                                     </button>
@@ -1489,7 +1492,6 @@
                     } catch (error) {}
                 },
 
-                // FUNGSI BARU: BATAL PIUTANG
                 async batalPiutang(invoice) {
                     const sandi = prompt(`🔒 BATALKAN KASBON / PIUTANG\nMasukkan PIN Admin untuk menghapus piutang dari ${invoice.split(' [')[0]} dan mengembalikan stok ke etalase:`); 
                     if (!sandi) return;
