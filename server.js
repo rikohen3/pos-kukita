@@ -62,14 +62,17 @@ app.get('/api/orders', async (req, res) => {
     catch (error) { res.status(500).json({ success: false }); }
 });
 
+// MEMPERBAIKI PENYIMPANAN PO AGAR TOTALNYA BULAT TANPA +2 RUPIAH
 app.post('/api/orders', async (req, res) => {
-    const { customerName, customerPhone, pickupDate, cart, shippingCost, downPayment, paymentMethod, notes, cashierName } = req.body;
+    const { customerName, customerPhone, pickupDate, cart, shippingCost, downPayment, paymentMethod, notes, cashierName, totalAmount } = req.body;
     try {
         const result = await prisma.$transaction(async (tx) => {
             const invoice = `PO-${Date.now()}`;
-            const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            // Memaksa sistem menerima totalAmount bulat (40.000) dari layar kasir
+            const finalTotal = totalAmount || cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
             const ongkir = parseInt(shippingCost) || 0; const dp = parseInt(downPayment) || 0;
-            const order = await tx.order.create({ data: { invoice, customerName, customerPhone, pickupDate: new Date(pickupDate), totalAmount, shippingCost: ongkir, downPayment: dp, paymentMethod, notes, cashierName, status: 'Menunggu', paymentStatus: (dp >= totalAmount + ongkir) ? 'Lunas' : 'Belum Lunas' } });
+            const order = await tx.order.create({ data: { invoice, customerName, customerPhone, pickupDate: new Date(pickupDate), totalAmount: finalTotal, shippingCost: ongkir, downPayment: dp, paymentMethod, notes, cashierName, status: 'Menunggu', paymentStatus: (dp >= finalTotal + ongkir) ? 'Lunas' : 'Belum Lunas' } });
 
             for (const item of cart) {
                 if (item.type === 'product') { await tx.orderItem.create({ data: { orderId: order.id, productId: item.id, qty: item.qty, price: item.price, subtotal: item.price * item.qty } }); } 
@@ -124,61 +127,30 @@ app.get('/api/piutang', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// MEMPERBAIKI CARA SIMPAN AGAR TIDAK ERROR PANJANG KARAKTER DATABASE
 app.post('/api/restock', async (req, res) => {
     const { supplierId, supplierName, items, discount, paymentMethod, notes, printNow } = req.body;
     try {
         const result = await prisma.$transaction(async (tx) => {
-            let totalCost = 0; 
-            const rincianNota = []; 
-            
+            let totalCost = 0; const rincianNota = []; 
             for (const item of items) {
                 if(!item.alreadyInStock) {
-                    const product = await tx.product.update({ 
-                        where: { id: parseInt(item.id) }, 
-                        data: { stock: { increment: parseInt(item.qty) } } 
-                    });
-                    await tx.stockHistory.create({ 
-                        data: { productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock } 
-                    });
+                    const product = await tx.product.update({ where: { id: parseInt(item.id) }, data: { stock: { increment: parseInt(item.qty) } } });
+                    await tx.stockHistory.create({ data: { productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock } });
                 }
                 totalCost += ((item.buyPrice || 0) * parseInt(item.qty));
                 rincianNota.push(`${item.name} (x${item.qty})`);
             }
-            
             const grandTotal = totalCost - (parseInt(discount) || 0);
-            let expense = null;
-            const notaID = `NOTA-${Date.now()}`;
+            let expense = null; const notaID = `NOTA-${Date.now()}`;
             
             if (printNow && paymentMethod !== 'Titip Jual') {
-                // KOMPRESI TINGKAT TINGGI AGAR MUAT DI DATABASE
-                const notaData = { 
-                    sup: supplierName, 
-                    inv: notaID,
-                    c: items.map(i => [parseInt(i.id), parseInt(i.qty), parseInt(i.buyPrice||0)]), // Format mini array
-                    tot: totalCost,
-                    disc: parseInt(discount) || 0,
-                    gTot: grandTotal,
-                    met: paymentMethod,
-                    ket: notes || '',
-                    rin: rincianNota.join(', ').substring(0, 100) // Batasi teks rincian
-                };
-                
-                expense = await tx.expense.create({ 
-                    data: { 
-                        category: 'Pembelian Stok / Restock', 
-                        description: JSON.stringify(notaData), 
-                        amount: grandTotal
-                    } 
-                });
+                const notaData = { sup: supplierName, inv: notaID, c: items.map(i => [parseInt(i.id), parseInt(i.qty), parseInt(i.buyPrice||0)]), tot: totalCost, disc: parseInt(discount) || 0, gTot: grandTotal, met: paymentMethod, ket: notes || '', rin: rincianNota.join(', ').substring(0, 100) };
+                expense = await tx.expense.create({ data: { category: 'Pembelian Stok / Restock', description: JSON.stringify(notaData), amount: grandTotal } });
             }
-            
             return { totalCost, discount, grandTotal, expense, method: paymentMethod, invoice: notaID };
         });
         res.json({ success: true, data: result });
-    } catch (error) { 
-        res.status(500).json({ success: false, message: error.message }); 
-    }
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
 app.post('/api/expenses', async (req, res) => {
@@ -207,7 +179,6 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// MEMBACA KOMPRESI DATA DARI DATABASE
 app.get('/api/reports', async (req, res) => {
   const { period, start, end } = req.query; let dateFilter = {};
   if (period === 'today') { const s = new Date(); s.setHours(0,0,0,0); const e = new Date(); e.setHours(23,59,59,999); dateFilter = { createdAt: { gte: s, lte: e } }; }
@@ -234,40 +205,19 @@ app.get('/api/reports', async (req, res) => {
         });
     });
 
-    let totalExpenses = 0;
-    let expTransfer = 0;
-    let expCash = 0;
-    const regularExpenses = [];
-    const vendorInvoices = [];
+    let totalExpenses = 0; let expTransfer = 0; let expCash = 0;
+    const regularExpenses = []; const vendorInvoices = [];
 
     expenses.forEach(e => {
         totalExpenses += e.amount;
         if(e.category === 'Pembelian Stok / Restock') {
             try {
                 const p = JSON.parse(e.description);
-                // Terjemahkan format mini JSON agar bisa dibaca web
-                const detailNota = {
-                    supplier: p.sup || p.supplier,
-                    invoice: p.inv || p.invoice,
-                    total: p.tot || p.total,
-                    discount: p.disc !== undefined ? p.disc : p.discount,
-                    grandTotal: p.gTot || p.grandTotal,
-                    method: p.met || p.method,
-                    keteranganManual: p.ket || p.keteranganManual,
-                    rincianTeks: p.rin || p.rincianTeks,
-                    cart: (p.c || p.cart || []).map(item => {
-                        if (Array.isArray(item)) return { id: item[0], qty: item[1], buyPrice: item[2] };
-                        return item;
-                    })
-                };
+                const detailNota = { supplier: p.sup || p.supplier, invoice: p.inv || p.invoice, total: p.tot || p.total, discount: p.disc !== undefined ? p.disc : p.discount, grandTotal: p.gTot || p.grandTotal, method: p.met || p.method, keteranganManual: p.ket || p.keteranganManual, rincianTeks: p.rin || p.rincianTeks, cart: (p.c || p.cart || []).map(item => { if (Array.isArray(item)) return { id: item[0], qty: item[1], buyPrice: item[2] }; return item; }) };
                 vendorInvoices.push({ id: e.id, time: e.createdAt, amount: e.amount, rawDesc: e.description, detailNota: detailNota });
                 
-                if (detailNota.method === 'Transfer' || detailNota.method === 'QRIS') { expTransfer += e.amount; } 
-                else { expCash += e.amount; }
-            } catch(err) { 
-                regularExpenses.push(e); 
-                if ((e.description || '').includes('[Transfer]')) { expTransfer += e.amount; } else { expCash += e.amount; }
-            }
+                if (detailNota.method === 'Transfer' || detailNota.method === 'QRIS') { expTransfer += e.amount; } else { expCash += e.amount; }
+            } catch(err) { regularExpenses.push(e); if ((e.description || '').includes('[Transfer]')) { expTransfer += e.amount; } else { expCash += e.amount; } }
         } else {
             regularExpenses.push(e);
             if ((e.description || '').includes('[Transfer]')) { expTransfer += e.amount; } else { expCash += e.amount; }

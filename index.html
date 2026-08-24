@@ -90,7 +90,7 @@
 
         <!-- TAB 1: POS KASIR -->
         <main x-show="currentTab === 'pos'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden relative">
-            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
                     <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
@@ -140,7 +140,12 @@
                         <template x-if="cart.length === 0"><div class="flex flex-col items-center justify-center h-full text-gray-400"><i data-lucide="shopping-bag" class="w-12 h-12 mb-3 opacity-20"></i><p>Keranjang kosong</p></div></template>
                         <template x-for="(item, index) in cart" :key="index">
                             <div class="flex items-center justify-between p-3 border rounded-lg">
-                                <div class="flex-1"><h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4><p class="text-brand-brown text-sm" x-text="formatRupiah(item.price)"></p></div>
+                                <!-- FIX TAMPILAN ITEM SAAT JADI PAKET -->
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4>
+                                    <p class="text-brand-brown text-sm" x-show="!isCustomPackage" x-text="formatRupiah(item.price)"></p>
+                                    <p class="text-brand-orange text-[10px] font-bold italic" x-show="isCustomPackage">Tergabung dlm Paket</p>
+                                </div>
                                 
                                 <div class="flex items-center gap-1 md:gap-2">
                                     <div class="flex items-center bg-gray-100 rounded-lg">
@@ -179,7 +184,7 @@
 
         <!-- TAB TERIMA BARANG VENDOR (DRAFT MALAM) -->
         <main x-show="currentTab === 'restock'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="truck" class="text-blue-500"></i> Terima Barang (Nota Vendor)</h1>
             </header>
             
@@ -294,7 +299,7 @@
 
         <!-- TAB BUKU PESANAN (PO) -->
         <main x-show="currentTab === 'po'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div>
                     <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="calendar-clock" class="text-purple-600"></i> Buku Pesanan</h1>
                     <p class="text-sm text-gray-500 hidden md:block">Daftar pesanan aktif. Stok kue tidak akan dipotong sampai pesanan selesai diambil.</p>
@@ -372,7 +377,7 @@
 
         <!-- TAB BUKU PIUTANG -->
         <main x-show="currentTab === 'piutang'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div>
                     <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="book-down" class="text-red-500"></i> Buku Piutang (Kasbon)</h1>
                     <p class="text-sm text-gray-500 hidden md:block">Daftar tagihan yang belum dilunasi oleh instansi/pelanggan.</p>
@@ -413,7 +418,7 @@
 
         <!-- TAB 2: MASTER PRODUK -->
         <main x-show="currentTab === 'produk'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <div>
                     <h1 class="text-xl font-bold text-gray-800">Master Produk</h1>
                     <p class="text-sm text-gray-500 hidden md:block">Gunakan tombol Edit Stok saat penerimaan barang.</p>
@@ -480,7 +485,7 @@
 
         <!-- TAB 3: PENGELUARAN -->
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran Lain-lain</h1></header>
+            <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran Lain-lain</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24">
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                     <p class="text-sm text-gray-500 mb-4 bg-yellow-50 p-2 rounded border border-yellow-100"><i data-lucide="info" class="w-4 h-4 inline mr-1 text-yellow-600"></i> Untuk pembayaran <b>Nota Datang Barang (Supplier/Vendor)</b>, silakan gunakan menu <b>Terima Barang</b> agar stok otomatis bertambah.</p>
@@ -503,7 +508,7 @@
 
         <!-- TAB 4: LAPORAN & ANALITIK DENGAN SUB-MENU (TAB) -->
         <main x-show="currentTab === 'laporan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center justify-between px-4 md:px-6">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
                 <h1 class="text-lg font-bold text-gray-800 md:hidden">Laporan</h1>
                 <div class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -518,8 +523,8 @@
                 </div>
             </header>
             
-            <!-- SUB-MENU (TABS) UNTUK LAPORAN (Diberi flex-shrink-0 agar tidak tergencet) -->
-            <div class="flex-shrink-0 bg-white border-b px-4 flex gap-4 overflow-x-auto">
+            <!-- SUB-MENU (TABS) UNTUK LAPORAN -->
+            <div class="bg-white border-b px-4 flex gap-4 overflow-x-auto">
                 <button @click="reportSubTab = 'ringkasan'" :class="reportSubTab === 'ringkasan' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Ringkasan & Omset</button>
                 <button @click="reportSubTab = 'struk'" :class="reportSubTab === 'struk' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Struk Kasir</button>
                 <button @click="reportSubTab = 'stok_vendor'" :class="reportSubTab === 'stok_vendor' ? 'border-brand-brown text-brand-brown' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 font-bold text-sm border-b-2 transition">Stok & Vendor</button>
@@ -559,26 +564,11 @@
                             </div>
                         </div>
                         
-                        <!-- KOTAK SISA UANG FISIK DENGAN TOMBOL EDIT PIN -->
                         <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start bg-gradient-to-br from-brand-brown to-orange-600 text-white relative overflow-hidden">
                             <div class="absolute right-[-10px] top-[-10px] opacity-20"><i data-lucide="coins" class="w-24 h-24"></i></div>
-                            <div class="flex items-center mb-2 relative z-10">
-                                <p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p>
-                            </div>
-                            
+                            <div class="flex items-center mb-2 relative z-10"><p class="text-sm font-semibold opacity-90">Sisa Uang Fisik (Laci Kasir)</p></div>
                             <p class="text-2xl font-bold relative z-10" x-text="formatRupiah(reportData.netProfit + parseInt(saldoAwalLaci || 0))"></p>
-                            
-                            <!-- TAMPILAN SALDO AWAL YANG DIKUNCI -->
-                            <div class="mt-3 relative z-10 bg-white bg-opacity-20 p-2 rounded-lg flex items-center justify-between">
-                                <span class="text-[10px] font-bold uppercase tracking-wider">Saldo Awal (Modal Laci):</span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-bold" x-text="formatRupiah(parseInt(saldoAwalLaci || 0))"></span>
-                                    <button @click="setSaldoAwal()" class="bg-white text-orange-600 hover:bg-orange-100 p-1 rounded shadow-sm text-[10px] font-bold transition flex items-center gap-1">
-                                        <i data-lucide="edit-2" class="w-3 h-3"></i> Set
-                                    </button>
-                                </div>
-                            </div>
-
+                            <div class="mt-3 relative z-10 bg-white bg-opacity-20 p-2 rounded-lg flex items-center justify-between"><span class="text-[10px] font-bold uppercase tracking-wider">Saldo Awal (Modal):</span><div class="flex items-center"><span class="text-xs mr-1 font-bold">Rp</span><input type="number" x-model="saldoAwalLaci" @input="saveSaldo()" class="w-20 p-1 text-xs font-bold text-gray-800 rounded outline-none text-right shadow-inner bg-white bg-opacity-90 focus:bg-white transition-all"></div></div>
                             <p class="text-[9px] opacity-80 mt-2 relative z-10">(Saldo Awal + Pendapatan Tunai) - Pengeluaran</p>
                         </div>
                         
@@ -777,7 +767,7 @@
 
         <!-- TAB 5: PENGATURAN -->
         <main x-show="currentTab === 'pengaturan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="h-16 flex-shrink-0 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Pengaturan Toko</h1></header>
+            <header class="h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Pengaturan Toko</h1></header>
             <div class="p-4 md:p-6 overflow-y-auto pb-24 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <div class="bg-white rounded-xl shadow-sm border p-6 w-full">
                     <h2 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2"><i data-lucide="lock" class="text-brand-brown"></i> Keamanan (Ganti PIN)</h2>
@@ -989,7 +979,6 @@
                 </div>
                 <div style="margin-bottom: 8px;">
                     <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
-                    <!-- NAMA SUPPLIER AKAN MUNCUL DI SINI DENGAN BENAR -->
                     <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
                     <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
                 </div>
@@ -1057,6 +1046,8 @@
                 
                 // SALDO AWAL LACI
                 saldoAwalLaci: localStorage.getItem('saldo_laci') || 0,
+                // SIMPAN TOTAL PAKET FIX
+                packageTotal: 0,
 
                 // VARIABEL BUKU PESANAN & PIUTANG
                 poList: [], piutangList: [], showPoModal: false,
@@ -1074,31 +1065,20 @@
                     await this.fetchCashiers(); await this.fetchCatalog();
                 },
 
-                // FUNGSI UPDATE SALDO AWAL DENGAN PIN
-                async setSaldoAwal() {
-                    const sandi = prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin untuk mengatur modal kasir:");
-                    if (!sandi) return;
-                    
-                    try {
-                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
-                        
-                        const nominal = prompt("Masukkan jumlah Saldo Awal (Modal Laci) pagi ini:", this.saldoAwalLaci || "0");
-                        if (nominal !== null) {
-                            const parsed = parseInt(nominal);
-                            if(!isNaN(parsed)) {
-                                this.saldoAwalLaci = parsed;
-                                localStorage.setItem('saldo_laci', parsed);
-                                alert(`✅ Saldo awal berhasil diset menjadi Rp ${new Intl.NumberFormat('id-ID').format(parsed)}`);
-                                this.fetchReport(); 
-                            } else {
-                                alert("Nominal tidak valid!");
-                            }
-                        }
-                    } catch(e) {
-                        alert("Gagal verifikasi PIN. Pastikan internet menyala.");
+                // FUNGSI KEMBALIKAN HARGA ASLI JIKA PAKET BATAL
+                restorePrices() {
+                    if(this.isCustomPackage) {
+                        this.isCustomPackage = false;
+                        this.packageTotal = 0;
+                        this.customerName = '';
+                        this.cart.forEach(item => {
+                            const prod = this.products.find(p => p.id === item.id && p.type === item.type);
+                            if(prod) item.price = prod.price;
+                        });
                     }
                 },
+
+                saveSaldo() { localStorage.setItem('saldo_laci', this.saldoAwalLaci); },
 
                 // LOGIKA KASIR
                 async fetchCashiers() { try { const res = await fetch(`${SERVER_URL}/api/cashiers`); const data = await res.json(); if(data.success) this.cashiersList = data.data; } catch(e){} },
@@ -1131,18 +1111,19 @@
                 get filteredMasterProducts() { return this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); },
                 
                 addToCart(product) { 
-                    this.isCustomPackage = false; 
+                    this.restorePrices(); 
                     const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; 
                     const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); 
                     if (existing) { existing.qty++; } else { this.cart.unshift(itemToAdd); } 
                 },
                 
-                increaseQty(index) { this.isCustomPackage = false; this.cart[index].qty++; },
-                decreaseQty(index) { this.isCustomPackage = false; if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
-                removeFromCart(index) { this.isCustomPackage = false; this.cart.splice(index, 1); },
-                validateQty(index) { this.isCustomPackage = false; let val = parseInt(this.cart[index].qty); if (isNaN(val) || val < 1) val = 1; this.cart[index].qty = val; },
+                increaseQty(index) { this.restorePrices(); this.cart[index].qty++; },
+                decreaseQty(index) { this.restorePrices(); if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
+                removeFromCart(index) { this.restorePrices(); this.cart.splice(index, 1); },
+                validateQty(index) { this.restorePrices(); let val = parseInt(this.cart[index].qty); if (isNaN(val) || val < 1) val = 1; this.cart[index].qty = val; },
 
-                get total() { return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
+                // FIX TOTAL: MEMBACA ANGKA BULAT DARI PAKET JIKA AKTIF
+                get total() { return this.isCustomPackage ? this.packageTotal : this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                 get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
                 get change() { return parseFloat(this.cashReceived || 0) - this.total; },
                 formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); },
@@ -1153,7 +1134,9 @@
                     const priceStr = prompt(`Harga Per Kotak?`, '0'); if (!priceStr) return; const pricePerBox = parseFloat(priceStr); if (isNaN(pricePerBox) || pricePerBox < 0) return alert('Tidak valid!');
                     const newTotal = qtyBox * pricePerBox;
                     const inputNama = prompt(`Nama Pemesan:`, ''); let namaPemesan = inputNama ? inputNama.trim() + " - " : "Pesanan Umum - ";
-                    this.customerName = `${namaPemesan}${qtyBox} Kotak`; this.isCustomPackage = true; 
+                    this.customerName = `${namaPemesan}${qtyBox} Kotak`; 
+                    this.isCustomPackage = true; 
+                    this.packageTotal = newTotal; // <--- KUNCI PENYELAMAT! 
                     
                     let originalTotal = 0; this.cart.forEach(item => { const prod = this.products.find(p => p.id === item.id && p.type === item.type); originalTotal += ((prod ? prod.price : item.price) * item.qty); });
                     if (originalTotal > 0) {
@@ -1218,7 +1201,8 @@
                     if (!this.poForm.name || !this.poForm.pickupDate) return alert('Nama dan Waktu Pengambilan Wajib Diisi!');
                     this.isProcessing = true;
                     let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
-                    const payload = { customerName: this.poForm.name, customerPhone: this.poForm.phone, pickupDate: this.poForm.pickupDate, shippingCost: this.poForm.shippingCost, downPayment: this.poForm.dp, paymentMethod: this.poForm.paymentMethod, notes: this.poForm.notes, cashierName: this.activeCashier, cart: mappedCart };
+                    // FIX: KITA MEMAKSA TOTAL PO SAMA DENGAN HARGA PAKET BULAT DARI DEPAN
+                    const payload = { customerName: this.poForm.name, customerPhone: this.poForm.phone, pickupDate: this.poForm.pickupDate, shippingCost: this.poForm.shippingCost, downPayment: this.poForm.dp, paymentMethod: this.poForm.paymentMethod, notes: this.poForm.notes, cashierName: this.activeCashier, cart: mappedCart, totalAmount: this.total };
 
                     try {
                         const res = await fetch(`${SERVER_URL}/api/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -1261,7 +1245,7 @@
                     } catch (e) {}
                 },
 
-                resetCart() { this.cart = []; this.isCustomPackage = false; this.customerName = ''; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; },
+                resetCart() { this.cart = []; this.isCustomPackage = false; this.packageTotal = 0; this.customerName = ''; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; },
 
                 printPO(order) {
                     this.lastTx = {
