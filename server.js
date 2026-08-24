@@ -62,13 +62,11 @@ app.get('/api/orders', async (req, res) => {
     catch (error) { res.status(500).json({ success: false }); }
 });
 
-// MEMPERBAIKI PENYIMPANAN PO AGAR TOTALNYA BULAT TANPA +2 RUPIAH
 app.post('/api/orders', async (req, res) => {
     const { customerName, customerPhone, pickupDate, cart, shippingCost, downPayment, paymentMethod, notes, cashierName, totalAmount } = req.body;
     try {
         const result = await prisma.$transaction(async (tx) => {
             const invoice = `PO-${Date.now()}`;
-            // Memaksa sistem menerima totalAmount bulat (40.000) dari layar kasir
             const finalTotal = totalAmount || cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             
             const ongkir = parseInt(shippingCost) || 0; const dp = parseInt(downPayment) || 0;
@@ -119,10 +117,23 @@ app.delete('/api/orders/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// MEMPERBAIKI TAMPILAN PIUTANG AGAR LEBIH RINCI (NAMA + QTY + HARGA)
 app.get('/api/piutang', async (req, res) => {
     try {
         const sales = await prisma.sale.findMany({ where: { paymentMethod: 'Piutang' }, orderBy: { createdAt: 'desc' }, include: { items: { include: { product: true, package: true } } } });
-        const formatted = sales.map(s => ({ id: s.id, invoice: s.invoice, time: s.createdAt, total: s.totalAmount, items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', ') }));
+        const formatted = sales.map(s => ({ 
+            id: s.id, 
+            invoice: s.invoice, 
+            time: s.createdAt, 
+            total: s.totalAmount, 
+            items: s.items.map(i => `${i.product ? i.product.name : i.package?.name} (x${i.qty})`).join(', '),
+            detailedItems: s.items.map(i => ({
+                name: i.product ? i.product.name : i.package?.name,
+                qty: i.qty,
+                price: i.price,
+                subtotal: i.subtotal || (i.price * i.qty)
+            }))
+        }));
         res.json({ success: true, data: formatted });
     } catch (error) { res.status(500).json({ success: false }); }
 });
