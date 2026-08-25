@@ -244,13 +244,22 @@
                                     </div>
                                 </div>
                                 
-                                <!-- FITUR BARU: KOLOM RETUR OTOMATIS -->
-                                <div class="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-gray-200">
-                                    <div class="text-[10px] font-bold text-red-500">Sisa / Retur (Pcs):<br><span class="font-normal text-[9px] text-gray-400">Yg tidak laku/ditarik</span></div>
-                                    <div class="flex items-center bg-white border border-red-200 rounded shadow-sm">
-                                        <button @click="updateReturQty(index, -1)" class="w-7 h-7 flex items-center justify-center hover:bg-red-50 rounded-l text-red-600 font-bold">-</button>
-                                        <input type="number" x-model.number="item.returQty" @change="validateReturQty(index)" class="w-10 text-center text-xs font-bold border-x border-red-200 text-red-600 outline-none p-0 h-7" min="0">
-                                        <button @click="updateReturQty(index, 1)" class="w-7 h-7 flex items-center justify-center hover:bg-red-50 rounded-r text-red-600 font-bold">+</button>
+                                <!-- FITUR BARU: KOLOM RETUR & STATUS SISA -->
+                                <div class="mt-2 pt-2 border-t border-dashed border-gray-200">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="text-[10px] font-bold text-red-500">Jumlah Sisa/Retur:</div>
+                                        <div class="flex items-center bg-white border border-red-200 rounded shadow-sm">
+                                            <button @click="updateReturQty(index, -1)" class="w-7 h-7 flex items-center justify-center hover:bg-red-50 rounded-l text-red-600 font-bold">-</button>
+                                            <input type="number" x-model.number="item.returQty" @change="validateReturQty(index)" class="w-10 text-center text-xs font-bold border-x border-red-200 text-red-600 outline-none p-0 h-7" min="0">
+                                            <button @click="updateReturQty(index, 1)" class="w-7 h-7 flex items-center justify-center hover:bg-red-50 rounded-r text-red-600 font-bold">+</button>
+                                        </div>
+                                    </div>
+                                    <!-- TOGGLE STATUS SISA KUE -->
+                                    <div class="flex justify-end" x-show="item.returQty > 0">
+                                        <select x-model="item.returAction" @change="saveDraftLocally()" class="text-[9px] border border-red-200 rounded p-1 text-red-600 outline-none font-bold bg-white w-full">
+                                            <option value="tarik">Barang ditarik vendor/buang (Stok -)</option>
+                                            <option value="lanjut">Sisa lanjut dijual besok (Stok Tetap)</option>
+                                        </select>
                                     </div>
                                 </div>
                                 
@@ -472,6 +481,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6">
+                    <!-- FITUR PENGURUTAN (SORTING) STOK DITAMBAHKAN DI SINI -->
                     <div class="mb-4 flex flex-col md:flex-row gap-3">
                         <div class="relative flex-1 max-w-md">
                             <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 text-gray-400 w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -1383,6 +1393,11 @@
                             this.restockDiscount = parsed.discount || '';
                             this.restockMethod = parsed.method || 'Tunai';
                             this.restockNotes = parsed.notes || '';
+                            
+                            // Backward compatibility untuk draft lama yang belum punya returAction
+                            this.restockCart.forEach(item => {
+                                if(!item.returAction) item.returAction = 'tarik';
+                            });
                         } catch(e) {}
                     }
                 },
@@ -1396,7 +1411,7 @@
                 addToRestockCart(product) { 
                     if(!product.buyPrice || product.buyPrice <= 0) return alert('❌ Harga Modal produk ini masih 0 atau belum diisi. Silakan edit terlebih dahulu di menu Master Produk!');
                     const existing = this.restockCart.find(item => item.id === product.id && !item.alreadyInStock); 
-                    if (existing) { existing.qty++; } else { this.restockCart.unshift({ ...product, qty: 1, returQty: 0, alreadyInStock: false }); } 
+                    if (existing) { existing.qty++; } else { this.restockCart.unshift({ ...product, qty: 1, returQty: 0, returAction: 'tarik', alreadyInStock: false }); } 
                     this.saveDraftLocally();
                 },
                 
@@ -1472,10 +1487,11 @@
                             return alert('Tidak ada barang baru untuk ditambahkan ke stok pagi. Silakan tutup nota malam jika ingin membayar.');
                         }
 
-                        // JIKA TUTUP NOTA, PROSES PENGURANGAN STOK FISIK RETUR OTOMATIS
+                        // JIKA TUTUP NOTA, PROSES PENGURANGAN STOK FISIK RETUR OTOMATIS 
+                        // TAPI HANYA JIKA STATUSNYA "DITARIK VENDOR (TARIK)"
                         if (isPrintingMalam) {
                             for (let item of this.restockCart) {
-                                if (item.returQty > 0 && item.alreadyInStock) {
+                                if (item.returQty > 0 && item.alreadyInStock && item.returAction === 'tarik') {
                                     const prod = this.products.find(p => p.id === item.id);
                                     if (prod) {
                                         const newStock = prod.stock - item.returQty;
@@ -1504,7 +1520,7 @@
                                 // SIMPAN DATA FULL (ADA RETUR-NYA) UNTUK CETAK STRUK MANUAL ALA MBA AYU
                                 const savedCartForReceipt = JSON.parse(JSON.stringify(this.restockCart));
                                 this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: savedCartForReceipt, total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.restockNotes };
-                                alert(`✅ NOTA DITUTUP!\nPengeluaran kas tercatat. Stok sisa/retur telah dikurangi otomatis dari etalase.`);
+                                alert(`✅ NOTA DITUTUP!\nPengeluaran kas tercatat.`);
                                 
                                 localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
                                 this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
