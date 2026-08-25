@@ -313,7 +313,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="order in poList" :key="order.id">
-                        <div class="bg-white border rounded-xl shadow-sm overflow-hidden flex flex-col relative">
+                        <div class="bg-white border-2 border-red-100 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
                             <!-- Label Status DP -->
                             <div class="absolute top-0 right-0 px-3 py-1 text-[10px] font-bold text-white rounded-bl-lg" 
                                  :class="order.paymentStatus === 'Lunas' ? 'bg-green-500' : (order.downPayment > 0 ? 'bg-yellow-500' : 'bg-red-500')">
@@ -459,10 +459,21 @@
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6">
-                    <div class="mb-4 relative max-w-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 text-gray-400 w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" x-model="masterSearchQuery" placeholder="Ketik nama kue untuk mencari..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50 transition-all">
+                    <!-- FITUR PENGURUTAN (SORTING) STOK DITAMBAHKAN DI SINI -->
+                    <div class="mb-4 flex flex-col md:flex-row gap-3">
+                        <div class="relative flex-1 max-w-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 text-gray-400 w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" x-model="masterSearchQuery" placeholder="Ketik nama kue untuk mencari..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50 transition-all">
+                        </div>
+                        <div class="flex-shrink-0">
+                            <select x-model="productSortBy" class="w-full md:w-auto p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-white text-sm text-gray-700 font-bold shadow-sm">
+                                <option value="name_asc">Urutkan: Nama (A - Z)</option>
+                                <option value="stock_desc">Urutkan: Stok Terbanyak</option>
+                                <option value="stock_asc">Urutkan: Stok Habis / Sedikit</option>
+                            </select>
+                        </div>
                     </div>
+                    
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-max">
                             <thead>
@@ -504,7 +515,6 @@
                                 <option value="Transfer">Transfer (Rekening Modal)</option>
                             </select>
                         </div>
-                        <!-- FIX KATEGORI BAYAR VENDOR -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
                             <select x-model="expCat" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown font-medium">
@@ -1075,6 +1085,9 @@
                 saldoAwalLaci: localStorage.getItem('saldo_laci') || 0,
                 // SIMPAN TOTAL PAKET FIX
                 packageTotal: 0,
+                
+                // MENAMBAH FITUR SORTING (MENGURUTKAN PRODUK)
+                productSortBy: 'name_asc',
 
                 // VARIABEL BUKU PESANAN & PIUTANG
                 poList: [], piutangList: [], showPoModal: false,
@@ -1148,7 +1161,19 @@
                 },
 
                 get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
-                get filteredMasterProducts() { return this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); },
+                
+                // MENGAPLIKASIKAN FITUR SORTING PADA TABEL MASTER PRODUK
+                get filteredMasterProducts() { 
+                    let filtered = this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); 
+                    if (this.productSortBy === 'stock_desc') { 
+                        filtered.sort((a, b) => (b.stock || 0) - (a.stock || 0)); 
+                    } else if (this.productSortBy === 'stock_asc') { 
+                        filtered.sort((a, b) => (a.stock || 0) - (b.stock || 0)); 
+                    } else { 
+                        filtered.sort((a, b) => a.name.localeCompare(b.name)); 
+                    }
+                    return filtered;
+                },
                 
                 addToCart(product) { 
                     this.restorePrices(); 
