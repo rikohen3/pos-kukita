@@ -108,6 +108,7 @@
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
                     <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+                    <!-- TAMPILAN KASIR AKTIF -->
                     <div class="flex items-center gap-2 bg-orange-100 px-3 py-1.5 rounded-full border border-orange-200">
                         <i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i>
                         <span class="text-xs md:text-sm font-bold text-brand-brown" x-text="activeCashier"></span>
@@ -202,6 +203,21 @@
             
             <div class="flex flex-1 overflow-hidden relative flex-col md:flex-row">
                 <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
+                    
+                    <!-- FITUR BARU: ALARM VENDOR BELUM TUTUP NOTA -->
+                    <div x-show="activeDrafts.length > 0" class="p-3 bg-yellow-100 border-b border-yellow-200 z-10" style="display: none;">
+                        <label class="block text-[11px] font-extrabold text-yellow-800 mb-2 flex items-center gap-1">
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i> PENGINGAT: DRAFT NOTA BELUM DITUTUP LUNAS
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="draft in activeDrafts" :key="draft.id">
+                                <button @click="restockSupplierId = draft.id; loadDraftSupplier();" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 shadow-sm transition">
+                                    <i data-lucide="clock" class="w-3 h-3"></i> <span x-text="draft.name"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
                     <div class="p-4 bg-white border-b shadow-sm z-10">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">1. Pilih Supplier (Vendor Asal)</label>
                         <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
@@ -1162,6 +1178,7 @@
                 // VARIABEL BUKU TERIMA BARANG (VENDOR) DRAFT
                 restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
                 restockStockAddedPagi: false, // Checkbox pengaman stok ganda
+                activeDrafts: [], // ALARM VENDOR BELUM DITUTUP
 
                 async init() {
                     setTimeout(() => { lucide.createIcons(); }, 100);
@@ -1428,6 +1445,23 @@
                 // ==========================================
                 // FUNGSI TERIMA BARANG VENDOR (SISTEM DRAFT + RETUR)
                 // ==========================================
+
+                // FUNGSI BARU: CEK DRAFT AKTIF UNTUK ALARM VENDOR
+                checkActiveDrafts() {
+                    if (!this.options || !this.options.suppliers) return;
+                    this.activeDrafts = [];
+                    this.options.suppliers.forEach(sup => {
+                        const draft = localStorage.getItem(`draft_restock_${sup.id}`);
+                        if (draft) {
+                            try {
+                                const parsed = JSON.parse(draft);
+                                if (parsed && parsed.cart && parsed.cart.length > 0) {
+                                    this.activeDrafts.push(sup);
+                                }
+                            } catch(e) {}
+                        }
+                    });
+                },
                 
                 loadDraftSupplier() {
                     if(this.restockSupplierId) {
@@ -1456,12 +1490,14 @@
                             }
                         } catch(e) {}
                     }
+                    this.checkActiveDrafts();
                 },
                 
                 saveDraftLocally() {
                     if(!this.restockSupplierId) return;
                     const draftData = { cart: this.restockCart, discount: this.restockDiscount, method: this.restockMethod, notes: this.restockNotes };
                     localStorage.setItem(`draft_restock_${this.restockSupplierId}`, JSON.stringify(draftData));
+                    this.checkActiveDrafts();
                 },
 
                 addToRestockCart(product) { 
@@ -1645,6 +1681,7 @@
                                 localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
                                 this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
                                 this.restockStockAddedPagi = false;
+                                this.checkActiveDrafts(); // Update alarm vendor
                                 
                                 this.fetchReport();
                                 this.isPrintingVendor = true;
@@ -1814,7 +1851,11 @@
                 async fetchOptions() {
                     try {
                         const res = await fetch(`${SERVER_URL}/api/options`); const data = await res.json();
-                        if (data.success) { this.options.categories = data.data.categories; this.options.suppliers = data.data.suppliers; }
+                        if (data.success) { 
+                            this.options.categories = data.data.categories; 
+                            this.options.suppliers = data.data.suppliers; 
+                            this.checkActiveDrafts(); // Cek antrean vendor pas menu direload
+                        }
                     } catch(e) {}
                 },
 
