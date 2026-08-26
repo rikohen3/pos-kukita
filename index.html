@@ -211,7 +211,8 @@
                         </label>
                         <div class="flex flex-wrap gap-2">
                             <template x-for="draft in activeDrafts" :key="draft.id">
-                                <button @click="restockSupplierId = draft.id; loadDraftSupplier();" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 shadow-sm transition">
+                                <!-- DI SINI BUG FIXED: Pastikan draft.id jadi String biar x-model nggak bingung -->
+                                <button @click="restockSupplierId = String(draft.id); loadDraftSupplier();" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 shadow-sm transition">
                                     <i data-lucide="clock" class="w-3 h-3"></i> <span x-text="draft.name"></span>
                                 </button>
                             </template>
@@ -220,10 +221,12 @@
 
                     <div class="p-4 bg-white border-b shadow-sm z-10">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">1. Pilih Supplier (Vendor Asal)</label>
+                        <!-- x-model selalu string -->
                         <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
                             <option value="">-- Sentuh untuk Pilih Supplier --</option>
                             <template x-for="sup in options.suppliers" :key="sup.id">
-                                <option :value="sup.id" x-text="sup.name"></option>
+                                <!-- Paksa value jadi String supaya gampang di-reset ke "" -->
+                                <option :value="String(sup.id)" x-text="sup.name"></option>
                             </template>
                         </select>
                     </div>
@@ -233,7 +236,7 @@
                             <p class="font-medium">Pilih supplier di atas terlebih dahulu.</p>
                         </div>
                         <div x-show="restockSupplierId" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                            <template x-for="product in products.filter(p => p.type === 'product' && p.supplierId == restockSupplierId)" :key="product.id">
+                            <template x-for="product in products.filter(p => p.type === 'product' && String(p.supplierId) === restockSupplierId)" :key="product.id">
                                 <div @click="addToRestockCart(product)" class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition flex flex-col relative group">
                                     <div class="absolute top-2 right-2 bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i data-lucide="plus" class="w-4 h-4"></i></div>
                                     <h3 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6" x-text="product.name"></h3>
@@ -1446,7 +1449,6 @@
                 // FUNGSI TERIMA BARANG VENDOR (SISTEM DRAFT + RETUR)
                 // ==========================================
 
-                // FUNGSI BARU: CEK DRAFT AKTIF UNTUK ALARM VENDOR
                 checkActiveDrafts() {
                     if (!this.options || !this.options.suppliers) return;
                     this.activeDrafts = [];
@@ -1463,9 +1465,20 @@
                     });
                 },
                 
+                resetRestockUI() {
+                    this.restockSupplierId = '';
+                    this.restockSupplierName = '';
+                    this.restockCart = [];
+                    this.restockDiscount = '';
+                    this.restockNotes = '';
+                    this.restockStockAddedPagi = false;
+                    this.checkActiveDrafts();
+                },
+
                 loadDraftSupplier() {
                     if(this.restockSupplierId) {
-                        const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
+                        // Pastikan perbandingan menggunakan String untuk mencegah bug Alpine
+                        const selectedSup = this.options.suppliers.find(s => String(s.id) === String(this.restockSupplierId));
                         this.restockSupplierName = selectedSup ? selectedSup.name : '';
                     } else {
                         this.restockSupplierName = '';
@@ -1474,7 +1487,11 @@
                     this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
                     this.restockStockAddedPagi = false; // Reset checkbox
 
-                    if(!this.restockSupplierId) return;
+                    if(!this.restockSupplierId) {
+                        this.checkActiveDrafts();
+                        return;
+                    }
+                    
                     const savedDraft = localStorage.getItem(`draft_restock_${this.restockSupplierId}`);
                     if(savedDraft) {
                         try {
@@ -1577,7 +1594,6 @@
                     this.fetchCatalog(); 
                 },
 
-                // MENGHITUNG TOTAL UANG BERDASARKAN (JUMLAH MASUK - JUMLAH RETUR)
                 get restockTotal() { 
                     return this.restockCart.reduce((sum, i) => sum + ((i.buyPrice || 0) * (i.qty - (i.returQty || 0))), 0); 
                 },
@@ -1587,7 +1603,7 @@
                     if(this.restockCart.length === 0) return alert('Keranjang penerimaan kosong!');
                     if(!this.restockSupplierId) return alert('Silakan pilih Supplier/Vendor terlebih dahulu!');
                     
-                    const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
+                    const selectedSup = this.options.suppliers.find(s => String(s.id) === String(this.restockSupplierId));
                     this.restockSupplierName = selectedSup ? selectedSup.name : 'Vendor Tidak Diketahui';
 
                     const pesan = isPrintingMalam ? 
@@ -1605,11 +1621,14 @@
                     try {
                         const hasNewItems = this.restockCart.some(item => !item.alreadyInStock);
                         
-                        // JIKA KLIK DRAFT PAGI (Hanya Menambah Stok Etalase, Tidak Mencetak Nota Pembayaran)
+                        // JIKA KLIK DRAFT PAGI
                         if (!isPrintingMalam) {
                             if (!hasNewItems) {
+                                this.saveDraftLocally();
+                                alert('✅ DRAFT DIPERBARUI!\nPerubahan telah disimpan ke draft (stok sudah ditambahkan sebelumnya).');
+                                this.resetRestockUI();
                                 this.isProcessing = false;
-                                return alert('Tidak ada barang baru untuk ditambahkan ke stok pagi. Silakan klik Tutup Nota Malam jika ingin membayar.');
+                                return;
                             }
                             
                             for (let item of this.restockCart) {
@@ -1621,33 +1640,27 @@
                                             method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) 
                                         });
                                         item.alreadyInStock = true;
-                                        // Set Riwayat Tanggal Masuk (IDE 1)
                                         localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
                                     }
                                 }
                             }
-                            this.restockStockAddedPagi = true; // Tandai bahwa stok sudah berhasil ditambah
+                            this.restockStockAddedPagi = true;
                             this.saveDraftLocally();
                             alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase aplikasi. Tersimpan di Draft untuk dibayar nanti malam.');
                             
                             this.fetchCatalog();
-                            
-                            // RESET UI KE TAMPILAN AWAL 
-                            this.restockSupplierId = '';
-                            this.loadDraftSupplier(); 
+                            this.resetRestockUI(); // Reset Layar
                             this.isProcessing = false;
                             return;
                         }
 
-                        // JIKA KLIK TUTUP NOTA MALAM (Koreksi Stok, Bayar, Cetak)
+                        // JIKA KLIK TUTUP NOTA MALAM
                         if (isPrintingMalam) {
-                            // SIAPKAN PAYLOAD UNTUK SERVER (Hanya jumlah kue yang benar-benar DIBAYAR/TERJUAL)
                             const payloadItems = this.restockCart.map(item => ({
                                 ...item,
                                 qty: item.qty - (item.returQty || 0)
                             })).filter(item => item.qty > 0);
 
-                            // BIKIN KODE RAHASIA: Memasukkan sejarah Retur biar gak hilang waktu cetak ulang
                             const grossInfo = this.restockCart.map(i => `${i.id}*${i.qty}*${i.returQty || 0}`).join('|');
                             const finalNotes = (this.restockNotes && this.restockNotes.trim() !== '') 
                                                ? `${this.restockNotes} [RTR:${grossInfo}]` 
@@ -1658,7 +1671,6 @@
                             const result = await res.json();
                             
                             if(result.success) {
-                                // MENGATASI STOK GANDA:
                                 for (let item of this.restockCart) {
                                     if (this.restockStockAddedPagi || item.alreadyInStock) {
                                         const prod = this.products.find(p => p.id === item.id);
@@ -1671,31 +1683,31 @@
                                             } catch(e) {}
                                         }
                                     }
-                                    
-                                    // Update Tanggal Umur Kue bagi yg malam ini baru diinput mendadak (tanpa draft)
                                     if (!item.alreadyInStock) {
                                         localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
                                     }
                                 }
 
-                                // SIMPAN DATA FULL (ADA RETUR-NYA) UNTUK CETAK STRUK MANUAL ALA MBA AYU
                                 const savedCartForReceipt = JSON.parse(JSON.stringify(this.restockCart));
                                 this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: savedCartForReceipt, total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.restockNotes };
                                 alert(`✅ NOTA LUNAS DITUTUP!\nPengeluaran kas sudah tercatat otomatis.`);
                                 
-                                localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
-                                this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
-                                this.restockStockAddedPagi = false;
+                                const currentId = this.restockSupplierId;
+                                localStorage.removeItem(`draft_restock_${currentId}`);
                                 
-                                // RESET UI KE TAMPILAN AWAL 
-                                this.restockSupplierId = '';
-                                
-                                this.checkActiveDrafts(); // Update alarm vendor
                                 this.fetchReport();
-                                
                                 this.isPrintingVendor = true;
-                                setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
-                                this.fetchCatalog(); 
+                                
+                                // Di sini triknya: Reset UI dilakukan tepat sebelum/sesudah print agar layar kembali kosong dengan mulus
+                                setTimeout(() => { 
+                                    window.print(); 
+                                    setTimeout(() => { 
+                                        this.isPrintingVendor = false; 
+                                        this.resetRestockUI(); // RESET LAYAR DILAKUKAN DI SINI
+                                        this.fetchCatalog(); 
+                                    }, 3000); 
+                                }, 500);
+                                
                             } else {
                                 alert('Gagal menyimpan!\nAlasan Server: ' + (result.message || 'Error Database Tidak Dikenal'));
                             }
@@ -1709,7 +1721,6 @@
                     let displayNotes = notesRaw;
                     let rtrData = "";
                     
-                    // Bongkar sandi rahasia [RTR:...]
                     if (notesRaw.includes('[RTR:')) {
                         let parts = notesRaw.split('[RTR:');
                         displayNotes = parts[0].trim();
@@ -1725,7 +1736,6 @@
                         let grossQty = netQty;
                         let returQty = c.returQty || 0;
 
-                        // Terapkan angka rahasia RTR kalau ada
                         if (rtrData) {
                             let items = rtrData.split('|');
                             for (let item of items) {
@@ -1907,7 +1917,6 @@
                     try {
                         const res = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) });
                         if ((await res.json()).success) { 
-                            // Update tanggal masuk memori kalau ditambah stoknya (Bukan dikurangi)
                             if (diffQty > 0) { localStorage.setItem('last_restock_date_' + product.id, new Date().toISOString()); }
                             alert(`Berhasil!`); this.fetchCatalog(); 
                         } 
