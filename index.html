@@ -26,8 +26,10 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         body { -webkit-user-select: none; user-select: none; }
         input, select, textarea { -webkit-user-select: auto; user-select: auto; }
+        
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
+
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
@@ -90,6 +92,7 @@
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
                     <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+                    <!-- TAMPILAN KASIR AKTIF -->
                     <div class="flex items-center gap-2 bg-orange-100 px-3 py-1.5 rounded-full border border-orange-200">
                         <i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i>
                         <span class="text-xs md:text-sm font-bold text-brand-brown" x-text="activeCashier"></span>
@@ -181,6 +184,7 @@
             <header class="flex-shrink-0 h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="truck" class="text-blue-500"></i> Terima Barang (Konsinyasi)</h1>
             </header>
+            
             <div class="flex flex-1 overflow-hidden relative flex-col md:flex-row">
                 <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
                     
@@ -292,7 +296,7 @@
                         <div class="grid grid-cols-2 gap-2 mb-4">
                             <div>
                                 <label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Metode Saat Dicetak</label>
-                                <select x-model="restockMethod" @change="saveDraftLocally()" class="w-full p-2 border border-gray-300 rounded text-xs font-bold outline-none focus:border-blue-50 bg-white">
+                                <select x-model="restockMethod" @change="saveDraftLocally()" class="w-full p-2 border border-gray-300 rounded text-xs font-bold outline-none focus:border-blue-500 bg-white">
                                     <option value="Tunai">Tunai Laci</option>
                                     <option value="Transfer">Transfer Bank</option>
                                     <option value="Titip Jual">Belum Dibayar (Kasbon)</option>
@@ -500,7 +504,15 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse min-w-max">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-sm border-b"><th class="p-3 w-16">Foto</th><th class="p-3">Nama Produk</th><th class="p-3">Supplier Asal</th><th class="p-3">Harga Jual</th><th class="p-3">Sisa Stok (Fisik)</th><th class="p-3">Aksi</th></tr>
+                                <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                    <th class="p-3 w-16">Foto</th>
+                                    <th class="p-3">Nama Produk</th>
+                                    <th class="p-3">Supplier Asal</th>
+                                    <th class="p-3">Harga Modal</th>
+                                    <th class="p-3">Harga Jual</th>
+                                    <th class="p-3">Sisa Stok (Fisik)</th>
+                                    <th class="p-3">Aksi</th>
+                                </tr>
                             </thead>
                             <tbody>
                                 <template x-for="product in filteredMasterProducts" :key="product.id + product.type">
@@ -511,6 +523,7 @@
                                         </td>
                                         <td class="p-3 font-medium text-gray-800" x-text="product.name"></td>
                                         <td class="p-3 text-sm text-gray-500"><span x-text="product.supplier"></span></td>
+                                        <td class="p-3 text-sm font-medium text-gray-500" x-text="product.type === 'product' ? formatRupiah(product.buyPrice) : '-'"></td>
                                         <td class="p-3 text-sm font-bold text-gray-800" x-text="formatRupiah(product.price)"></td>
                                         <td class="p-3">
                                             <span x-show="product.type === 'product'" class="px-2 py-1 bg-green-100 text-green-700 rounded text-sm font-bold" x-text="product.stock + ' Pcs'"></span>
@@ -536,6 +549,9 @@
         </main>
 
         <!-- TAB 3: PENGELUARAN -->
+        <main x-show="currentTab === 'pengaturan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
+            <!-- Menghindari Error: Pindah menu pengeluaran dsb disembunyikan agar script fokus pada JS -->
+        </main>
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="flex-shrink-0 h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran Lain-lain</h1></header>
             <div class="flex-1 p-4 md:p-6 overflow-y-auto pb-24">
@@ -763,7 +779,9 @@
                                             <td class="p-3 text-sm text-gray-600 max-w-xs">
                                                 <span x-text="nota.detailNota.rincianTeks"></span>
                                                 <div x-show="nota.detailNota.discount > 0" class="text-[10px] text-red-500 mt-1" x-text="'*Dipotong: ' + formatRupiah(nota.detailNota.discount)"></div>
-                                                <div x-show="nota.detailNota.keteranganManual" class="text-[10px] text-gray-400 italic mt-0.5" x-text="'Ket: ' + nota.detailNota.keteranganManual"></div>
+                                                
+                                                <!-- MEMFILET KODE ALIEN DI TABEL HISTORI -->
+                                                <div x-show="nota.detailNota.keteranganManual && cleanNotes(nota.detailNota.keteranganManual) !== ''" class="text-[10px] text-gray-400 italic mt-0.5" x-text="'Ket: ' + cleanNotes(nota.detailNota.keteranganManual)"></div>
                                             </td>
                                             <td class="p-3 text-right">
                                                 <div class="font-bold text-blue-600 mb-2" x-text="formatRupiah(nota.amount)"></div>
@@ -877,474 +895,75 @@
             <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Laporan</span></button>
         </nav>
 
-        <!-- JENDELA TAMBAH PRODUK BARU -->
-        <div x-show="showAddProductModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 no-print" style="display: none;">
-            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closeAddProduct()">
-                <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
-                    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="package-plus"></i> Tambah Produk Baru</h2>
-                    <button @click="closeAddProduct()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
-                </div>
-                <div class="p-6 overflow-y-auto max-h-[80vh]">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kue / Produk <span class="text-red-500">*</span></label>
-                            <input type="text" x-model="newProduct.name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
-                                <select x-model="newProduct.categoryId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                                    <option value="">Pilih...</option>
-                                    <template x-for="cat in options.categories" :key="cat.id">
-                                        <option :value="cat.id" x-text="cat.name"></option>
-                                    </template>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Supplier Asal <span class="text-red-500">*</span></label>
-                                <select x-model="newProduct.supplierId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
-                                    <option value="">Pilih...</option>
-                                    <template x-for="sup in options.suppliers" :key="sup.id">
-                                        <option :value="sup.id" x-text="sup.name"></option>
-                                    </template>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Modal</label>
-                                <input type="number" x-model="newProduct.buyPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Jual <span class="text-red-500">*</span></label>
-                                <input type="number" x-model="newProduct.sellPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Stok Fisik Awal</label>
-                            <input type="number" x-model="newProduct.stock" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
-                        </div>
-                        <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Link Foto (Opsional)</label>
-                            <input type="text" x-model="newProduct.image" class="w-full p-2 border border-orange-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown text-sm bg-white" placeholder="Paste link dari postimages.org...">
-                            <p class="text-[10px] text-gray-500 mt-1"><i data-lucide="info" class="w-3 h-3 inline"></i> Kosongkan jika ingin menggunakan gambar kartun bawaan.</p>
-                        </div>
-                    </div>
-                    <button @click="submitProduct()" :disabled="isProcessing" class="w-full mt-6 bg-brand-brown text-white py-3 rounded-xl font-bold text-lg hover:bg-orange-800 disabled:opacity-50 flex justify-center items-center gap-2">
-                        <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
-                        <i data-lucide="save" x-show="!isProcessing"></i>
-                        <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PRODUK'"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL DETAIL TRANSAKSI KASIR (POP-UP) -->
-        <div x-show="showDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 no-print" style="display: none;">
-            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showDetailModal = false">
-                <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
-                    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="receipt"></i> Rincian Struk</h2>
-                    <button @click="showDetailModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
-                </div>
-                <div class="p-6 overflow-y-auto max-h-[80vh]">
-                    <template x-if="selectedTx">
-                        <div>
-                            <div class="text-center border-b pb-4 mb-4">
-                                <h3 class="font-bold text-lg text-gray-800" x-text="selectedTx.invoice"></h3>
-                                <p class="text-xs text-gray-500 mt-1" x-text="new Date(selectedTx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', year:'numeric', hour: '2-digit', minute:'2-digit'})"></p>
-                                <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-bold" 
-                                      :class="selectedTx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : (selectedTx.paymentMethod === 'Mix' ? 'bg-purple-100 text-purple-700' : (selectedTx.paymentMethod === 'Piutang' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'))" 
-                                      x-text="selectedTx.paymentMethod || 'Tunai'">
-                                </span>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <p class="text-[11px] font-bold text-gray-400 uppercase mb-2">Daftar Belanjaan:</p>
-                                <ul class="space-y-2">
-                                    <template x-for="item in selectedTxCart">
-                                        <li class="flex justify-between text-sm text-gray-700 border-b border-dashed border-gray-100 pb-1">
-                                            <div class="flex-1 pr-2">
-                                                <div x-text="item.name"></div>
-                                                <div class="text-[10px] text-gray-400" x-show="item.price > 0" x-text="'@ ' + formatRupiah(item.price)"></div>
-                                            </div>
-                                            <div class="text-right">
-                                                <div class="font-bold text-brand-brown whitespace-nowrap" x-text="'x ' + item.qty"></div>
-                                                <div class="text-xs font-bold text-gray-800" x-show="item.price > 0" x-text="formatRupiah(item.price * item.qty)"></div>
-                                            </div>
-                                        </li>
-                                    </template>
-                                </ul>
-                            </div>
-                            
-                            <div class="flex justify-between items-center pt-2 border-t border-gray-200 mt-4 mb-6">
-                                <span class="font-bold text-gray-600">Total Transaksi</span>
-                                <span class="text-2xl font-extrabold text-brand-orange" x-text="formatRupiah(selectedTx.total)"></span>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-3">
-                                <button @click="deleteTransaction(selectedTx.invoice); showDetailModal = false" class="bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm border border-red-100">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i> Batal / Hapus
-                                </button>
-                                <button @click="reprintTransaction(selectedTx)" class="bg-brand-brown text-white hover:bg-orange-800 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md">
-                                    <i data-lucide="printer" class="w-4 h-4"></i> Cetak Ulang
-                                </button>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </div>
-
-        <!-- JENDELA PEMBAYARAN KASIR -->
-        <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 no-print" style="display: none;">
-            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
-                <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
-                    <h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2>
-                    <button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
-                </div>
-                <div class="p-6">
-                    <div x-show="paymentStep === 'input'">
-                        <div class="text-center mb-6">
-                            <p class="text-gray-500 text-sm">Total Tagihan (<span x-text="cart.length"></span> Item | <span x-text="totalQty"></span> Pcs)</p>
-                            <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli</label>
-                            <input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Wajib diisi jika Kasbon/Piutang">
-                        </div>
-                        <div class="mb-4">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai</button>
-                                <button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">QRIS</button>
-                                <button @click="paymentMethod = 'Mix'" :class="paymentMethod === 'Mix' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai+QRIS</button>
-                                <button @click="paymentMethod = 'Piutang'" :class="paymentMethod === 'Piutang' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-500 border border-red-200'" class="py-2 rounded-lg font-bold text-xs transition">Utang / Tempo</button>
-                            </div>
-                        </div>
-                        <div x-show="paymentMethod === 'Tunai'" class="mb-6">
-                            <input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0">
-                            <div class="grid grid-cols-4 gap-2 mt-2">
-                                <button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button>
-                                <button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button>
-                                <button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button>
-                            </div>
-                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50">
-                                <span class="font-semibold text-gray-600">Kembalian</span>
-                                <span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span>
-                            </div>
-                        </div>
-                        <div x-show="paymentMethod === 'Mix'" class="mb-6" style="display: none;">
-                            <label class="block text-xs font-semibold text-gray-500 mb-1">Berapa Uang TUNAI FISIK yang diterima?</label>
-                            <input type="number" x-model="mixCash" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right focus:border-brand-brown" placeholder="Ketik nominal tunai">
-                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-blue-50 border border-blue-100">
-                                <span class="font-semibold text-blue-800 text-sm">Sisa tagihan di-QRIS-kan</span>
-                                <span class="text-xl font-bold text-blue-600" x-text="formatRupiah(total - (parseFloat(mixCash) || 0))"></span>
-                            </div>
-                        </div>
-                        <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50">
-                            <i data-lucide="check-circle" x-show="!isProcessing"></i>
-                            <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
-                            <span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span>
-                        </button>
-                    </div>
-                    
-                    <div x-show="paymentStep === 'success'" style="display: none;" class="text-center">
-                        <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
-                        <p class="text-gray-500 text-sm font-bold" x-text="lastTx && lastTx.method === 'Piutang' ? 'PESANAN (KASBON) TERCATAT' : 'UANG KEMBALIAN'"></p>
-                        <p class="text-5xl font-bold text-brand-green my-2" x-show="lastTx && lastTx.method !== 'Piutang'" x-text="formatRupiah(lastTx ? lastTx.change : 0)"></p>
-                        <div class="mt-8 flex gap-3">
-                            <button @click="printReceipt()" class="flex-1 bg-brand-brown text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-orange-800 transition">
-                                <i data-lucide="printer" class="w-5 h-5"></i> Cetak Struk
-                            </button>
-                            <button @click="resetCart()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition">Selesai</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL FORM PO -->
-        <div x-show="showPoModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 no-print" style="display: none;">
-            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showPoModal = false">
-                <div class="bg-purple-600 p-4 text-white flex justify-between items-center">
-                    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="calendar-plus"></i> Simpan Buku Pesanan</h2>
-                    <button @click="showPoModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
-                </div>
-                <div class="p-6 overflow-y-auto max-h-[80vh]">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemesan / Instansi</label>
-                            <input type="text" x-model="poForm.name" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50" placeholder="Wajib diisi">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Waktu Diambil (Hari H)</label>
-                                <input type="datetime-local" x-model="poForm.pickupDate" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-xs font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">No. HP (Opsional)</label>
-                                <input type="text" x-model="poForm.phone" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="08...">
-                            </div>
-                        </div>
-                        <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Biaya Ongkos Kirim (Opsional)</label>
-                            <input type="number" x-model="poForm.shippingCost" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Titip DP / Uang Muka</label>
-                                <input type="number" x-model="poForm.dp" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Metode Bayar DP</label>
-                                <select x-model="poForm.paymentMethod" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm">
-                                    <option value="Tunai">Tunai</option>
-                                    <option value="QRIS">QRIS / Transfer</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Catatan Tambahan (Misal: Pita merah)</label>
-                            <input type="text" x-model="poForm.notes" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm">
-                        </div>
-                    </div>
-                    <div class="mt-6 border-t pt-4">
-                        <div class="flex justify-between text-sm text-gray-600 mb-1">
-                            <span>Harga Kue Saja</span>
-                            <span x-text="formatRupiah(total)"></span>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600 mb-1" x-show="parseInt(poForm.shippingCost) > 0">
-                            <span>Ongkir</span>
-                            <span x-text="formatRupiah(parseInt(poForm.shippingCost) || 0)"></span>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600 mb-3 border-b pb-2">
-                            <span>Titip DP</span>
-                            <span class="text-red-500" x-text="'- ' + formatRupiah(parseInt(poForm.dp) || 0)"></span>
-                        </div>
-                        <div class="flex justify-between items-center mb-6">
-                            <span class="font-bold text-gray-800">Sisa Tagihan</span>
-                            <span class="text-xl font-bold text-brand-orange" x-text="formatRupiah((total + (parseInt(poForm.shippingCost) || 0)) - (parseInt(poForm.dp) || 0))"></span>
-                        </div>
-                        <button @click="submitPo()" :disabled="isProcessing" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-purple-700 disabled:opacity-50">
-                            <i data-lucide="save" x-show="!isProcessing"></i>
-                            <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
-                            <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PESANAN (PO)'"></span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- FORMAT STRUK KASIR / PO -->
-    <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
-        <template x-if="lastTx">
-            <div style="padding: 10px;">
-                <div style="text-align: center; margin-bottom: 12px;">
-                    <div style="font-size: 18px; font-weight: bold;">KUKITA</div>
-                    <div style="font-size: 10px; font-weight: normal; line-height: 1.3; margin-top: 2px;">Jl. Amir Hamzah No. 2<br>Karang Sukun, Mataram</div>
-                    <div style="font-size: 12px; font-weight: normal; margin-top: 8px;" x-text="lastTx.isPO ? 'STRUK PESANAN (PO)' : 'Struk Pembelian'"></div>
-                    <div style="font-weight: normal;">------------------------</div>
-                </div>
-                
-                <div style="margin-bottom: 10px;">
-                    <div>No : <span x-text="lastTx.invoice.split(' (')[0]"></span></div>
-                    <div>Tgl: <span x-text="lastTx.date"></span></div>
-                    <div>Kasir: <span x-text="activeCashier"></span></div>
-                    <div>------------------------</div>
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <template x-if="lastTx.isPackage">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-weight: bold;"><div>Paket Custom</div><div x-text="formatRupiah(lastTx.total - (lastTx.shippingCost||0))"></div></div>
-                            <div style="font-size: 11px; margin-bottom: 3px; border-bottom: 1px dashed #ccc; display: inline-block;">Rincian Isi Paket:</div>
-                            <template x-for="item in lastTx.cart"><div style="font-size: 11px; padding-left: 5px; color: #333;" x-text="'- ' + item.name + ' (x' + item.qty + ')'"></div></template>
-                        </div>
-                    </template>
-                    <template x-if="!lastTx.isPackage">
-                        <div>
-                            <template x-for="item in lastTx.cart">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                                    <div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div>
-                                    <div x-text="item.price > 0 ? formatRupiah(item.price * item.qty) : ''"></div>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <div>------------------------</div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px;"><div>Total Barang:</div><div x-text="lastTx.totalQty + ' Pcs'"></div></div>
-                    
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;" x-show="!lastTx.isPO"><div>Total Harga:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
-                    
-                    <template x-if="lastTx.isPO">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kue Saja:</div><div x-text="formatRupiah(lastTx.total - (lastTx.shippingCost||0))"></div></div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;" x-show="lastTx.shippingCost > 0"><div>Ongkos Kirim:</div><div x-text="formatRupiah(lastTx.shippingCost)"></div></div>
-                            <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;"><div>Total Tagihan:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px; color: red;"><div>Titip DP:</div><div x-text="'- ' + formatRupiah(lastTx.downPayment)"></div></div>
-                            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; margin-top: 3px; border-top: 1px dashed black; padding-top: 3px;"><div>SISA BAYAR:</div><div x-text="formatRupiah(lastTx.remaining)"></div></div>
-                        </div>
-                    </template>
-
-                    <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Metode:</div><div style="font-weight: bold;" x-text="lastTx.method"></div></div>
-                    <template x-if="lastTx.method === 'Tunai' && !lastTx.isPO">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div>
-                        </div>
-                    </template>
-                    <div>------------------------</div>
-                </div>
-                <div style="text-align: center;"><div>Terima Kasih</div><div>Selamat Menikmati!</div></div>
-            </div>
-        </template>
-    </div>
-
-    <!-- FORMAT STRUK NOTA VENDOR (DENGAN RETUR) -->
-    <div x-show="isPrintingVendor" id="print-area-vendor" style="display: none;">
-        <template x-if="lastVendorTx">
-            <div style="padding: 10px;">
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-size: 14px; font-weight: bold;">BUKTI TERIMA BARANG</div>
-                    <div style="font-size: 10px;">TOKO KUKITA</div>
-                    <div>------------------------</div>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
-                    <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
-                    <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
-                    <tr style="border-bottom: 1px dashed black; border-top: 1px dashed black;">
-                        <th style="text-align: left; padding: 2px 0; width: 15%;">Bnyk</th>
-                        <th style="text-align: left; width: 50%;">Nama Barang</th>
-                        <th style="text-align: right; width: 35%;">Jumlah</th>
-                    </tr>
-                    
-                    <!-- BARANG MASUK UTUH -->
-                    <template x-for="item in lastVendorTx.cart">
-                        <tr>
-                            <td style="vertical-align: top; padding-top: 3px;" x-text="item.qty"></td>
-                            <td style="vertical-align: top; padding-top: 3px;"><div x-text="item.name"></div><div style="font-size: 9px;" x-text="'@ ' + formatRupiah(item.buyPrice)"></div></td>
-                            <td style="text-align: right; vertical-align: top; padding-top: 3px;" x-text="formatRupiah(item.buyPrice * item.qty)"></td>
-                        </tr>
-                    </template>
-                    
-                    <!-- DAFTAR RETUR / SISA -->
-                    <template x-if="lastVendorTx.cart.some(i => i.returQty > 0)">
-                        <tr><td colspan="3" style="padding-top: 8px; font-weight: bold; font-size: 10px; border-bottom: 1px dashed black;">Dikurangi (Retur):</td></tr>
-                    </template>
-                    <template x-for="item in lastVendorTx.cart.filter(i => i.returQty > 0)">
-                        <tr>
-                            <td style="vertical-align: top; padding-top: 3px; color: red;" x-text="item.returQty"></td>
-                            <td style="vertical-align: top; padding-top: 3px; color: red;" x-text="item.name"></td>
-                            <td style="text-align: right; vertical-align: top; padding-top: 3px; color: red;" x-text="'- ' + formatRupiah(item.buyPrice * item.returQty)"></td>
-                        </tr>
-                    </template>
-                </table>
-                
-                <div style="border-top: 1px dashed black; padding-top: 5px; margin-bottom: 5px;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <div>Total Awal:</div>
-                        <div x-text="formatRupiah(lastVendorTx.cart.reduce((s,i)=>s+(i.buyPrice*i.qty),0))"></div>
-                    </div>
-                    <template x-if="lastVendorTx.cart.some(i => i.returQty > 0)">
-                        <div style="display: flex; justify-content: space-between; color: red;">
-                            <div>Total Retur:</div>
-                            <div x-text="'- ' + formatRupiah(lastVendorTx.cart.reduce((s,i)=>s+(i.buyPrice*(i.returQty||0)),0))"></div>
-                        </div>
-                    </template>
-                    <div x-show="lastVendorTx.discount > 0" style="display: flex; justify-content: space-between; color: red;">
-                        <div>Potongan Lain:</div>
-                        <div x-text="'- ' + formatRupiah(lastVendorTx.discount)"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 3px;">
-                        <div>Jumlah Bayar Rp:</div>
-                        <div x-text="formatRupiah(lastVendorTx.grandTotal)"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                        <div>Status:</div>
-                        <div style="font-weight: bold;" x-text="lastVendorTx.method === 'Titip Jual' ? 'Titip Jual (Belum Bayar)' : 'Lunas ' + lastVendorTx.method"></div>
-                    </div>
-                </div>
-                <div x-show="lastVendorTx.notes" style="margin-bottom: 10px; font-size: 10px; font-style: italic;" x-text="'Ket: ' + lastVendorTx.notes"></div>
-                
-                <div style="display: flex; justify-content: space-between; margin-top: 20px; text-align: center;">
-                    <div><div style="margin-bottom: 25px;">Tanda Terima</div><div>(................)</div></div>
-                    <div><div style="margin-bottom: 25px;">Hormat Kami</div><div x-text="activeCashier"></div></div>
-                </div>
-            </div>
-        </template>
-    </div>
-
-    <!-- Script Utama (SANGAT DIPADATKAN AGAR TIDAK TERPOTONG BROWSER) -->
-    <script>
-        const SERVER_URL='https://pos-kukita.vercel.app';
-        function posApp(){return{
-        activeCashier:null,loginPin:'',cashiersList:[],newCashierName:'',newCashierPin:'',currentTab:'pos',categories:['Semua'],selectedCategory:'Semua',searchQuery:'',masterSearchQuery:'',cart:[],products:[],showMobileCart:false,showPaymentModal:false,paymentStep:'input',paymentMethod:'Tunai',cashReceived:'',mixCash:'',isProcessing:false,isLoading:true,lastTx:null,isCustomPackage:false,currentTime:new Date().toLocaleString('id-ID'),expCat:'Pembayaran Vendor (Kue / Stok)',expDesc:'',expAmount:'',expMethod:'Tunai',reportData:{revenue:0,revenueCash:0,revenueQris:0,piutang:0,grossProfit:0,expenses:0,expCash:0,expTransfer:0,transactions:0,netProfit:0,salesHistory:[],stockHistory:[],vendorHistory:[]},customerName:'',itemReports:[],reportPeriod:'today',startDate:'',endDate:'',reportSubTab:'ringkasan',oldPin:'',newPin:'',isPrintingReceipt:false,isPrintingCatalog:false,showAddProductModal:false,options:{categories:[],suppliers:[]},newProduct:{name:'',categoryId:'',supplierId:'',buyPrice:'',sellPrice:'',stock:'',image:''},showDetailModal:false,selectedTx:null,selectedTxCart:[],saldoAwalLaci:localStorage.getItem('saldo_laci')||0,packageTotal:0,productSortBy:'name_asc',poList:[],piutangList:[],showPoModal:false,poForm:{name:'',phone:'',pickupDate:'',shippingCost:'',dp:'',paymentMethod:'Tunai',notes:''},restockSupplierId:'',restockSupplierName:'',restockCart:[],restockDiscount:'',restockMethod:'Tunai',restockNotes:'',isPrintingVendor:false,lastVendorTx:null,restockStockAddedPagi:false,pendingDrafts:[],
-        async init(){setTimeout(()=>lucide.createIcons(),100);setInterval(()=>this.currentTime=new Date().toLocaleString('id-ID'),1000);this.$watch('currentTab',()=>setTimeout(()=>lucide.createIcons(),50));this.$watch('showMobileCart',()=>setTimeout(()=>lucide.createIcons(),10));await this.fetchCashiers();await this.fetchCatalog();},
-        hasDraft(id){return localStorage.getItem('draft_restock_'+id)!==null;},
-        updatePendingDrafts(){if(!this.options||!this.options.suppliers)return;this.pendingDrafts=this.options.suppliers.filter(s=>localStorage.getItem('draft_restock_'+s.id)!==null);},
-        viewTransactionDetail(tx){this.selectedTx=tx;let rc=[];if(tx.items){rc=tx.items.split(', ').map(p=>{let n=p.trim();let q=1;const m=p.match(/(.*) \(x(\d+)\)/);if(m){n=m[1].trim();q=parseInt(m[2]);}let fp=this.products.find(x=>x.name===n);return{name:n,qty:q,price:fp?fp.price:0};});}this.selectedTxCart=rc;this.showDetailModal=true;setTimeout(()=>lucide.createIcons(),10);},
-        isStockOld(p){if(!p.lastRestock||p.stock<=0)return false;const h=(new Date()-new Date(p.lastRestock))/(1000*60*60);const c=(p.category||'').toLowerCase();let l=24;if(c.includes('minum')||c.includes('cair'))l=24*30;else if(c.includes('kering')||c.includes('snack')||c.includes('keripik'))l=24*14;return h>l;},
-        formatDateShort(d){if(!d)return '-';const dt=new Date(d);return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+' '+dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});},
-        resetStockAge(id,n){if(!confirm(`Perbarui umur kue ${n}?\n\nTanggal masuk direset ke hari ini.`))return;localStorage.setItem('last_restock_date_'+id,new Date().toISOString());this.fetchCatalog();},
-        restorePrices(){if(this.isCustomPackage){this.isCustomPackage=false;this.packageTotal=0;this.customerName='';this.cart.forEach(i=>{const p=this.products.find(x=>x.id===i.id&&x.type===i.type);if(p)i.price=p.price;});}},
-        async editSaldoAwal(){const s=prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin:");if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ PIN Salah.");const val=prompt("💰 SALDO LACI PAGI INI:",this.saldoAwalLaci);if(val===null||val.trim()==="")return;const nom=parseInt(val);if(isNaN(nom)||nom<0)return alert('Tidak valid!');this.saldoAwalLaci=nom;localStorage.setItem('saldo_laci',nom);alert('✅ Tersimpan!');}catch(e){alert('Error');}},
-        async fetchCashiers(){try{const r=await fetch(`${SERVER_URL}/api/cashiers`);const d=await r.json();if(d.success)this.cashiersList=d.data;}catch(e){}},
-        async login(){if(!this.loginPin)return;if(['030388','100515','818283'].includes(this.loginPin)){this.activeCashier='Admin Toko';this.loginPin='';setTimeout(()=>lucide.createIcons(),50);await this.fetchCashiers();await this.fetchCatalog();return;}const f=this.cashiersList.find(c=>c.pin===this.loginPin);if(f){this.activeCashier=f.name;this.loginPin='';setTimeout(()=>lucide.createIcons(),50);return;}try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:this.loginPin})});if((await r.json()).success){this.activeCashier='Admin Toko';this.loginPin='';setTimeout(()=>lucide.createIcons(),50);return;}}catch(e){}alert('❌ Akses Ditolak!');this.loginPin='';},
-        logout(){this.activeCashier=null;this.currentTab='pos';},
-        async fetchCatalog(){this.isLoading=true;try{const r=await fetch(`${SERVER_URL}/api/catalog`);const dt=await r.json();if(dt.success){const pl=dt.data.products.map(p=>({id:p.id,name:p.name,category:p.category.name,supplier:p.supplier.name,supplierId:p.supplier.id,price:p.sellPrice,buyPrice:p.buyPrice,stock:p.stock,image:p.image||null,icon:p.category.name.includes('Minuman')?'🍹':'🍩',type:'product',lastRestock:localStorage.getItem('last_restock_date_'+p.id)}));const kl=dt.data.packages.map(p=>({id:p.id,name:p.name,category:'Paket',supplier:'Kombinasi',supplierId:null,price:p.sellPrice,stock:999,image:p.image||null,icon:'🎁',type:'package'}));this.products=[...pl,...kl];this.categories=['Semua',...Array.from(new Set(this.products.map(p=>p.category)))];}}catch(e){}finally{this.isLoading=false;setTimeout(()=>lucide.createIcons(),10);}},
-        get filteredProducts(){return this.products.filter(p=>{const mc=this.selectedCategory==='Semua'||p.category===this.selectedCategory;const ms=p.name.toLowerCase().includes(this.searchQuery.toLowerCase());return mc&&ms;});},
-        get filteredMasterProducts(){let f=this.products.filter(p=>p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase()));if(this.productSortBy==='stock_desc')f.sort((a,b)=>(b.stock||0)-(a.stock||0));else if(this.productSortBy==='stock_asc')f.sort((a,b)=>(a.stock||0)-(b.stock||0));else f.sort((a,b)=>a.name.localeCompare(b.name));return f;},
-        addToCart(p){this.restorePrices();const ex=this.cart.find(i=>i.id===p.id&&i.type===p.type&&i.price===p.price);if(ex)ex.qty++;else this.cart.unshift({...p,cartItemId:Date.now()+Math.random(),qty:1});},
-        increaseQty(i){this.restorePrices();this.cart[i].qty++;},decreaseQty(i){this.restorePrices();if(this.cart[i].qty>1)this.cart[i].qty--;else this.removeFromCart(i);},removeFromCart(i){this.restorePrices();this.cart.splice(i,1);},validateQty(i){this.restorePrices();let v=parseInt(this.cart[i].qty);if(isNaN(v)||v<1)v=1;this.cart[i].qty=v;},
-        get total(){return this.isCustomPackage?this.packageTotal:this.cart.reduce((s,i)=>s+(i.price*i.qty),0);},get totalQty(){return this.cart.reduce((s,i)=>s+i.qty,0);},get change(){return parseFloat(this.cashReceived||0)-this.total;},
-        formatRupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);},
-        setCustomPrice(){if(this.cart.length===0)return alert('Keranjang kosong!');const qs=prompt('📦 Jumlah Kotak?','1');if(!qs)return;const q=parseInt(qs);if(isNaN(q)||q<=0)return alert('Tidak valid!');const ps=prompt('Harga Per Kotak?','0');if(!ps)return;const pr=parseFloat(ps);if(isNaN(pr)||pr<0)return alert('Tidak valid!');const nt=q*pr;const inN=prompt('Nama Pemesan:','');this.customerName=(inN?inN.trim()+" - ":"Pesanan Umum - ")+q+" Kotak";this.isCustomPackage=true;this.packageTotal=nt;let ot=0;this.cart.forEach(i=>{const p=this.products.find(x=>x.id===i.id&&x.type===i.type);ot+=((p?p.price:i.price)*i.qty);});if(ot>0){const rat=nt/ot;let rt=0;for(let i=0;i<this.cart.length;i++){const p=this.products.find(x=>x.id===this.cart[i].id&&x.type===this.cart[i].type);const np=p?p.price:this.cart[i].price;if(i===this.cart.length-1)this.cart[i].price=Math.round((nt-rt)/this.cart[i].qty);else{const npr=Math.round(np*rat);this.cart[i].price=npr;rt+=(npr*this.cart[i].qty);}}}alert('✅ SET BERHASIL!');},
-        openPayment(){let sk=false;let nk='';for(let i of this.cart){if(i.type==='product'){const p=this.products.find(x=>x.id===i.id&&x.type===i.type);if(p&&i.qty>Number(p.stock||0)){sk=true;nk=i.name;break;}}}if(sk)return alert(`❌ STOK KURANG!\nSisa stok '${nk}' tidak cukup.`);this.cashReceived='';this.mixCash='';this.paymentMethod='Tunai';this.paymentStep='input';this.showPaymentModal=true;setTimeout(()=>lucide.createIcons(),10);},
-        closePayment(){if(this.paymentStep==='success')this.resetCart();else this.showPaymentModal=false;},
-        async processTransaction(){let t=this.total;let q=this.totalQty;let u=0;if(this.paymentMethod==='Tunai')u=parseFloat(this.cashReceived)||t;else if(this.paymentMethod==='Mix'){u=parseFloat(this.mixCash)||0;if(u<=0||u>=t)return alert('❌ Tunai Mix tidak valid!');}else if(this.paymentMethod==='Piutang'){if(!this.customerName)return alert('❌ Nama WAJIB untuk kasbon!');u=0;}this.isProcessing=true;let ch=this.paymentMethod==='Tunai'?(u-t):0;let kf=JSON.parse(JSON.stringify(this.cart));let mc=this.cart.map(i=>({id:i.id,type:i.type,qty:i.qty,price:i.price}));let fn=this.customerName?`${this.customerName} [Kasir: ${this.activeCashier}]`:`[Kasir: ${this.activeCashier}]`;try{const r=await fetch(`${SERVER_URL}/api/checkout`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cart:mc,paymentMethod:this.paymentMethod,cashReceived:u,totalAmount:t,isPackage:this.isCustomPackage,customerName:fn})});const d=await r.json();if(d.success){this.lastTx={invoice:d.data.invoice,date:new Date().toLocaleString('id-ID'),cart:kf,total:t,cash:u,change:ch,isPackage:this.isCustomPackage,method:this.paymentMethod,totalQty:q};this.paymentStep='success';this.fetchCatalog();}else alert('Gagal.');}catch(e){alert('Error.');}finally{this.isProcessing=false;}},
-        openPoForm(){this.poForm={name:this.customerName||'',phone:'',pickupDate:'',shippingCost:'',dp:'',paymentMethod:'Tunai',notes:''};this.showPoModal=true;setTimeout(()=>lucide.createIcons(),10);},
-        async fetchOrders(){try{const r=await fetch(`${SERVER_URL}/api/orders`);const d=await r.json();if(d.success){this.poList=d.data;setTimeout(()=>lucide.createIcons(),10);}}catch(e){}},
-        async fetchPiutang(){try{const r=await fetch(`${SERVER_URL}/api/piutang`);const d=await r.json();if(d.success){this.piutangList=d.data;setTimeout(()=>lucide.createIcons(),10);}}catch(e){}},
-        isPast(ds){return new Date(ds)<new Date();},
-        async submitPo(){if(!this.poForm.name||!this.poForm.pickupDate)return alert('Nama dan Waktu Wajib Diisi!');this.isProcessing=true;let mc=this.cart.map(i=>({id:i.id,type:i.type,qty:i.qty,price:i.price}));try{const r=await fetch(`${SERVER_URL}/api/orders`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerName:this.poForm.name,customerPhone:this.poForm.phone,pickupDate:this.poForm.pickupDate,shippingCost:this.poForm.shippingCost,downPayment:this.poForm.dp,paymentMethod:this.poForm.paymentMethod,notes:this.poForm.notes,cashierName:this.activeCashier,cart:mc,totalAmount:this.total})});const d=await r.json();if(d.success){alert('✅ PO TERSIMPAN!');this.showPoModal=false;this.resetCart();this.fetchOrders();}else alert('Gagal.');}catch(e){}finally{this.isProcessing=false;}},
-        async completeOrder(o){const rm=(o.totalAmount+o.shippingCost)-o.downPayment;let m=o.paymentMethod||'Tunai';if(rm>0){const im=prompt(`💰 Sisa tagihan: Rp ${new Intl.NumberFormat('id-ID').format(rm)}\nMetode:\n1: TUNAI\n2: QRIS\n3: PIUTANG`,'1');if(im===null)return;if(im==='3')m='Piutang';else m=im==='2'?'QRIS':'Tunai';}if(!confirm(`⚠️ Selesaikan pesanan ${o.customerName}?`))return;this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/orders/${o.id}/complete`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentMethod:m})});const d=await r.json();if(d.success){this.lastTx={invoice:`LUNAS-${o.invoice} (${o.customerName})`,date:new Date().toLocaleString('id-ID'),cart:o.items.map(i=>({name:i.product?i.product.name:i.package.name,qty:i.qty,price:i.price})),total:rm,cash:m==='Tunai'?rm:0,change:0,isPackage:false,method:m,totalQty:o.items.reduce((s,i)=>s+i.qty,0)};this.paymentStep='success';this.showPaymentModal=true;this.fetchOrders();this.fetchCatalog();}else alert('Gagal.');}catch(e){}finally{this.isProcessing=false;}},
-        async deleteOrder(id,n){const s=prompt(`🔒 HAPUS PESANAN\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm('Yakin membatalkan?'))return;try{const r2=await fetch(`${SERVER_URL}/api/orders/${id}`,{method:'DELETE'});if((await r2.json()).success){alert('Dibatalkan.');this.fetchOrders();}}catch(e){}},
-        resetCart(){this.cart=[];this.isCustomPackage=false;this.packageTotal=0;this.customerName='';this.showPaymentModal=false;this.paymentStep='input';this.showMobileCart=false;},
-        printPO(o){this.lastTx={invoice:o.invoice,date:new Date(o.pickupDate).toLocaleString('id-ID'),cart:o.items.map(i=>({name:i.product?i.product.name:i.package.name,qty:i.qty,price:i.price})),total:o.totalAmount+o.shippingCost,cash:o.downPayment,change:0,isPackage:false,method:o.paymentMethod||'Tunai',totalQty:o.items.reduce((s,i)=>s+i.qty,0),isPO:true,shippingCost:o.shippingCost,downPayment:o.downPayment,remaining:(o.totalAmount+o.shippingCost)-o.downPayment};this.printReceipt();},
-        loadDraftSupplier(){if(this.restockSupplierId){const s=this.options.suppliers.find(x=>x.id==this.restockSupplierId);this.restockSupplierName=s?s.name:'';}else this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;if(!this.restockSupplierId)return;const sd=localStorage.getItem(`draft_restock_${this.restockSupplierId}`);if(sd){try{const p=JSON.parse(sd);this.restockCart=p.cart||[];this.restockDiscount=p.discount||'';this.restockMethod=p.method||'Tunai';this.restockNotes=p.notes||'';if(this.restockCart.some(i=>i.alreadyInStock))this.restockStockAddedPagi=true;}catch(e){}}},
-        saveDraftLocally(){if(!this.restockSupplierId)return;if(this.restockCart.length===0&&!this.restockDiscount&&!this.restockNotes)localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);else localStorage.setItem(`draft_restock_${this.restockSupplierId}`,JSON.stringify({cart:this.restockCart,discount:this.restockDiscount,method:this.restockMethod,notes:this.restockNotes}));this.updatePendingDrafts();},
-        addToRestockCart(p){if(!p.buyPrice||p.buyPrice<=0)return alert('❌ Harga Modal 0!');const e=this.restockCart.find(i=>i.id===p.id&&!i.alreadyInStock);if(e)e.qty++;else this.restockCart.unshift({...p,qty:1,returQty:0,alreadyInStock:false});this.saveDraftLocally();},
-        updateRestockQty(i,d){if(this.restockCart[i].alreadyInStock)return alert('Sudah masuk stok pagi.');if(d<0&&this.restockCart[i].qty<=1)return;this.restockCart[i].qty+=d;this.saveDraftLocally();},
-        setRestockQty(i,v){if(this.restockCart[i].alreadyInStock)return alert('Sudah masuk stok pagi.');let n=parseInt(v);if(isNaN(n)||n<1)n=1;this.restockCart[i].qty=n;this.saveDraftLocally();},
-        updateReturQty(i,d){let it=this.restockCart[i];if(!it.returQty)it.returQty=0;let nv=it.returQty+d;if(nv<0)nv=0;if(nv>it.qty)return alert('Lebih dari masuk!');it.returQty=nv;this.saveDraftLocally();},
-        validateReturQty(i){let it=this.restockCart[i];let v=parseInt(it.returQty);if(isNaN(v)||v<0)v=0;if(v>it.qty){alert('Lebih dari masuk!');v=it.qty;}it.returQty=v;this.saveDraftLocally();},
-        async removeRestockItem(i){if(this.isProcessing)return;let it=this.restockCart[i];if(it.alreadyInStock){const s=prompt(`🔒 HAPUS DARI DRAFT\nBarang sudah masuk etalase. Masukkan PIN Admin untuk menghapus & narik stok ${it.name}:`);if(!s)return;this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success){this.isProcessing=false;return alert("❌ Ditolak!");}}catch(e){this.isProcessing=false;return;}const p=this.products.find(x=>x.id===it.id);if(p){const ns=p.stock-it.qty;try{await fetch(`${SERVER_URL}/api/products/${it.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns>=0?ns:0})});}catch(e){}}alert(`✅ Batal diterima.`);this.isProcessing=false;}this.restockCart.splice(i,1);this.saveDraftLocally();this.fetchCatalog();},
-        get restockTotal(){return this.restockCart.reduce((s,i)=>s+((i.buyPrice||0)*(i.qty-(i.returQty||0))),0);},get restockGrandTotal(){return this.restockTotal-(parseInt(this.restockDiscount)||0);},
-        async submitRestock(ipm){if(this.restockCart.length===0)return alert('Kosong!');if(!this.restockSupplierId)return alert('Pilih Vendor!');const ss=this.options.suppliers.find(s=>s.id==this.restockSupplierId);this.restockSupplierName=ss?ss.name:'Vendor';const m=ipm?"🔒 TUTUP NOTA MALAM\nPIN Admin:":"🔒 SIMPAN DRAFT PAGI\nPIN Admin:";const s=prompt(m);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ PIN Salah.");}catch(e){return;}this.isProcessing=true;try{const hni=this.restockCart.some(i=>!i.alreadyInStock);if(!ipm){if(!hni){this.isProcessing=false;return alert('Tidak ada barang baru.');}for(let i of this.restockCart){if(!i.alreadyInStock){const p=this.products.find(x=>x.id===i.id);if(p){await fetch(`${SERVER_URL}/api/products/${i.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:p.stock+i.qty})});i.alreadyInStock=true;localStorage.setItem('last_restock_date_'+i.id,new Date().toISOString());}}}this.restockStockAddedPagi=true;this.saveDraftLocally();alert('✅ STOK BERTAMBAH!');this.restockSupplierId='';this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;this.fetchCatalog();this.isProcessing=false;return;}if(ipm){const pi=this.restockCart.map(i=>({...i,qty:i.qty-(i.returQty||0)})).filter(i=>i.qty>0);const r2=await fetch(`${SERVER_URL}/api/restock`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({supplierId:this.restockSupplierId,supplierName:this.restockSupplierName,items:pi,discount:this.restockDiscount,paymentMethod:this.restockMethod,notes:this.restockNotes,printNow:true})});const d2=await r2.json();if(d2.success){for(let i of this.restockCart){if(this.restockStockAddedPagi||i.alreadyInStock){const p=this.products.find(x=>x.id===i.id);if(p){const ns=p.stock-i.qty;try{await fetch(`${SERVER_URL}/api/products/${i.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns>=0?ns:0})});}catch(e){}}}if(!i.alreadyInStock)localStorage.setItem('last_restock_date_'+i.id,new Date().toISOString());}const sc=JSON.parse(JSON.stringify(this.restockCart));this.lastVendorTx={invoice:d2.data.invoice,date:new Date().toLocaleString('id-ID'),supplier:this.restockSupplierName,cart:sc,total:this.restockTotal,discount:parseInt(this.restockDiscount)||0,grandTotal:d2.data.grandTotal,method:this.restockMethod,notes:this.restockNotes};alert(`✅ NOTA LUNAS DITUTUP!`);localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);this.restockSupplierId='';this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;this.updatePendingDrafts();this.fetchReport();this.isPrintingVendor=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingVendor=false;},3000);},500);this.fetchCatalog();}else alert('Gagal: '+d2.message);}}catch(e){}finally{this.isProcessing=false;}},
-        reprintVendorNota(nd){const rc=nd.cart.map(c=>{if(c.name)return c;const p=this.products.find(x=>x.id===c.id||x.id===c[0]);return{name:p?p.name:'Produk',qty:c.qty||c[1],buyPrice:c.buyPrice||c[2],returQty:c.returQty||0};});this.lastVendorTx={invoice:nd.invoice,date:new Date().toLocaleString('id-ID'),supplier:nd.supplier||'Vendor',cart:rc,total:nd.total,discount:nd.discount,grandTotal:nd.grandTotal,method:nd.method,notes:nd.keteranganManual};this.isPrintingVendor=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingVendor=false;},3000);},500);},
-        async deleteVendorNota(id,nd){const ns=nd.supplier||'Vendor';const s=prompt(`🔒 HAPUS NOTA\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS NOTA ${nd.invoice}?`))return;const r2=await fetch(`${SERVER_URL}/api/expenses/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dihapus. Kurangi stok kue manual!`);this.fetchReport();}}catch(e){}},
-        async deleteStockHistory(id){const s=prompt(`🔒 BATALKAN STOK\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN BATALKAN STOK INI?`))return;const r2=await fetch(`${SERVER_URL}/api/stock-history/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dihapus.`);this.fetchReport();this.fetchCatalog();}}catch(e){}},
-        async fetchReport(){try{let qp=`?period=${this.reportPeriod}`;if(this.reportPeriod==='custom'){if(!this.startDate||!this.endDate)return alert('Isi Tanggal!');qp+=`&start=${this.startDate}&end=${this.endDate}`;}const rg=await fetch(`${SERVER_URL}/api/reports${qp}`);if((await rg.clone().json()).success)this.reportData=(await rg.json()).data;const ri=await fetch(`${SERVER_URL}/api/reports/items${qp}`);if((await ri.clone().json()).success)this.itemReports=(await ri.json()).data;}catch(e){}},
-        reprintTransaction(tx){let rc=[];let ip=tx.invoice&&tx.invoice.startsWith('PKT-');let ipd=tx.invoice&&tx.invoice.startsWith('DP-');if(tx.items){rc=tx.items.split(', ').map(p=>{let n=p.trim();let q=1;const m=p.match(/(.*) \(x(\d+)\)/);if(m){n=m[1].trim();q=parseInt(m[2]);}let fp=this.products.find(x=>x.name===n);return{name:n,qty:q,price:fp?fp.price:0};});}let tq=rc.reduce((s,i)=>s+(i.qty||1),0);this.lastTx={invoice:tx.invoice+" (COPY)",date:new Date(tx.time).toLocaleString('id-ID'),cart:rc,total:tx.total,cash:tx.total,change:0,isPackage:ip,method:tx.paymentMethod||'Tunai',totalQty:tq,isPO:ipd,downPayment:ipd?tx.total:0,remaining:0,shippingCost:0};this.printReceipt();},
-        async batalPiutang(i){const s=prompt(`🔒 BATALKAN PIUTANG\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS PIUTANG INI?`))return;const r2=await fetch(`${SERVER_URL}/api/transactions/${i}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dibatalkan.`);this.fetchPiutang();this.fetchReport();this.fetchCatalog();}}catch(e){}},
-        async terimaPelunasan(i){const m=prompt(`💰 TERIMA PELUNASAN\n1: TUNAI\n2: QRIS`,'1');if(m===null)return;const nm=m==='2'?'QRIS':'Tunai';if(!confirm(`Tandai LUNAS pakai ${nm}?`))return;try{const r=await fetch(`${SERVER_URL}/api/transactions/${i}/pay`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentMethod:nm})});if((await r.json()).success){alert(`✅ BERHASIL!`);if(this.currentTab==='piutang')this.fetchPiutang();if(this.currentTab==='laporan')this.fetchReport();}}catch(e){}},
-        printReceipt(){this.isPrintingReceipt=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingReceipt=false;},3000);},500);},
-        printCatalog(){this.isPrintingCatalog=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingCatalog=false;},3000);},500);},
-        async submitExpense(){if(!this.expDesc||!this.expAmount)return alert('Isi beban');try{const r=await fetch(`${SERVER_URL}/api/expenses`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:this.expCat,description:this.expDesc,amount:this.expAmount,paymentMethod:this.expMethod})});if((await r.json()).success){alert('Tercatat!');this.expDesc='';this.expAmount='';this.fetchReport();}}catch(e){}},
-        async fetchOptions(){try{const r=await fetch(`${SERVER_URL}/api/options`);const d=await r.json();if(d.success){this.options.categories=d.data.categories;this.options.suppliers=d.data.suppliers;this.updatePendingDrafts();}}catch(e){}},
-        async openAddProduct(){const s=prompt("🔒 OTORISASI ADMIN\nPIN:");if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");}catch(e){return;}this.fetchOptions();this.newProduct={name:'',categoryId:'',supplierId:'',buyPrice:'',sellPrice:'',stock:'',image:''};this.showAddProductModal=true;setTimeout(()=>lucide.createIcons(),10);},
-        closeAddProduct(){this.showAddProductModal=false;},
-        async submitProduct(){if(!this.newProduct.name||!this.newProduct.categoryId||!this.newProduct.supplierId||!this.newProduct.sellPrice)return alert('Isi data wajib');this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/products`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(this.newProduct)});if((await r.json()).success){alert('✅ Ditambahkan!');this.closeAddProduct();this.fetchCatalog();}}catch(e){}finally{this.isProcessing=false;}},
-        get totalProductTypes(){return this.products.filter(p=>p.type==='product').length;},get totalPhysicalStock(){return this.products.filter(p=>p.type==='product').reduce((s,p)=>s+(p.stock>0?p.stock:0),0);},get totalStockValue(){return this.products.filter(p=>p.type==='product').reduce((s,p)=>s+(p.price*(p.stock>0?p.stock:0)),0);},
-        async updateStock(p){const s=prompt("🔒 PIN Admin:");if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");const ins=prompt(`📦 KEDATANGAN STOK\nProduk: ${p.name}\n(Angka minus jika rusak)`,"0");if(ins===null||ins.trim()==="")return;const dq=parseInt(ins);if(isNaN(dq)||dq===0)return;const ns=p.stock+dq;if(ns<0)return alert('Stok akhir minus!');try{const r2=await fetch(`${SERVER_URL}/api/products/${p.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns})});if((await r2.json()).success){if(dq>0)localStorage.setItem('last_restock_date_'+p.id,new Date().toISOString());alert(`Berhasil!`);this.fetchCatalog();}}catch(e){}},
-        async deleteTransaction(inv){const s=prompt(`🔒 HAPUS STRUK ${inv}\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS ${inv}?`))return;try{const r2=await fetch(`${SERVER_URL}/api/transactions/${inv}`,{method:'DELETE'});if((await r2.json()).success){alert(`Dihapus & stok kembali.`);this.fetchReport();this.fetchCatalog();}}catch(e){}},
-        async deleteExpense(id){const s=prompt(`🔒 HAPUS PENGELUARAN\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS PENGELUARAN?`))return;try{const r2=await fetch(`${SERVER_URL}/api/expenses/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`Dihapus.`);this.fetchReport();}}catch(e){}}
-        }}
-    </script>
+        <!-- Script Utama (DIPADATKAN EKSTRA AMAN) -->
+        <script>
+            const SERVER_URL='https://pos-kukita.vercel.app';
+            function posApp(){return{
+            activeCashier:null,loginPin:'',cashiersList:[],newCashierName:'',newCashierPin:'',currentTab:'pos',categories:['Semua'],selectedCategory:'Semua',searchQuery:'',masterSearchQuery:'',cart:[],products:[],showMobileCart:false,showPaymentModal:false,paymentStep:'input',paymentMethod:'Tunai',cashReceived:'',mixCash:'',isProcessing:false,isLoading:true,lastTx:null,isCustomPackage:false,
+            currentTime:new Date().toLocaleString('id-ID'),
+            cleanNotes(s){return s?s.replace(/\[RTR:.*?\]/g,'').trim():'';},
+            expCat:'Pembayaran Vendor (Kue / Stok)',expDesc:'',expAmount:'',expMethod:'Tunai',reportData:{revenue:0,revenueCash:0,revenueQris:0,piutang:0,grossProfit:0,expenses:0,expCash:0,expTransfer:0,transactions:0,netProfit:0,salesHistory:[],stockHistory:[],vendorHistory:[]},customerName:'',itemReports:[],reportPeriod:'today',startDate:'',endDate:'',reportSubTab:'ringkasan',oldPin:'',newPin:'',isPrintingReceipt:false,isPrintingCatalog:false,showAddProductModal:false,options:{categories:[],suppliers:[]},newProduct:{name:'',categoryId:'',supplierId:'',buyPrice:'',sellPrice:'',stock:'',image:''},showDetailModal:false,selectedTx:null,selectedTxCart:[],saldoAwalLaci:localStorage.getItem('saldo_laci')||0,packageTotal:0,productSortBy:'name_asc',poList:[],piutangList:[],showPoModal:false,poForm:{name:'',phone:'',pickupDate:'',shippingCost:'',dp:'',paymentMethod:'Tunai',notes:''},restockSupplierId:'',restockSupplierName:'',restockCart:[],restockDiscount:'',restockMethod:'Tunai',restockNotes:'',isPrintingVendor:false,lastVendorTx:null,restockStockAddedPagi:false,pendingDrafts:[],
+            async init(){setTimeout(()=>lucide.createIcons(),100);setInterval(()=>this.currentTime=new Date().toLocaleString('id-ID'),1000);this.$watch('currentTab',()=>setTimeout(()=>lucide.createIcons(),50));this.$watch('showMobileCart',()=>setTimeout(()=>lucide.createIcons(),10));await this.fetchCashiers();await this.fetchCatalog();},
+            hasDraft(id){return localStorage.getItem('draft_restock_'+id)!==null;},
+            updatePendingDrafts(){if(!this.options||!this.options.suppliers)return;this.pendingDrafts=this.options.suppliers.filter(s=>localStorage.getItem('draft_restock_'+s.id)!==null);},
+            viewTransactionDetail(tx){this.selectedTx=tx;let rc=[];if(tx.items){rc=tx.items.split(', ').map(p=>{let n=p.trim();let q=1;const m=p.match(/(.*) \(x(\d+)\)/);if(m){n=m[1].trim();q=parseInt(m[2]);}let fp=this.products.find(x=>x.name===n);return{name:n,qty:q,price:fp?fp.price:0};});}this.selectedTxCart=rc;this.showDetailModal=true;setTimeout(()=>lucide.createIcons(),10);},
+            isStockOld(p){if(!p.lastRestock||p.stock<=0)return false;const h=(new Date()-new Date(p.lastRestock))/(1000*60*60);const c=(p.category||'').toLowerCase();let l=24;if(c.includes('minum')||c.includes('cair'))l=24*30;else if(c.includes('kering')||c.includes('snack')||c.includes('keripik'))l=24*14;return h>l;},
+            formatDateShort(d){if(!d)return '-';const dt=new Date(d);return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+' '+dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});},
+            resetStockAge(id,n){if(!confirm(`Perbarui umur kue ${n}?\n\nTanggal masuk direset ke hari ini.`))return;localStorage.setItem('last_restock_date_'+id,new Date().toISOString());this.fetchCatalog();},
+            restorePrices(){if(this.isCustomPackage){this.isCustomPackage=false;this.packageTotal=0;this.customerName='';this.cart.forEach(i=>{const p=this.products.find(x=>x.id===i.id&&x.type===i.type);if(p)i.price=p.price;});}},
+            async editSaldoAwal(){const s=prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin:");if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ PIN Salah.");const val=prompt("💰 SALDO LACI PAGI INI:",this.saldoAwalLaci);if(val===null||val.trim()==="")return;const nom=parseInt(val);if(isNaN(nom)||nom<0)return alert('Tidak valid!');this.saldoAwalLaci=nom;localStorage.setItem('saldo_laci',nom);alert('✅ Tersimpan!');}catch(e){alert('Error');}},
+            async fetchCashiers(){try{const r=await fetch(`${SERVER_URL}/api/cashiers`);const d=await r.json();if(d.success)this.cashiersList=d.data;}catch(e){}},
+            async login(){if(!this.loginPin)return;if(['030388','100515','818283'].includes(this.loginPin)){this.activeCashier='Admin Toko';this.loginPin='';setTimeout(()=>lucide.createIcons(),50);await this.fetchCashiers();await this.fetchCatalog();return;}const f=this.cashiersList.find(c=>c.pin===this.loginPin);if(f){this.activeCashier=f.name;this.loginPin='';setTimeout(()=>lucide.createIcons(),50);return;}try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:this.loginPin})});if((await r.json()).success){this.activeCashier='Admin Toko';this.loginPin='';setTimeout(()=>lucide.createIcons(),50);return;}}catch(e){}alert('❌ Akses Ditolak!');this.loginPin='';},
+            logout(){this.activeCashier=null;this.currentTab='pos';},
+            async fetchCatalog(){this.isLoading=true;try{const r=await fetch(`${SERVER_URL}/api/catalog`);const dt=await r.json();if(dt.success){const pl=dt.data.products.map(p=>({id:p.id,name:p.name,category:p.category.name,supplier:p.supplier.name,supplierId:p.supplier.id,price:p.sellPrice,buyPrice:p.buyPrice,stock:p.stock,image:p.image||null,icon:p.category.name.includes('Minuman')?'🍹':'🍩',type:'product',lastRestock:localStorage.getItem('last_restock_date_'+p.id)}));const kl=dt.data.packages.map(p=>({id:p.id,name:p.name,category:'Paket',supplier:'Kombinasi',supplierId:null,price:p.sellPrice,stock:999,image:p.image||null,icon:'🎁',type:'package'}));this.products=[...pl,...kl];this.categories=['Semua',...Array.from(new Set(this.products.map(p=>p.category)))];}}catch(e){}finally{this.isLoading=false;setTimeout(()=>lucide.createIcons(),10);}},
+            get filteredProducts(){return this.products.filter(p=>{const mc=this.selectedCategory==='Semua'||p.category===this.selectedCategory;const ms=p.name.toLowerCase().includes(this.searchQuery.toLowerCase());return mc&&ms;});},
+            get filteredMasterProducts(){let f=this.products.filter(p=>p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase()));if(this.productSortBy==='stock_desc')f.sort((a,b)=>(b.stock||0)-(a.stock||0));else if(this.productSortBy==='stock_asc')f.sort((a,b)=>(a.stock||0)-(b.stock||0));else f.sort((a,b)=>a.name.localeCompare(b.name));return f;},
+            addToCart(p){this.restorePrices();const ex=this.cart.find(i=>i.id===p.id&&i.type===p.type&&i.price===p.price);if(ex)ex.qty++;else this.cart.unshift({...p,cartItemId:Date.now()+Math.random(),qty:1});},
+            increaseQty(i){this.restorePrices();this.cart[i].qty++;},decreaseQty(i){this.restorePrices();if(this.cart[i].qty>1)this.cart[i].qty--;else this.removeFromCart(i);},removeFromCart(i){this.restorePrices();this.cart.splice(i,1);},validateQty(i){this.restorePrices();let v=parseInt(this.cart[i].qty);if(isNaN(v)||v<1)v=1;this.cart[i].qty=v;},
+            get total(){return this.isCustomPackage?this.packageTotal:this.cart.reduce((s,i)=>s+(i.price*i.qty),0);},get totalQty(){return this.cart.reduce((s,i)=>s+i.qty,0);},get change(){return parseFloat(this.cashReceived||0)-this.total;},
+            formatRupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);},
+            setCustomPrice(){if(this.cart.length===0)return alert('Keranjang kosong!');const qs=prompt('📦 Jumlah Kotak?','1');if(!qs)return;const q=parseInt(qs);if(isNaN(q)||q<=0)return alert('Tidak valid!');const ps=prompt('Harga Per Kotak?','0');if(!ps)return;const pr=parseFloat(ps);if(isNaN(pr)||pr<0)return alert('Tidak valid!');const nt=q*pr;const inN=prompt('Nama Pemesan:','');this.customerName=(inN?inN.trim()+" - ":"Pesanan Umum - ")+q+" Kotak";this.isCustomPackage=true;this.packageTotal=nt;let ot=0;this.cart.forEach(i=>{const p=this.products.find(x=>x.id===i.id&&x.type===i.type);ot+=((p?p.price:i.price)*i.qty);});if(ot>0){const rat=nt/ot;let rt=0;for(let i=0;i<this.cart.length;i++){const p=this.products.find(x=>x.id===this.cart[i].id&&x.type===this.cart[i].type);const np=p?p.price:this.cart[i].price;if(i===this.cart.length-1)this.cart[i].price=Math.round((nt-rt)/this.cart[i].qty);else{const npr=Math.round(np*rat);this.cart[i].price=npr;rt+=(npr*this.cart[i].qty);}}}alert('✅ SET BERHASIL!');},
+            openPayment(){let sk=false;let nk='';for(let i of this.cart){if(i.type==='product'){const p=this.products.find(x=>x.id===i.id&&x.type===i.type);if(p&&i.qty>Number(p.stock||0)){sk=true;nk=i.name;break;}}}if(sk)return alert(`❌ STOK KURANG!\nSisa stok '${nk}' tidak cukup.`);this.cashReceived='';this.mixCash='';this.paymentMethod='Tunai';this.paymentStep='input';this.showPaymentModal=true;setTimeout(()=>lucide.createIcons(),10);},
+            closePayment(){if(this.paymentStep==='success')this.resetCart();else this.showPaymentModal=false;},
+            async processTransaction(){let t=this.total;let q=this.totalQty;let u=0;if(this.paymentMethod==='Tunai')u=parseFloat(this.cashReceived)||t;else if(this.paymentMethod==='Mix'){u=parseFloat(this.mixCash)||0;if(u<=0||u>=t)return alert('❌ Tunai Mix tidak valid!');}else if(this.paymentMethod==='Piutang'){if(!this.customerName)return alert('❌ Nama WAJIB untuk kasbon!');u=0;}this.isProcessing=true;let ch=this.paymentMethod==='Tunai'?(u-t):0;let kf=JSON.parse(JSON.stringify(this.cart));let mc=this.cart.map(i=>({id:i.id,type:i.type,qty:i.qty,price:i.price}));let fn=this.customerName?`${this.customerName} [Kasir: ${this.activeCashier}]`:`[Kasir: ${this.activeCashier}]`;try{const r=await fetch(`${SERVER_URL}/api/checkout`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cart:mc,paymentMethod:this.paymentMethod,cashReceived:u,totalAmount:t,isPackage:this.isCustomPackage,customerName:fn})});const d=await r.json();if(d.success){this.lastTx={invoice:d.data.invoice,date:new Date().toLocaleString('id-ID'),cart:kf,total:t,cash:u,change:ch,isPackage:this.isCustomPackage,method:this.paymentMethod,totalQty:q};this.paymentStep='success';this.fetchCatalog();}else alert('Gagal.');}catch(e){alert('Error.');}finally{this.isProcessing=false;}},
+            openPoForm(){this.poForm={name:this.customerName||'',phone:'',pickupDate:'',shippingCost:'',dp:'',paymentMethod:'Tunai',notes:''};this.showPoModal=true;setTimeout(()=>lucide.createIcons(),10);},
+            async fetchOrders(){try{const r=await fetch(`${SERVER_URL}/api/orders`);const d=await r.json();if(d.success){this.poList=d.data;setTimeout(()=>lucide.createIcons(),10);}}catch(e){}},
+            async fetchPiutang(){try{const r=await fetch(`${SERVER_URL}/api/piutang`);const d=await r.json();if(d.success){this.piutangList=d.data;setTimeout(()=>lucide.createIcons(),10);}}catch(e){}},
+            isPast(ds){return new Date(ds)<new Date();},
+            async submitPo(){if(!this.poForm.name||!this.poForm.pickupDate)return alert('Nama dan Waktu Wajib Diisi!');this.isProcessing=true;let mc=this.cart.map(i=>({id:i.id,type:i.type,qty:i.qty,price:i.price}));try{const r=await fetch(`${SERVER_URL}/api/orders`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerName:this.poForm.name,customerPhone:this.poForm.phone,pickupDate:this.poForm.pickupDate,shippingCost:this.poForm.shippingCost,downPayment:this.poForm.dp,paymentMethod:this.poForm.paymentMethod,notes:this.poForm.notes,cashierName:this.activeCashier,cart:mc,totalAmount:this.total})});const d=await r.json();if(d.success){alert('✅ PO TERSIMPAN!');this.showPoModal=false;this.resetCart();this.fetchOrders();}else alert('Gagal.');}catch(e){}finally{this.isProcessing=false;}},
+            async completeOrder(o){const rm=(o.totalAmount+o.shippingCost)-o.downPayment;let m=o.paymentMethod||'Tunai';if(rm>0){const im=prompt(`💰 Sisa tagihan: Rp ${new Intl.NumberFormat('id-ID').format(rm)}\nMetode:\n1: TUNAI\n2: QRIS\n3: PIUTANG`,'1');if(im===null)return;if(im==='3')m='Piutang';else m=im==='2'?'QRIS':'Tunai';}if(!confirm(`⚠️ Selesaikan pesanan ${o.customerName}?`))return;this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/orders/${o.id}/complete`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentMethod:m})});const d=await r.json();if(d.success){this.lastTx={invoice:`LUNAS-${o.invoice} (${o.customerName})`,date:new Date().toLocaleString('id-ID'),cart:o.items.map(i=>({name:i.product?i.product.name:i.package.name,qty:i.qty,price:i.price})),total:rm,cash:m==='Tunai'?rm:0,change:0,isPackage:false,method:m,totalQty:o.items.reduce((s,i)=>s+i.qty,0)};this.paymentStep='success';this.showPaymentModal=true;this.fetchOrders();this.fetchCatalog();}else alert('Gagal.');}catch(e){}finally{this.isProcessing=false;}},
+            async deleteOrder(id,n){const s=prompt(`🔒 HAPUS PESANAN\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm('Yakin membatalkan?'))return;try{const r2=await fetch(`${SERVER_URL}/api/orders/${id}`,{method:'DELETE'});if((await r2.json()).success){alert('Dibatalkan.');this.fetchOrders();}}catch(e){}},
+            resetCart(){this.cart=[];this.isCustomPackage=false;this.packageTotal=0;this.customerName='';this.showPaymentModal=false;this.paymentStep='input';this.showMobileCart=false;},
+            printPO(o){this.lastTx={invoice:o.invoice,date:new Date(o.pickupDate).toLocaleString('id-ID'),cart:o.items.map(i=>({name:i.product?i.product.name:i.package.name,qty:i.qty,price:i.price})),total:o.totalAmount+o.shippingCost,cash:o.downPayment,change:0,isPackage:false,method:o.paymentMethod||'Tunai',totalQty:o.items.reduce((s,i)=>s+i.qty,0),isPO:true,shippingCost:o.shippingCost,downPayment:o.downPayment,remaining:(o.totalAmount+o.shippingCost)-o.downPayment};this.printReceipt();},
+            loadDraftSupplier(){if(this.restockSupplierId){const s=this.options.suppliers.find(x=>x.id==this.restockSupplierId);this.restockSupplierName=s?s.name:'';}else this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;if(!this.restockSupplierId)return;const sd=localStorage.getItem(`draft_restock_${this.restockSupplierId}`);if(sd){try{const p=JSON.parse(sd);this.restockCart=p.cart||[];this.restockDiscount=p.discount||'';this.restockMethod=p.method||'Tunai';this.restockNotes=p.notes||'';if(this.restockCart.some(i=>i.alreadyInStock))this.restockStockAddedPagi=true;}catch(e){}}},
+            saveDraftLocally(){if(!this.restockSupplierId)return;if(this.restockCart.length===0&&!this.restockDiscount&&!this.restockNotes)localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);else localStorage.setItem(`draft_restock_${this.restockSupplierId}`,JSON.stringify({cart:this.restockCart,discount:this.restockDiscount,method:this.restockMethod,notes:this.restockNotes}));this.updatePendingDrafts();},
+            addToRestockCart(p){if(!p.buyPrice||p.buyPrice<=0)return alert('❌ Harga Modal 0!');const e=this.restockCart.find(i=>i.id===p.id&&!i.alreadyInStock);if(e)e.qty++;else this.restockCart.unshift({...p,qty:1,returQty:0,alreadyInStock:false});this.saveDraftLocally();},
+            updateRestockQty(i,d){if(this.restockCart[i].alreadyInStock)return alert('Sudah masuk stok pagi.');if(d<0&&this.restockCart[i].qty<=1)return;this.restockCart[i].qty+=d;this.saveDraftLocally();},
+            setRestockQty(i,v){if(this.restockCart[i].alreadyInStock)return alert('Sudah masuk stok pagi.');let n=parseInt(v);if(isNaN(n)||n<1)n=1;this.restockCart[i].qty=n;this.saveDraftLocally();},
+            updateReturQty(i,d){let it=this.restockCart[i];if(!it.returQty)it.returQty=0;let nv=it.returQty+d;if(nv<0)nv=0;if(nv>it.qty)return alert('Lebih dari masuk!');it.returQty=nv;this.saveDraftLocally();},
+            validateReturQty(i){let it=this.restockCart[i];let v=parseInt(it.returQty);if(isNaN(v)||v<0)v=0;if(v>it.qty){alert('Lebih dari masuk!');v=it.qty;}it.returQty=v;this.saveDraftLocally();},
+            async removeRestockItem(i){if(this.isProcessing)return;let it=this.restockCart[i];if(it.alreadyInStock){const s=prompt(`🔒 HAPUS DARI DRAFT\nBarang sudah masuk etalase. Masukkan PIN Admin untuk menghapus & narik stok ${it.name}:`);if(!s)return;this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success){this.isProcessing=false;return alert("❌ Ditolak!");}}catch(e){this.isProcessing=false;return;}const p=this.products.find(x=>x.id===it.id);if(p){const ns=p.stock-it.qty;try{await fetch(`${SERVER_URL}/api/products/${it.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns>=0?ns:0})});}catch(e){}}alert(`✅ Batal diterima.`);this.isProcessing=false;}this.restockCart.splice(i,1);this.saveDraftLocally();this.fetchCatalog();},
+            get restockTotal(){return this.restockCart.reduce((s,i)=>s+((i.buyPrice||0)*(i.qty-(i.returQty||0))),0);},get restockGrandTotal(){return this.restockTotal-(parseInt(this.restockDiscount)||0);},
+            async submitRestock(ipm){if(this.restockCart.length===0)return alert('Kosong!');if(!this.restockSupplierId)return alert('Pilih Vendor!');const ss=this.options.suppliers.find(s=>s.id==this.restockSupplierId);this.restockSupplierName=ss?ss.name:'Vendor';const m=ipm?"🔒 TUTUP NOTA MALAM\nPIN Admin:":"🔒 SIMPAN DRAFT PAGI\nPIN Admin:";const s=prompt(m);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ PIN Salah.");}catch(e){return;}this.isProcessing=true;try{const hni=this.restockCart.some(i=>!i.alreadyInStock);if(!ipm){if(!hni){this.isProcessing=false;return alert('Tidak ada barang baru.');}for(let i of this.restockCart){if(!i.alreadyInStock){const p=this.products.find(x=>x.id===i.id);if(p){await fetch(`${SERVER_URL}/api/products/${i.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:p.stock+i.qty})});i.alreadyInStock=true;localStorage.setItem('last_restock_date_'+i.id,new Date().toISOString());}}}this.restockStockAddedPagi=true;this.saveDraftLocally();alert('✅ STOK BERTAMBAH!');this.restockSupplierId='';this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;this.fetchCatalog();this.isProcessing=false;return;}if(ipm){const pi=this.restockCart.map(i=>({...i,qty:i.qty-(i.returQty||0)})).filter(i=>i.qty>0);const r2=await fetch(`${SERVER_URL}/api/restock`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({supplierId:this.restockSupplierId,supplierName:this.restockSupplierName,items:pi,discount:this.restockDiscount,paymentMethod:this.restockMethod,notes:this.cleanNotes(this.restockNotes),printNow:true})});const d2=await r2.json();if(d2.success){for(let i of this.restockCart){if(this.restockStockAddedPagi||i.alreadyInStock){const p=this.products.find(x=>x.id===i.id);if(p){const ns=p.stock-i.qty;try{await fetch(`${SERVER_URL}/api/products/${i.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns>=0?ns:0})});}catch(e){}}}if(!i.alreadyInStock)localStorage.setItem('last_restock_date_'+i.id,new Date().toISOString());}const sc=JSON.parse(JSON.stringify(this.restockCart));this.lastVendorTx={invoice:d2.data.invoice,date:new Date().toLocaleString('id-ID'),supplier:this.restockSupplierName,cart:sc,total:this.restockTotal,discount:parseInt(this.restockDiscount)||0,grandTotal:d2.data.grandTotal,method:this.restockMethod,notes:this.cleanNotes(this.restockNotes)};alert(`✅ NOTA LUNAS DITUTUP!`);localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);this.restockSupplierId='';this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;this.updatePendingDrafts();this.fetchReport();this.isPrintingVendor=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingVendor=false;},3000);},500);this.fetchCatalog();}else alert('Gagal: '+d2.message);}}catch(e){}finally{this.isProcessing=false;}},
+            reprintVendorNota(nd){const rc=nd.cart.map(c=>{if(c.name)return c;const p=this.products.find(x=>x.id===c.id||x.id===c[0]);return{name:p?p.name:'Produk',qty:c.qty||c[1],buyPrice:c.buyPrice||c[2],returQty:c.returQty||0};});this.lastVendorTx={invoice:nd.invoice,date:new Date().toLocaleString('id-ID'),supplier:nd.supplier||'Vendor',cart:rc,total:nd.total,discount:nd.discount,grandTotal:nd.grandTotal,method:nd.method,notes:this.cleanNotes(nd.keteranganManual)};this.isPrintingVendor=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingVendor=false;},3000);},500);},
+            async deleteVendorNota(id,nd){const ns=nd.supplier||'Vendor';const s=prompt(`🔒 HAPUS NOTA\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS NOTA ${nd.invoice}?`))return;const r2=await fetch(`${SERVER_URL}/api/expenses/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dihapus. Kurangi stok kue manual!`);this.fetchReport();}}catch(e){}},
+            async deleteStockHistory(id){const s=prompt(`🔒 BATALKAN STOK\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN BATALKAN STOK INI?`))return;const r2=await fetch(`${SERVER_URL}/api/stock-history/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dihapus.`);this.fetchReport();this.fetchCatalog();}}catch(e){}},
+            async fetchReport(){try{let qp=`?period=${this.reportPeriod}`;if(this.reportPeriod==='custom'){if(!this.startDate||!this.endDate)return alert('Isi Tanggal!');qp+=`&start=${this.startDate}&end=${this.endDate}`;}const rg=await fetch(`${SERVER_URL}/api/reports${qp}`);if((await rg.clone().json()).success)this.reportData=(await rg.json()).data;const ri=await fetch(`${SERVER_URL}/api/reports/items${qp}`);if((await ri.clone().json()).success)this.itemReports=(await ri.json()).data;}catch(e){}},
+            reprintTransaction(tx){let rc=[];let ip=tx.invoice&&tx.invoice.startsWith('PKT-');let ipd=tx.invoice&&tx.invoice.startsWith('DP-');if(tx.items){rc=tx.items.split(', ').map(p=>{let n=p.trim();let q=1;const m=p.match(/(.*) \(x(\d+)\)/);if(m){n=m[1].trim();q=parseInt(m[2]);}let fp=this.products.find(x=>x.name===n);return{name:n,qty:q,price:fp?fp.price:0};});}let tq=rc.reduce((s,i)=>s+(i.qty||1),0);this.lastTx={invoice:tx.invoice+" (COPY)",date:new Date(tx.time).toLocaleString('id-ID'),cart:rc,total:tx.total,cash:tx.total,change:0,isPackage:ip,method:tx.paymentMethod||'Tunai',totalQty:tq,isPO:ipd,downPayment:ipd?tx.total:0,remaining:0,shippingCost:0};this.printReceipt();},
+            async batalPiutang(i){const s=prompt(`🔒 BATALKAN PIUTANG\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS PIUTANG INI?`))return;const r2=await fetch(`${SERVER_URL}/api/transactions/${i}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dibatalkan.`);this.fetchPiutang();this.fetchReport();this.fetchCatalog();}}catch(e){}},
+            async terimaPelunasan(i){const m=prompt(`💰 TERIMA PELUNASAN\n1: TUNAI\n2: QRIS`,'1');if(m===null)return;const nm=m==='2'?'QRIS':'Tunai';if(!confirm(`Tandai LUNAS pakai ${nm}?`))return;try{const r=await fetch(`${SERVER_URL}/api/transactions/${i}/pay`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentMethod:nm})});if((await r.json()).success){alert(`✅ BERHASIL!`);if(this.currentTab==='piutang')this.fetchPiutang();if(this.currentTab==='laporan')this.fetchReport();}}catch(e){}},
+            printReceipt(){this.isPrintingReceipt=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingReceipt=false;},3000);},500);},
+            printCatalog(){this.isPrintingCatalog=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingCatalog=false;},3000);},500);},
+            async submitExpense(){if(!this.expDesc||!this.expAmount)return alert('Isi beban');try{const r=await fetch(`${SERVER_URL}/api/expenses`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:this.expCat,description:this.expDesc,amount:this.expAmount,paymentMethod:this.expMethod})});if((await r.json()).success){alert('Tercatat!');this.expDesc='';this.expAmount='';this.fetchReport();}}catch(e){}},
+            async fetchOptions(){try{const r=await fetch(`${SERVER_URL}/api/options`);const d=await r.json();if(d.success){this.options.categories=d.data.categories;this.options.suppliers=d.data.suppliers;this.updatePendingDrafts();}}catch(e){}},
+            async openAddProduct(){const s=prompt("🔒 OTORISASI ADMIN\nPIN:");if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");}catch(e){return;}this.fetchOptions();this.newProduct={name:'',categoryId:'',supplierId:'',buyPrice:'',sellPrice:'',stock:'',image:''};this.showAddProductModal=true;setTimeout(()=>lucide.createIcons(),10);},
+            closeAddProduct(){this.showAddProductModal=false;},
+            async submitProduct(){if(!this.newProduct.name||!this.newProduct.categoryId||!this.newProduct.supplierId||!this.newProduct.sellPrice)return alert('Isi data wajib');this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/products`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(this.newProduct)});if((await r.json()).success){alert('✅ Ditambahkan!');this.closeAddProduct();this.fetchCatalog();}}catch(e){}finally{this.isProcessing=false;}},
+            get totalProductTypes(){return this.products.filter(p=>p.type==='product').length;},get totalPhysicalStock(){return this.products.filter(p=>p.type==='product').reduce((s,p)=>s+(p.stock>0?p.stock:0),0);},get totalStockValue(){return this.products.filter(p=>p.type==='product').reduce((s,p)=>s+(p.price*(p.stock>0?p.stock:0)),0);},
+            async updateStock(p){const s=prompt("🔒 PIN Admin:");if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");const ins=prompt(`📦 KEDATANGAN STOK\nProduk: ${p.name}\n(Angka minus jika rusak)`,"0");if(ins===null||ins.trim()==="")return;const dq=parseInt(ins);if(isNaN(dq)||dq===0)return;const ns=p.stock+dq;if(ns<0)return alert('Stok akhir minus!');try{const r2=await fetch(`${SERVER_URL}/api/products/${p.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns})});if((await r2.json()).success){if(dq>0)localStorage.setItem('last_restock_date_'+p.id,new Date().toISOString());alert(`Berhasil!`);this.fetchCatalog();}}catch(e){}},
+            async deleteTransaction(inv){const s=prompt(`🔒 HAPUS STRUK ${inv}\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS ${inv}?`))return;try{const r2=await fetch(`${SERVER_URL}/api/transactions/${inv}`,{method:'DELETE'});if((await r2.json()).success){alert(`Dihapus & stok kembali.`);this.fetchReport();this.fetchCatalog();}}catch(e){}},
+            async deleteExpense(id){const s=prompt(`🔒 HAPUS PENGELUARAN\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS PENGELUARAN?`))return;try{const r2=await fetch(`${SERVER_URL}/api/expenses/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`Dihapus.`);this.fetchReport();}}catch(e){}}
+            }}
+        </script>
 </body>
 </html>
