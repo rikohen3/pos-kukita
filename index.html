@@ -94,6 +94,7 @@
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
                     <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+                    <!-- TAMPILAN KASIR AKTIF -->
                     <div class="flex items-center gap-2 bg-orange-100 px-3 py-1.5 rounded-full border border-orange-200">
                         <i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i>
                         <span class="text-xs md:text-sm font-bold text-brand-brown" x-text="activeCashier"></span>
@@ -209,7 +210,7 @@
                         <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
                             <option value="">-- Sentuh untuk Pilih Supplier --</option>
                             <template x-for="sup in options.suppliers" :key="sup.id">
-                                <option :value="sup.id" x-text="hasDraft(sup.id) ? '🟡 ' + sup.name + ' (Ada Draft)' : sup.name"></option>
+                                <option :value="sup.id" x-text="sup.name"></option>
                             </template>
                         </select>
                     </div>
