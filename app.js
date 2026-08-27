@@ -514,7 +514,6 @@ function posApp() {
                         if (!item.alreadyInStock) {
                             const prod = this.products.find(p => p.id === item.id);
                             if (prod) {
-                                // PERBAIKAN STOK: Tambah ke etalase hanya stok yang SUDAH dikurangi retur
                                 const jumlahBersih = item.qty - (item.returQty || 0);
                                 const newStock = prod.stock + jumlahBersih;
                                 await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
@@ -542,24 +541,40 @@ function posApp() {
                 }
 
                 if (isPrintingMalam) {
-                    // PERBAIKAN SERVER: Kirim data qty utuh dan retur utuh agar tidak terpotong di cetakan
+                    // Kirim stok bersih (Net) ke server agar laporan akuntansi 100% akurat
                     const payloadItems = this.restockCart.map(item => ({
                         ...item,
-                        qty: item.qty,
-                        returQty: item.returQty || 0
+                        qty: item.qty - (item.returQty || 0)
                     })).filter(item => item.qty > 0);
+
+                    // Buat Catatan Rahasia (Secret Note) untuk menyimpan memori retur ke Server
+                    let returStrings = [];
+                    this.restockCart.forEach(item => {
+                        if (item.returQty && item.returQty > 0) {
+                            returStrings.push(`${item.id || item.name}=${item.returQty}`);
+                        }
+                    });
+                    let secretReturNote = returStrings.length > 0 ? ` [RTR:${returStrings.join(',')}]` : '';
 
                     let stokAsli = {};
                     for (let item of this.restockCart) {
                         if (this.restockStockAddedPagi || item.alreadyInStock) {
                             const prod = this.products.find(p => p.id === item.id);
-                            if (prod) {
-                                stokAsli[item.id] = prod.stock; 
-                            }
+                            if (prod) { stokAsli[item.id] = prod.stock; }
                         }
                     }
 
-                    const payload = { supplierId: this.restockSupplierId, supplierName: this.restockSupplierName, items: payloadItems, discount: this.restockDiscount, paymentMethod: this.restockMethod, notes: this.cleanNotes(this.restockNotes), printNow: true };
+                    const payload = { 
+                        supplierId: this.restockSupplierId, 
+                        supplierName: this.restockSupplierName, 
+                        items: payloadItems, 
+                        discount: this.restockDiscount, 
+                        paymentMethod: this.restockMethod, 
+                        // Gabungkan note asli Mba Ayu dengan note rahasia
+                        notes: (this.cleanNotes(this.restockNotes) + secretReturNote).trim(), 
+                        printNow: true 
+                    };
+                    
                     const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     const result = await res.json();
                     
@@ -573,9 +588,7 @@ function posApp() {
                         }
                         
                         for (let item of this.restockCart) {
-                            if (!item.alreadyInStock) {
-                                localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
-                            }
+                            if (!item.alreadyInStock) { localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString()); }
                         }
 
                         const savedCartForReceipt = JSON.parse(JSON.stringify(this.restockCart));
@@ -605,26 +618,53 @@ function posApp() {
         },
 
         reprintVendorNota(notaDetail) {
+            // Membongkar (Parse) Catatan Rahasia untuk merekonstruksi rincian Retur
+            let returMap = {};
+            if (notaDetail.keteranganManual) {
+                const match = notaDetail.keteranganManual.match(/\[RTR:(.*?)\]/);
+                if (match && match[1]) {
+                    const pairs = match[1].split(',');
+                    pairs.forEach(p => {
+                        const [idOrName, qty] = p.split('=');
+                        returMap[idOrName] = parseInt(qty);
+                    });
+                }
+            }
+
             const reconstructedCart = notaDetail.cart.map(c => {
-                if(c.name) return c; 
-                const prod = this.products.find(p => p.id === c.id || p.id === c[0]); 
+                let name = c.name;
+                let id = c.id || c[0];
+                let netQty = c.qty || c[1];
+                let buyPrice = c.buyPrice || c[2];
+
+                if (!name) {
+                    const prod = this.products.find(p => p.id === id);
+                    name = prod ? prod.name : 'Produk';
+                }
+
+                // Ambil data retur dari kapsul rahasia, jika ada
+                let returQty = returMap[id] || returMap[name] || 0;
+
                 return { 
-                    name: prod ? prod.name : 'Produk', 
-                    qty: c.qty || c[1], 
-                    buyPrice: c.buyPrice || c[2], 
-                    returQty: c.returQty || c[3] || 0 
+                    id: id,
+                    name: name, 
+                    // Karena tabel butuh Total Awal (Net + Retur), kita jumlahkan kembali
+                    qty: netQty + returQty, 
+                    buyPrice: buyPrice, 
+                    returQty: returQty 
                 };
             });
             
             this.lastVendorTx = {
                 invoice: notaDetail.invoice,
-                date: new Date().toLocaleString('id-ID'), 
+                date: new Date(notaDetail.time || Date.now()).toLocaleString('id-ID'), 
                 supplier: notaDetail.supplier || 'Data Lama (Tanpa Nama)',
                 cart: reconstructedCart,
                 total: notaDetail.total,
                 discount: notaDetail.discount,
                 grandTotal: notaDetail.grandTotal,
                 method: notaDetail.method,
+                // Bersihkan cetakan dari kode rahasia agar tetap rapi
                 notes: this.cleanNotes(notaDetail.keteranganManual)
             };
             this.isPrintingVendor = true;
