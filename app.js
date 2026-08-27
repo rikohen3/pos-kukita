@@ -200,6 +200,19 @@ function posApp() {
         removeFromCart(index) { this.restorePrices(); this.cart.splice(index, 1); },
         validateQty(index) { this.restorePrices(); let val = parseInt(this.cart[index].qty); if (isNaN(val) || val < 1) val = 1; this.cart[index].qty = val; },
 
+        editItemPrice(index) {
+            if (this.isCustomPackage) return alert('❌ Harga tidak bisa diubah satuan karena sedang terikat dalam mode Paket Custom. Batalkan paket terlebih dahulu jika ingin ubah harga satuan.');
+            
+            const item = this.cart[index];
+            const inputPrice = prompt(`✏️ UBAH HARGA MANUAL\n\nProduk: ${item.name}\n\nMasukkan harga khusus / baru untuk item ini:`, item.price);
+            
+            if (inputPrice === null || inputPrice.trim() === "") return;
+            const newPrice = parseInt(inputPrice);
+            if (isNaN(newPrice) || newPrice < 0) return alert('❌ Nominal tidak valid!');
+            
+            this.cart[index].price = newPrice;
+        },
+        
         get total() { return this.isCustomPackage ? this.packageTotal : this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
         get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
         get change() { return parseFloat(this.cashReceived || 0) - this.total; },
