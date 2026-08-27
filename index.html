@@ -929,8 +929,14 @@
                                 <ul class="space-y-2">
                                     <template x-for="item in selectedTxCart">
                                         <li class="flex justify-between text-sm text-gray-700 border-b border-dashed border-gray-100 pb-1">
-                                            <span x-text="item.name" class="flex-1 pr-2"></span>
-                                            <span class="font-bold text-brand-brown whitespace-nowrap" x-text="'x ' + item.qty"></span>
+                                            <div class="flex-1 pr-2">
+                                                <div x-text="item.name"></div>
+                                                <div class="text-[10px] text-gray-400" x-show="item.price > 0" x-text="'@ ' + formatRupiah(item.price)"></div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="font-bold text-brand-brown whitespace-nowrap" x-text="'x ' + item.qty"></div>
+                                                <div class="text-xs font-bold text-gray-800" x-show="item.price > 0" x-text="formatRupiah(item.price * item.qty)"></div>
+                                            </div>
                                         </li>
                                     </template>
                                 </ul>
@@ -1146,16 +1152,23 @@
                     await this.fetchCashiers(); await this.fetchCatalog();
                 },
 
-                // FITUR LIHAT DETAIL TRANSAKSI
+                // FITUR LIHAT DETAIL TRANSAKSI (POP-UP)
                 viewTransactionDetail(tx) {
                     this.selectedTx = tx;
                     let reconstructedCart = [];
                     if (tx.items) {
                         const parts = tx.items.split(', ');
                         reconstructedCart = parts.map(p => {
+                            let name = p.trim();
+                            let qty = 1;
                             const match = p.match(/(.*) \(x(\d+)\)/);
-                            if (match) return { name: match[1].trim(), qty: parseInt(match[2]) };
-                            return { name: p.trim(), qty: 1 };
+                            if (match) { name = match[1].trim(); qty = parseInt(match[2]); }
+                            
+                            // MENGOBATI AMNESIA HARGA: Cari produknya di Master Katalog
+                            let foundProduct = this.products.find(prod => prod.name === name);
+                            let price = foundProduct ? foundProduct.price : 0;
+                            
+                            return { name: name, qty: qty, price: price };
                         });
                     }
                     this.selectedTxCart = reconstructedCart;
@@ -1710,7 +1723,7 @@
                     } catch (error) {}
                 },
 
-                // FITUR CETAK ULANG STRUK KASIR
+                // MENGOBATI AMNESIA KOMPUTER: FITUR CETAK ULANG STRUK KASIR
                 reprintTransaction(tx) {
                     let reconstructedCart = [];
                     let isPkg = tx.invoice && tx.invoice.startsWith('PKT-');
@@ -1719,11 +1732,16 @@
                     if (tx.items) {
                         const parts = tx.items.split(', ');
                         reconstructedCart = parts.map(p => {
+                            let name = p.trim();
+                            let qty = 1;
                             const match = p.match(/(.*) \(x(\d+)\)/);
-                            if (match) {
-                                return { name: match[1].trim(), qty: parseInt(match[2]), price: 0 };
-                            }
-                            return { name: p.trim(), qty: 1, price: 0 };
+                            if (match) { name = match[1].trim(); qty = parseInt(match[2]); }
+                            
+                            // Menyontek harga ke Master Katalog
+                            let foundProduct = this.products.find(prod => prod.name === name);
+                            let price = foundProduct ? foundProduct.price : 0;
+
+                            return { name: name, qty: qty, price: price };
                         });
                     }
 
