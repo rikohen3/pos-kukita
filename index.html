@@ -159,14 +159,13 @@
                     <div class="p-5 border-t bg-gray-50">
                         <div class="grid grid-cols-2 gap-2 mb-4">
                             <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="edit-3" class="w-3 h-3"></i> Set Hrg Paket</button>
-                            <button @click="openPoForm()" x-show="cart.length > 0" class="w-full bg-purple-100 text-purple-700 border border-purple-200 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="book-check" class="w-3 h-3"></i> Simpan sbg PO</button>
+                            <button @click.stop="openPoForm()" x-show="cart.length > 0" class="w-full bg-purple-100 text-purple-700 border border-purple-200 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="book-check" class="w-3 h-3"></i> Simpan sbg PO</button>
                         </div>
                         <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Total Barang</span><span class="font-semibold text-brand-brown" x-text="totalQty + ' Pcs'"></span></div>
                         <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Subtotal</span><span class="font-semibold" x-text="formatRupiah(total)"></span></div>
                         <div class="flex justify-between mt-2 mb-6"><span class="text-lg font-bold">Total</span><span class="text-2xl font-bold text-brand-orange" x-text="formatRupiah(total)"></span></div>
                         
-                        <!-- TOMBOL BAYAR SEKARANG AMAN DARI POTONGAN -->
-                        <button @click="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2 transition"><i data-lucide="credit-card"></i> BAYAR SEKARANG</button>
+                        <button @click.stop="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2 transition"><i data-lucide="credit-card"></i> BAYAR SEKARANG</button>
                     </div>
                 </aside>
                 <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart">
@@ -188,7 +187,6 @@
             <div class="flex flex-1 overflow-hidden relative flex-col md:flex-row">
                 <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
                     
-                    <!-- KOTAK PENGINGAT KUNING MUNCUL JIKA ADA DRAFT -->
                     <div x-show="pendingDrafts.length > 0" class="m-4 mb-0 p-3 bg-yellow-50 border border-yellow-200 rounded-lg shadow-sm">
                         <div class="flex items-center text-yellow-800 text-[10px] font-bold mb-2 uppercase">
                             <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i> Pengingat: Draft Nota Belum Ditutup Lunas
@@ -548,7 +546,7 @@
             </div>
         </main>
 
-        <!-- TAB 3: PENGELUARAN -->
+        <!-- TAB PENGELUARAN -->
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="flex-shrink-0 h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran Lain-lain</h1></header>
             <div class="flex-1 p-4 md:p-6 overflow-y-auto pb-24">
@@ -581,7 +579,7 @@
             </div>
         </main>
 
-        <!-- TAB 4: LAPORAN & ANALITIK DENGAN SUB-MENU (TAB) -->
+        <!-- TAB LAPORAN & ANALITIK -->
         <main x-show="currentTab === 'laporan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="flex-shrink-0 h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 hidden md:block">Laporan & Analitik Toko</h1>
@@ -777,7 +775,6 @@
                                                 <span x-text="nota.detailNota.rincianTeks"></span>
                                                 <div x-show="nota.detailNota.discount > 0" class="text-[10px] text-red-500 mt-1" x-text="'*Dipotong: ' + formatRupiah(nota.detailNota.discount)"></div>
                                                 
-                                                <!-- MEMFILET KODE ALIEN DI TABEL HISTORI -->
                                                 <div x-show="nota.detailNota.keteranganManual && cleanNotes(nota.detailNota.keteranganManual) !== ''" class="text-[10px] text-gray-400 italic mt-0.5" x-text="'Ket: ' + cleanNotes(nota.detailNota.keteranganManual)"></div>
                                             </td>
                                             <td class="p-3 text-right">
@@ -853,7 +850,7 @@
             </div>
         </main>
 
-        <!-- TAB 5: PENGATURAN -->
+        <!-- TAB PENGATURAN -->
         <main x-show="currentTab === 'pengaturan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="flex-shrink-0 h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Pengaturan Toko</h1></header>
             <div class="flex-1 p-4 md:p-6 overflow-y-auto pb-24 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -893,7 +890,7 @@
         </nav>
 
         <!-- JENDELA TAMBAH PRODUK BARU -->
-        <div x-show="showAddProductModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 no-print" style="display: none;">
+        <div x-show="showAddProductModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
             <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closeAddProduct()">
                 <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
                     <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="package-plus"></i> Tambah Produk Baru</h2>
@@ -955,7 +952,7 @@
         </div>
 
         <!-- MODAL DETAIL TRANSAKSI KASIR (POP-UP) -->
-        <div x-show="showDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 no-print" style="display: none;">
+        <div x-show="showDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
             <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showDetailModal = false">
                 <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
                     <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="receipt"></i> Rincian Struk</h2>
@@ -972,7 +969,6 @@
                                       x-text="selectedTx.paymentMethod || 'Tunai'">
                                 </span>
                             </div>
-                            
                             <div class="mb-4">
                                 <p class="text-[11px] font-bold text-gray-400 uppercase mb-2">Daftar Belanjaan:</p>
                                 <ul class="space-y-2">
@@ -990,12 +986,10 @@
                                     </template>
                                 </ul>
                             </div>
-                            
                             <div class="flex justify-between items-center pt-2 border-t border-gray-200 mt-4 mb-6">
                                 <span class="font-bold text-gray-600">Total Transaksi</span>
                                 <span class="text-2xl font-extrabold text-brand-orange" x-text="formatRupiah(selectedTx.total)"></span>
                             </div>
-                            
                             <div class="grid grid-cols-2 gap-3">
                                 <button @click="deleteTransaction(selectedTx.invoice); showDetailModal = false" class="bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm border border-red-100">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i> Batal / Hapus
@@ -1010,146 +1004,149 @@
             </div>
         </div>
 
-    </div>
-
-    <!-- COPY KODE PART 2 DI SINI -->
-<!-- FORMAT STRUK KASIR / PO -->
-    <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
-        <template x-if="lastTx">
-            <div style="padding: 10px;">
-                <div style="text-align: center; margin-bottom: 12px;">
-                    <div style="font-size: 18px; font-weight: bold;">KUKITA</div>
-                    <div style="font-size: 10px; font-weight: normal; line-height: 1.3; margin-top: 2px;">Jl. Amir Hamzah No. 2<br>Karang Sukun, Mataram</div>
-                    <div style="font-size: 12px; font-weight: normal; margin-top: 8px;" x-text="lastTx.isPO ? 'STRUK PESANAN (PO)' : 'Struk Pembelian'"></div>
-                    <div style="font-weight: normal;">------------------------</div>
+        <!-- JENDELA PEMBAYARAN KASIR -->
+        <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
+            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
+                <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
+                    <h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2>
+                    <button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
                 </div>
-                <div style="margin-bottom: 10px;">
-                    <div>No : <span x-text="lastTx.invoice.split(' (')[0]"></span></div>
-                    <div>Tgl: <span x-text="lastTx.date"></span></div>
-                    <div>Kasir: <span x-text="activeCashier"></span></div>
-                    <div>------------------------</div>
-                </div>
-                <div style="margin-bottom: 10px;">
-                    <template x-if="lastTx.isPackage">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-weight: bold;"><div>Paket Custom</div><div x-text="formatRupiah(lastTx.total - (lastTx.shippingCost||0))"></div></div>
-                            <div style="font-size: 11px; margin-bottom: 3px; border-bottom: 1px dashed #ccc; display: inline-block;">Rincian Isi Paket:</div>
-                            <template x-for="item in lastTx.cart"><div style="font-size: 11px; padding-left: 5px; color: #333;" x-text="'- ' + item.name + ' (x' + item.qty + ')'"></div></template>
+                <div class="p-6">
+                    <div x-show="paymentStep === 'input'">
+                        <div class="text-center mb-6">
+                            <p class="text-gray-500 text-sm">Total Tagihan (<span x-text="cart.length"></span> Item | <span x-text="totalQty"></span> Pcs)</p>
+                            <p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p>
                         </div>
-                    </template>
-                    <template x-if="!lastTx.isPackage">
-                        <div>
-                            <template x-for="item in lastTx.cart">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                                    <div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div>
-                                    <div x-text="item.price > 0 ? formatRupiah(item.price * item.qty) : ''"></div>
-                                </div>
-                            </template>
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli</label>
+                            <input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Wajib diisi jika Kasbon/Piutang">
                         </div>
-                    </template>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <div>------------------------</div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px;"><div>Total Barang:</div><div x-text="lastTx.totalQty + ' Pcs'"></div></div>
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;" x-show="!lastTx.isPO"><div>Total Harga:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
+                        <div class="mb-4">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai</button>
+                                <button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">QRIS</button>
+                                <button @click="paymentMethod = 'Mix'" :class="paymentMethod === 'Mix' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai+QRIS</button>
+                                <button @click="paymentMethod = 'Piutang'" :class="paymentMethod === 'Piutang' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-500 border border-red-200'" class="py-2 rounded-lg font-bold text-xs transition">Utang / Tempo</button>
+                            </div>
+                        </div>
+                        <div x-show="paymentMethod === 'Tunai'" class="mb-6">
+                            <input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0">
+                            <div class="grid grid-cols-4 gap-2 mt-2">
+                                <button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button>
+                                <button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button>
+                                <button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50">
+                                <span class="font-semibold text-gray-600">Kembalian</span>
+                                <span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span>
+                            </div>
+                        </div>
+                        <div x-show="paymentMethod === 'Mix'" class="mb-6" style="display: none;">
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Berapa Uang TUNAI FISIK yang diterima?</label>
+                            <input type="number" x-model="mixCash" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right focus:border-brand-brown" placeholder="Ketik nominal tunai">
+                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-blue-50 border border-blue-100">
+                                <span class="font-semibold text-blue-800 text-sm">Sisa tagihan di-QRIS-kan</span>
+                                <span class="text-xl font-bold text-blue-600" x-text="formatRupiah(total - (parseFloat(mixCash) || 0))"></span>
+                            </div>
+                        </div>
+                        <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50">
+                            <i data-lucide="check-circle" x-show="!isProcessing"></i>
+                            <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
+                            <span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span>
+                        </button>
+                    </div>
                     
-                    <template x-if="lastTx.isPO">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kue Saja:</div><div x-text="formatRupiah(lastTx.total - (lastTx.shippingCost||0))"></div></div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;" x-show="lastTx.shippingCost > 0"><div>Ongkos Kirim:</div><div x-text="formatRupiah(lastTx.shippingCost)"></div></div>
-                            <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;"><div>Total Tagihan:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px; color: red;"><div>Titip DP:</div><div x-text="'- ' + formatRupiah(lastTx.downPayment)"></div></div>
-                            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; margin-top: 3px; border-top: 1px dashed black; padding-top: 3px;"><div>SISA BAYAR:</div><div x-text="formatRupiah(lastTx.remaining)"></div></div>
+                    <div x-show="paymentStep === 'success'" style="display: none;" class="text-center">
+                        <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                        <p class="text-gray-500 text-sm font-bold" x-text="lastTx && lastTx.method === 'Piutang' ? 'PESANAN (KASBON) TERCATAT' : 'UANG KEMBALIAN'"></p>
+                        <p class="text-5xl font-bold text-brand-green my-2" x-show="lastTx && lastTx.method !== 'Piutang'" x-text="formatRupiah(lastTx ? lastTx.change : 0)"></p>
+                        <div class="mt-8 flex gap-3">
+                            <button @click="printReceipt()" class="flex-1 bg-brand-brown text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-orange-800 transition">
+                                <i data-lucide="printer" class="w-5 h-5"></i> Cetak Struk
+                            </button>
+                            <button @click="resetCart()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition">Selesai</button>
                         </div>
-                    </template>
-
-                    <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Metode:</div><div style="font-weight: bold;" x-text="lastTx.method"></div></div>
-                    <template x-if="lastTx.method === 'Tunai' && !lastTx.isPO">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div>
-                        </div>
-                    </template>
-                    <div>------------------------</div>
-                </div>
-                <div style="text-align: center;"><div>Terima Kasih</div><div>Selamat Menikmati!</div></div>
-            </div>
-        </template>
-    </div>
-
-    <!-- FORMAT STRUK NOTA VENDOR -->
-    <div x-show="isPrintingVendor" id="print-area-vendor" style="display: none;">
-        <template x-if="lastVendorTx">
-            <div style="padding: 10px;">
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="font-size: 14px; font-weight: bold;">BUKTI TERIMA BARANG</div>
-                    <div style="font-size: 10px;">TOKO KUKITA</div>
-                    <div>------------------------</div>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
-                    <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
-                    <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
-                    <tr style="border-bottom: 1px dashed black; border-top: 1px dashed black;">
-                        <th style="text-align: left; padding: 2px 0; width: 15%;">Bnyk</th>
-                        <th style="text-align: left; width: 50%;">Nama Barang</th>
-                        <th style="text-align: right; width: 35%;">Jumlah</th>
-                    </tr>
-                    <template x-for="item in lastVendorTx.cart">
-                        <tr>
-                            <td style="vertical-align: top; padding-top: 3px;" x-text="item.qty"></td>
-                            <td style="vertical-align: top; padding-top: 3px;"><div x-text="item.name"></div><div style="font-size: 9px;" x-text="'@ ' + formatRupiah(item.buyPrice)"></div></td>
-                            <td style="text-align: right; vertical-align: top; padding-top: 3px;" x-text="formatRupiah(item.buyPrice * item.qty)"></td>
-                        </tr>
-                    </template>
-                    <template x-if="lastVendorTx.cart.some(i => i.returQty > 0)">
-                        <tr><td colspan="3" style="padding-top: 8px; font-weight: bold; font-size: 10px; border-bottom: 1px dashed black;">Dikurangi (Retur):</td></tr>
-                    </template>
-                    <template x-for="item in lastVendorTx.cart.filter(i => i.returQty > 0)">
-                        <tr>
-                            <td style="vertical-align: top; padding-top: 3px; color: red;" x-text="item.returQty"></td>
-                            <td style="vertical-align: top; padding-top: 3px; color: red;" x-text="item.name"></td>
-                            <td style="text-align: right; vertical-align: top; padding-top: 3px; color: red;" x-text="'- ' + formatRupiah(item.buyPrice * item.returQty)"></td>
-                        </tr>
-                    </template>
-                </table>
-                <div style="border-top: 1px dashed black; padding-top: 5px; margin-bottom: 5px;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <div>Total Awal:</div>
-                        <div x-text="formatRupiah(lastVendorTx.cart.reduce((s,i)=>s+(i.buyPrice*i.qty),0))"></div>
                     </div>
-                    <template x-if="lastVendorTx.cart.some(i => i.returQty > 0)">
-                        <div style="display: flex; justify-content: space-between; color: red;">
-                            <div>Total Retur:</div>
-                            <div x-text="'- ' + formatRupiah(lastVendorTx.cart.reduce((s,i)=>s+(i.buyPrice*(i.returQty||0)),0))"></div>
-                        </div>
-                    </template>
-                    <div x-show="lastVendorTx.discount > 0" style="display: flex; justify-content: space-between; color: red;">
-                        <div>Potongan Lain:</div>
-                        <div x-text="'- ' + formatRupiah(lastVendorTx.discount)"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 3px;">
-                        <div>Jumlah Bayar Rp:</div>
-                        <div x-text="formatRupiah(lastVendorTx.grandTotal)"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                        <div>Status:</div>
-                        <div style="font-weight: bold;" x-text="lastVendorTx.method === 'Titip Jual' ? 'Titip Jual (Belum Bayar)' : 'Lunas ' + lastVendorTx.method"></div>
-                    </div>
-                </div>
-                <div x-show="lastVendorTx.notes" style="margin-bottom: 10px; font-size: 10px; font-style: italic;" x-text="'Ket: ' + lastVendorTx.notes"></div>
-                <div style="display: flex; justify-content: space-between; margin-top: 20px; text-align: center;">
-                    <div><div style="margin-bottom: 25px;">Tanda Terima</div><div>(................)</div></div>
-                    <div><div style="margin-bottom: 25px;">Hormat Kami</div><div x-text="activeCashier"></div></div>
                 </div>
             </div>
-        </template>
+        </div>
+
+        <!-- MODAL FORM PO -->
+        <div x-show="showPoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
+            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showPoModal = false">
+                <div class="bg-purple-600 p-4 text-white flex justify-between items-center">
+                    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="calendar-plus"></i> Simpan Buku Pesanan</h2>
+                    <button @click="showPoModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[80vh]">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemesan / Instansi</label>
+                            <input type="text" x-model="poForm.name" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50" placeholder="Wajib diisi">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Waktu Diambil (Hari H)</label>
+                                <input type="datetime-local" x-model="poForm.pickupDate" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-xs font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">No. HP (Opsional)</label>
+                                <input type="text" x-model="poForm.phone" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="08...">
+                            </div>
+                        </div>
+                        <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Biaya Ongkos Kirim (Opsional)</label>
+                            <input type="number" x-model="poForm.shippingCost" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Titip DP / Uang Muka</label>
+                                <input type="number" x-model="poForm.dp" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Metode Bayar DP</label>
+                                <select x-model="poForm.paymentMethod" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm">
+                                    <option value="Tunai">Tunai</option>
+                                    <option value="QRIS">QRIS / Transfer</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Catatan Tambahan (Misal: Pita merah)</label>
+                            <input type="text" x-model="poForm.notes" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm">
+                        </div>
+                    </div>
+                    <div class="mt-6 border-t pt-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Harga Kue Saja</span>
+                            <span x-text="formatRupiah(total)"></span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1" x-show="parseInt(poForm.shippingCost) > 0">
+                            <span>Ongkir</span>
+                            <span x-text="formatRupiah(parseInt(poForm.shippingCost) || 0)"></span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-3 border-b pb-2">
+                            <span>Titip DP</span>
+                            <span class="text-red-500" x-text="'- ' + formatRupiah(parseInt(poForm.dp) || 0)"></span>
+                        </div>
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="font-bold text-gray-800">Sisa Tagihan</span>
+                            <span class="text-xl font-bold text-brand-orange" x-text="formatRupiah((total + (parseInt(poForm.shippingCost) || 0)) - (parseInt(poForm.dp) || 0))"></span>
+                        </div>
+                        <button @click="submitPo()" :disabled="isProcessing" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-purple-700 disabled:opacity-50">
+                            <i data-lucide="save" x-show="!isProcessing"></i>
+                            <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
+                            <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PESANAN (PO)'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- SCRIPT ALPINE JS -->
     <!-- Panggil File Javascript Eksternal -->
     <script src="app.js"></script>
+
 </body>
 </html>
