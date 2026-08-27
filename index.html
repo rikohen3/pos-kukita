@@ -140,7 +140,8 @@
                             <div class="flex items-center justify-between p-3 border rounded-lg">
                                 <div class="flex-1">
                                     <h4 class="font-bold text-sm text-gray-800 line-clamp-1" x-text="item.name"></h4>
-                                    <p class="text-brand-brown text-sm" x-show="!isCustomPackage" x-text="formatRupiah(item.price)"></p>
+                                    <!-- HARGA BISA DIKLIK UNTUK EDIT MANUAL -->
+                                    <p class="text-brand-brown text-sm cursor-pointer border-b border-dashed border-brand-brown inline-block hover:text-orange-700 transition" x-show="!isCustomPackage" @click="editItemPrice(index)" title="Klik untuk ubah harga manual" x-text="formatRupiah(item.price)"></p>
                                     <p class="text-brand-orange text-[10px] font-bold italic" x-show="isCustomPackage">Tergabung dlm Paket</p>
                                 </div>
                                 <div class="flex items-center gap-1 md:gap-2">
