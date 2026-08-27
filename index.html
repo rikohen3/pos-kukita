@@ -159,14 +159,14 @@
                     <div class="p-5 border-t bg-gray-50">
                         <div class="grid grid-cols-2 gap-2 mb-4">
                             <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="edit-3" class="w-3 h-3"></i> Set Hrg Paket</button>
-                            <button @click.stop="openPoForm()" x-show="cart.length > 0" class="w-full bg-purple-100 text-purple-700 border border-purple-200 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="book-check" class="w-3 h-3"></i> Simpan sbg PO</button>
+                            <button @click="openPoForm()" x-show="cart.length > 0" class="w-full bg-purple-100 text-purple-700 border border-purple-200 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="book-check" class="w-3 h-3"></i> Simpan sbg PO</button>
                         </div>
                         <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Total Barang</span><span class="font-semibold text-brand-brown" x-text="totalQty + ' Pcs'"></span></div>
                         <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Subtotal</span><span class="font-semibold" x-text="formatRupiah(total)"></span></div>
                         <div class="flex justify-between mt-2 mb-6"><span class="text-lg font-bold">Total</span><span class="text-2xl font-bold text-brand-orange" x-text="formatRupiah(total)"></span></div>
                         
-                        <!-- TOMBOL BAYAR SEKARANG -->
-                        <button @click.stop="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2 transition"><i data-lucide="credit-card"></i> BAYAR SEKARANG</button>
+                        <!-- TOMBOL BAYAR SEKARANG AMAN DARI POTONGAN -->
+                        <button @click="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2 transition"><i data-lucide="credit-card"></i> BAYAR SEKARANG</button>
                     </div>
                 </aside>
                 <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart">
@@ -549,9 +549,6 @@
         </main>
 
         <!-- TAB 3: PENGELUARAN -->
-        <main x-show="currentTab === 'pengaturan'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <!-- Menghindari Error: Pindah menu pengeluaran dsb disembunyikan agar script fokus pada JS -->
-        </main>
         <main x-show="currentTab === 'pengeluaran'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
             <header class="flex-shrink-0 h-16 bg-white border-b flex items-center px-4 md:px-6"><h1 class="text-xl font-bold text-gray-800">Catat Pengeluaran Lain-lain</h1></header>
             <div class="flex-1 p-4 md:p-6 overflow-y-auto pb-24">
@@ -895,75 +892,1096 @@
             <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Laporan</span></button>
         </nav>
 
-        <!-- Script Utama (DIPADATKAN EKSTRA AMAN) -->
-        <script>
-            const SERVER_URL='https://pos-kukita.vercel.app';
-            function posApp(){return{
-            activeCashier:null,loginPin:'',cashiersList:[],newCashierName:'',newCashierPin:'',currentTab:'pos',categories:['Semua'],selectedCategory:'Semua',searchQuery:'',masterSearchQuery:'',cart:[],products:[],showMobileCart:false,showPaymentModal:false,paymentStep:'input',paymentMethod:'Tunai',cashReceived:'',mixCash:'',isProcessing:false,isLoading:true,lastTx:null,isCustomPackage:false,
-            currentTime:new Date().toLocaleString('id-ID'),
-            cleanNotes(s){return s?s.replace(/\[RTR:.*?\]/g,'').trim():'';},
-            expCat:'Pembayaran Vendor (Kue / Stok)',expDesc:'',expAmount:'',expMethod:'Tunai',reportData:{revenue:0,revenueCash:0,revenueQris:0,piutang:0,grossProfit:0,expenses:0,expCash:0,expTransfer:0,transactions:0,netProfit:0,salesHistory:[],stockHistory:[],vendorHistory:[]},customerName:'',itemReports:[],reportPeriod:'today',startDate:'',endDate:'',reportSubTab:'ringkasan',oldPin:'',newPin:'',isPrintingReceipt:false,isPrintingCatalog:false,showAddProductModal:false,options:{categories:[],suppliers:[]},newProduct:{name:'',categoryId:'',supplierId:'',buyPrice:'',sellPrice:'',stock:'',image:''},showDetailModal:false,selectedTx:null,selectedTxCart:[],saldoAwalLaci:localStorage.getItem('saldo_laci')||0,packageTotal:0,productSortBy:'name_asc',poList:[],piutangList:[],showPoModal:false,poForm:{name:'',phone:'',pickupDate:'',shippingCost:'',dp:'',paymentMethod:'Tunai',notes:''},restockSupplierId:'',restockSupplierName:'',restockCart:[],restockDiscount:'',restockMethod:'Tunai',restockNotes:'',isPrintingVendor:false,lastVendorTx:null,restockStockAddedPagi:false,pendingDrafts:[],
-            async init(){setTimeout(()=>lucide.createIcons(),100);setInterval(()=>this.currentTime=new Date().toLocaleString('id-ID'),1000);this.$watch('currentTab',()=>setTimeout(()=>lucide.createIcons(),50));this.$watch('showMobileCart',()=>setTimeout(()=>lucide.createIcons(),10));await this.fetchCashiers();await this.fetchCatalog();},
-            hasDraft(id){return localStorage.getItem('draft_restock_'+id)!==null;},
-            updatePendingDrafts(){if(!this.options||!this.options.suppliers)return;this.pendingDrafts=this.options.suppliers.filter(s=>localStorage.getItem('draft_restock_'+s.id)!==null);},
-            viewTransactionDetail(tx){this.selectedTx=tx;let rc=[];if(tx.items){rc=tx.items.split(', ').map(p=>{let n=p.trim();let q=1;const m=p.match(/(.*) \(x(\d+)\)/);if(m){n=m[1].trim();q=parseInt(m[2]);}let fp=this.products.find(x=>x.name===n);return{name:n,qty:q,price:fp?fp.price:0};});}this.selectedTxCart=rc;this.showDetailModal=true;setTimeout(()=>lucide.createIcons(),10);},
-            isStockOld(p){if(!p.lastRestock||p.stock<=0)return false;const h=(new Date()-new Date(p.lastRestock))/(1000*60*60);const c=(p.category||'').toLowerCase();let l=24;if(c.includes('minum')||c.includes('cair'))l=24*30;else if(c.includes('kering')||c.includes('snack')||c.includes('keripik'))l=24*14;return h>l;},
-            formatDateShort(d){if(!d)return '-';const dt=new Date(d);return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+' '+dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});},
-            resetStockAge(id,n){if(!confirm(`Perbarui umur kue ${n}?\n\nTanggal masuk direset ke hari ini.`))return;localStorage.setItem('last_restock_date_'+id,new Date().toISOString());this.fetchCatalog();},
-            restorePrices(){if(this.isCustomPackage){this.isCustomPackage=false;this.packageTotal=0;this.customerName='';this.cart.forEach(i=>{const p=this.products.find(x=>x.id===i.id&&x.type===i.type);if(p)i.price=p.price;});}},
-            async editSaldoAwal(){const s=prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin:");if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ PIN Salah.");const val=prompt("💰 SALDO LACI PAGI INI:",this.saldoAwalLaci);if(val===null||val.trim()==="")return;const nom=parseInt(val);if(isNaN(nom)||nom<0)return alert('Tidak valid!');this.saldoAwalLaci=nom;localStorage.setItem('saldo_laci',nom);alert('✅ Tersimpan!');}catch(e){alert('Error');}},
-            async fetchCashiers(){try{const r=await fetch(`${SERVER_URL}/api/cashiers`);const d=await r.json();if(d.success)this.cashiersList=d.data;}catch(e){}},
-            async login(){if(!this.loginPin)return;if(['030388','100515','818283'].includes(this.loginPin)){this.activeCashier='Admin Toko';this.loginPin='';setTimeout(()=>lucide.createIcons(),50);await this.fetchCashiers();await this.fetchCatalog();return;}const f=this.cashiersList.find(c=>c.pin===this.loginPin);if(f){this.activeCashier=f.name;this.loginPin='';setTimeout(()=>lucide.createIcons(),50);return;}try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:this.loginPin})});if((await r.json()).success){this.activeCashier='Admin Toko';this.loginPin='';setTimeout(()=>lucide.createIcons(),50);return;}}catch(e){}alert('❌ Akses Ditolak!');this.loginPin='';},
-            logout(){this.activeCashier=null;this.currentTab='pos';},
-            async fetchCatalog(){this.isLoading=true;try{const r=await fetch(`${SERVER_URL}/api/catalog`);const dt=await r.json();if(dt.success){const pl=dt.data.products.map(p=>({id:p.id,name:p.name,category:p.category.name,supplier:p.supplier.name,supplierId:p.supplier.id,price:p.sellPrice,buyPrice:p.buyPrice,stock:p.stock,image:p.image||null,icon:p.category.name.includes('Minuman')?'🍹':'🍩',type:'product',lastRestock:localStorage.getItem('last_restock_date_'+p.id)}));const kl=dt.data.packages.map(p=>({id:p.id,name:p.name,category:'Paket',supplier:'Kombinasi',supplierId:null,price:p.sellPrice,stock:999,image:p.image||null,icon:'🎁',type:'package'}));this.products=[...pl,...kl];this.categories=['Semua',...Array.from(new Set(this.products.map(p=>p.category)))];}}catch(e){}finally{this.isLoading=false;setTimeout(()=>lucide.createIcons(),10);}},
-            get filteredProducts(){return this.products.filter(p=>{const mc=this.selectedCategory==='Semua'||p.category===this.selectedCategory;const ms=p.name.toLowerCase().includes(this.searchQuery.toLowerCase());return mc&&ms;});},
-            get filteredMasterProducts(){let f=this.products.filter(p=>p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase()));if(this.productSortBy==='stock_desc')f.sort((a,b)=>(b.stock||0)-(a.stock||0));else if(this.productSortBy==='stock_asc')f.sort((a,b)=>(a.stock||0)-(b.stock||0));else f.sort((a,b)=>a.name.localeCompare(b.name));return f;},
-            addToCart(p){this.restorePrices();const ex=this.cart.find(i=>i.id===p.id&&i.type===p.type&&i.price===p.price);if(ex)ex.qty++;else this.cart.unshift({...p,cartItemId:Date.now()+Math.random(),qty:1});},
-            increaseQty(i){this.restorePrices();this.cart[i].qty++;},decreaseQty(i){this.restorePrices();if(this.cart[i].qty>1)this.cart[i].qty--;else this.removeFromCart(i);},removeFromCart(i){this.restorePrices();this.cart.splice(i,1);},validateQty(i){this.restorePrices();let v=parseInt(this.cart[i].qty);if(isNaN(v)||v<1)v=1;this.cart[i].qty=v;},
-            get total(){return this.isCustomPackage?this.packageTotal:this.cart.reduce((s,i)=>s+(i.price*i.qty),0);},get totalQty(){return this.cart.reduce((s,i)=>s+i.qty,0);},get change(){return parseFloat(this.cashReceived||0)-this.total;},
-            formatRupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);},
-            setCustomPrice(){if(this.cart.length===0)return alert('Keranjang kosong!');const qs=prompt('📦 Jumlah Kotak?','1');if(!qs)return;const q=parseInt(qs);if(isNaN(q)||q<=0)return alert('Tidak valid!');const ps=prompt('Harga Per Kotak?','0');if(!ps)return;const pr=parseFloat(ps);if(isNaN(pr)||pr<0)return alert('Tidak valid!');const nt=q*pr;const inN=prompt('Nama Pemesan:','');this.customerName=(inN?inN.trim()+" - ":"Pesanan Umum - ")+q+" Kotak";this.isCustomPackage=true;this.packageTotal=nt;let ot=0;this.cart.forEach(i=>{const p=this.products.find(x=>x.id===i.id&&x.type===i.type);ot+=((p?p.price:i.price)*i.qty);});if(ot>0){const rat=nt/ot;let rt=0;for(let i=0;i<this.cart.length;i++){const p=this.products.find(x=>x.id===this.cart[i].id&&x.type===this.cart[i].type);const np=p?p.price:this.cart[i].price;if(i===this.cart.length-1)this.cart[i].price=Math.round((nt-rt)/this.cart[i].qty);else{const npr=Math.round(np*rat);this.cart[i].price=npr;rt+=(npr*this.cart[i].qty);}}}alert('✅ SET BERHASIL!');},
-            openPayment(){let sk=false;let nk='';for(let i of this.cart){if(i.type==='product'){const p=this.products.find(x=>x.id===i.id&&x.type===i.type);if(p&&i.qty>Number(p.stock||0)){sk=true;nk=i.name;break;}}}if(sk)return alert(`❌ STOK KURANG!\nSisa stok '${nk}' tidak cukup.`);this.cashReceived='';this.mixCash='';this.paymentMethod='Tunai';this.paymentStep='input';this.showPaymentModal=true;setTimeout(()=>lucide.createIcons(),10);},
-            closePayment(){if(this.paymentStep==='success')this.resetCart();else this.showPaymentModal=false;},
-            async processTransaction(){let t=this.total;let q=this.totalQty;let u=0;if(this.paymentMethod==='Tunai')u=parseFloat(this.cashReceived)||t;else if(this.paymentMethod==='Mix'){u=parseFloat(this.mixCash)||0;if(u<=0||u>=t)return alert('❌ Tunai Mix tidak valid!');}else if(this.paymentMethod==='Piutang'){if(!this.customerName)return alert('❌ Nama WAJIB untuk kasbon!');u=0;}this.isProcessing=true;let ch=this.paymentMethod==='Tunai'?(u-t):0;let kf=JSON.parse(JSON.stringify(this.cart));let mc=this.cart.map(i=>({id:i.id,type:i.type,qty:i.qty,price:i.price}));let fn=this.customerName?`${this.customerName} [Kasir: ${this.activeCashier}]`:`[Kasir: ${this.activeCashier}]`;try{const r=await fetch(`${SERVER_URL}/api/checkout`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cart:mc,paymentMethod:this.paymentMethod,cashReceived:u,totalAmount:t,isPackage:this.isCustomPackage,customerName:fn})});const d=await r.json();if(d.success){this.lastTx={invoice:d.data.invoice,date:new Date().toLocaleString('id-ID'),cart:kf,total:t,cash:u,change:ch,isPackage:this.isCustomPackage,method:this.paymentMethod,totalQty:q};this.paymentStep='success';this.fetchCatalog();}else alert('Gagal.');}catch(e){alert('Error.');}finally{this.isProcessing=false;}},
-            openPoForm(){this.poForm={name:this.customerName||'',phone:'',pickupDate:'',shippingCost:'',dp:'',paymentMethod:'Tunai',notes:''};this.showPoModal=true;setTimeout(()=>lucide.createIcons(),10);},
-            async fetchOrders(){try{const r=await fetch(`${SERVER_URL}/api/orders`);const d=await r.json();if(d.success){this.poList=d.data;setTimeout(()=>lucide.createIcons(),10);}}catch(e){}},
-            async fetchPiutang(){try{const r=await fetch(`${SERVER_URL}/api/piutang`);const d=await r.json();if(d.success){this.piutangList=d.data;setTimeout(()=>lucide.createIcons(),10);}}catch(e){}},
-            isPast(ds){return new Date(ds)<new Date();},
-            async submitPo(){if(!this.poForm.name||!this.poForm.pickupDate)return alert('Nama dan Waktu Wajib Diisi!');this.isProcessing=true;let mc=this.cart.map(i=>({id:i.id,type:i.type,qty:i.qty,price:i.price}));try{const r=await fetch(`${SERVER_URL}/api/orders`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerName:this.poForm.name,customerPhone:this.poForm.phone,pickupDate:this.poForm.pickupDate,shippingCost:this.poForm.shippingCost,downPayment:this.poForm.dp,paymentMethod:this.poForm.paymentMethod,notes:this.poForm.notes,cashierName:this.activeCashier,cart:mc,totalAmount:this.total})});const d=await r.json();if(d.success){alert('✅ PO TERSIMPAN!');this.showPoModal=false;this.resetCart();this.fetchOrders();}else alert('Gagal.');}catch(e){}finally{this.isProcessing=false;}},
-            async completeOrder(o){const rm=(o.totalAmount+o.shippingCost)-o.downPayment;let m=o.paymentMethod||'Tunai';if(rm>0){const im=prompt(`💰 Sisa tagihan: Rp ${new Intl.NumberFormat('id-ID').format(rm)}\nMetode:\n1: TUNAI\n2: QRIS\n3: PIUTANG`,'1');if(im===null)return;if(im==='3')m='Piutang';else m=im==='2'?'QRIS':'Tunai';}if(!confirm(`⚠️ Selesaikan pesanan ${o.customerName}?`))return;this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/orders/${o.id}/complete`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentMethod:m})});const d=await r.json();if(d.success){this.lastTx={invoice:`LUNAS-${o.invoice} (${o.customerName})`,date:new Date().toLocaleString('id-ID'),cart:o.items.map(i=>({name:i.product?i.product.name:i.package.name,qty:i.qty,price:i.price})),total:rm,cash:m==='Tunai'?rm:0,change:0,isPackage:false,method:m,totalQty:o.items.reduce((s,i)=>s+i.qty,0)};this.paymentStep='success';this.showPaymentModal=true;this.fetchOrders();this.fetchCatalog();}else alert('Gagal.');}catch(e){}finally{this.isProcessing=false;}},
-            async deleteOrder(id,n){const s=prompt(`🔒 HAPUS PESANAN\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm('Yakin membatalkan?'))return;try{const r2=await fetch(`${SERVER_URL}/api/orders/${id}`,{method:'DELETE'});if((await r2.json()).success){alert('Dibatalkan.');this.fetchOrders();}}catch(e){}},
-            resetCart(){this.cart=[];this.isCustomPackage=false;this.packageTotal=0;this.customerName='';this.showPaymentModal=false;this.paymentStep='input';this.showMobileCart=false;},
-            printPO(o){this.lastTx={invoice:o.invoice,date:new Date(o.pickupDate).toLocaleString('id-ID'),cart:o.items.map(i=>({name:i.product?i.product.name:i.package.name,qty:i.qty,price:i.price})),total:o.totalAmount+o.shippingCost,cash:o.downPayment,change:0,isPackage:false,method:o.paymentMethod||'Tunai',totalQty:o.items.reduce((s,i)=>s+i.qty,0),isPO:true,shippingCost:o.shippingCost,downPayment:o.downPayment,remaining:(o.totalAmount+o.shippingCost)-o.downPayment};this.printReceipt();},
-            loadDraftSupplier(){if(this.restockSupplierId){const s=this.options.suppliers.find(x=>x.id==this.restockSupplierId);this.restockSupplierName=s?s.name:'';}else this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;if(!this.restockSupplierId)return;const sd=localStorage.getItem(`draft_restock_${this.restockSupplierId}`);if(sd){try{const p=JSON.parse(sd);this.restockCart=p.cart||[];this.restockDiscount=p.discount||'';this.restockMethod=p.method||'Tunai';this.restockNotes=p.notes||'';if(this.restockCart.some(i=>i.alreadyInStock))this.restockStockAddedPagi=true;}catch(e){}}},
-            saveDraftLocally(){if(!this.restockSupplierId)return;if(this.restockCart.length===0&&!this.restockDiscount&&!this.restockNotes)localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);else localStorage.setItem(`draft_restock_${this.restockSupplierId}`,JSON.stringify({cart:this.restockCart,discount:this.restockDiscount,method:this.restockMethod,notes:this.restockNotes}));this.updatePendingDrafts();},
-            addToRestockCart(p){if(!p.buyPrice||p.buyPrice<=0)return alert('❌ Harga Modal 0!');const e=this.restockCart.find(i=>i.id===p.id&&!i.alreadyInStock);if(e)e.qty++;else this.restockCart.unshift({...p,qty:1,returQty:0,alreadyInStock:false});this.saveDraftLocally();},
-            updateRestockQty(i,d){if(this.restockCart[i].alreadyInStock)return alert('Sudah masuk stok pagi.');if(d<0&&this.restockCart[i].qty<=1)return;this.restockCart[i].qty+=d;this.saveDraftLocally();},
-            setRestockQty(i,v){if(this.restockCart[i].alreadyInStock)return alert('Sudah masuk stok pagi.');let n=parseInt(v);if(isNaN(n)||n<1)n=1;this.restockCart[i].qty=n;this.saveDraftLocally();},
-            updateReturQty(i,d){let it=this.restockCart[i];if(!it.returQty)it.returQty=0;let nv=it.returQty+d;if(nv<0)nv=0;if(nv>it.qty)return alert('Lebih dari masuk!');it.returQty=nv;this.saveDraftLocally();},
-            validateReturQty(i){let it=this.restockCart[i];let v=parseInt(it.returQty);if(isNaN(v)||v<0)v=0;if(v>it.qty){alert('Lebih dari masuk!');v=it.qty;}it.returQty=v;this.saveDraftLocally();},
-            async removeRestockItem(i){if(this.isProcessing)return;let it=this.restockCart[i];if(it.alreadyInStock){const s=prompt(`🔒 HAPUS DARI DRAFT\nBarang sudah masuk etalase. Masukkan PIN Admin untuk menghapus & narik stok ${it.name}:`);if(!s)return;this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success){this.isProcessing=false;return alert("❌ Ditolak!");}}catch(e){this.isProcessing=false;return;}const p=this.products.find(x=>x.id===it.id);if(p){const ns=p.stock-it.qty;try{await fetch(`${SERVER_URL}/api/products/${it.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns>=0?ns:0})});}catch(e){}}alert(`✅ Batal diterima.`);this.isProcessing=false;}this.restockCart.splice(i,1);this.saveDraftLocally();this.fetchCatalog();},
-            get restockTotal(){return this.restockCart.reduce((s,i)=>s+((i.buyPrice||0)*(i.qty-(i.returQty||0))),0);},get restockGrandTotal(){return this.restockTotal-(parseInt(this.restockDiscount)||0);},
-            async submitRestock(ipm){if(this.restockCart.length===0)return alert('Kosong!');if(!this.restockSupplierId)return alert('Pilih Vendor!');const ss=this.options.suppliers.find(s=>s.id==this.restockSupplierId);this.restockSupplierName=ss?ss.name:'Vendor';const m=ipm?"🔒 TUTUP NOTA MALAM\nPIN Admin:":"🔒 SIMPAN DRAFT PAGI\nPIN Admin:";const s=prompt(m);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ PIN Salah.");}catch(e){return;}this.isProcessing=true;try{const hni=this.restockCart.some(i=>!i.alreadyInStock);if(!ipm){if(!hni){this.isProcessing=false;return alert('Tidak ada barang baru.');}for(let i of this.restockCart){if(!i.alreadyInStock){const p=this.products.find(x=>x.id===i.id);if(p){await fetch(`${SERVER_URL}/api/products/${i.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:p.stock+i.qty})});i.alreadyInStock=true;localStorage.setItem('last_restock_date_'+i.id,new Date().toISOString());}}}this.restockStockAddedPagi=true;this.saveDraftLocally();alert('✅ STOK BERTAMBAH!');this.restockSupplierId='';this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;this.fetchCatalog();this.isProcessing=false;return;}if(ipm){const pi=this.restockCart.map(i=>({...i,qty:i.qty-(i.returQty||0)})).filter(i=>i.qty>0);const r2=await fetch(`${SERVER_URL}/api/restock`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({supplierId:this.restockSupplierId,supplierName:this.restockSupplierName,items:pi,discount:this.restockDiscount,paymentMethod:this.restockMethod,notes:this.cleanNotes(this.restockNotes),printNow:true})});const d2=await r2.json();if(d2.success){for(let i of this.restockCart){if(this.restockStockAddedPagi||i.alreadyInStock){const p=this.products.find(x=>x.id===i.id);if(p){const ns=p.stock-i.qty;try{await fetch(`${SERVER_URL}/api/products/${i.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns>=0?ns:0})});}catch(e){}}}if(!i.alreadyInStock)localStorage.setItem('last_restock_date_'+i.id,new Date().toISOString());}const sc=JSON.parse(JSON.stringify(this.restockCart));this.lastVendorTx={invoice:d2.data.invoice,date:new Date().toLocaleString('id-ID'),supplier:this.restockSupplierName,cart:sc,total:this.restockTotal,discount:parseInt(this.restockDiscount)||0,grandTotal:d2.data.grandTotal,method:this.restockMethod,notes:this.cleanNotes(this.restockNotes)};alert(`✅ NOTA LUNAS DITUTUP!`);localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);this.restockSupplierId='';this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;this.updatePendingDrafts();this.fetchReport();this.isPrintingVendor=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingVendor=false;},3000);},500);this.fetchCatalog();}else alert('Gagal: '+d2.message);}}catch(e){}finally{this.isProcessing=false;}},
-            reprintVendorNota(nd){const rc=nd.cart.map(c=>{if(c.name)return c;const p=this.products.find(x=>x.id===c.id||x.id===c[0]);return{name:p?p.name:'Produk',qty:c.qty||c[1],buyPrice:c.buyPrice||c[2],returQty:c.returQty||0};});this.lastVendorTx={invoice:nd.invoice,date:new Date().toLocaleString('id-ID'),supplier:nd.supplier||'Vendor',cart:rc,total:nd.total,discount:nd.discount,grandTotal:nd.grandTotal,method:nd.method,notes:this.cleanNotes(nd.keteranganManual)};this.isPrintingVendor=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingVendor=false;},3000);},500);},
-            async deleteVendorNota(id,nd){const ns=nd.supplier||'Vendor';const s=prompt(`🔒 HAPUS NOTA\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS NOTA ${nd.invoice}?`))return;const r2=await fetch(`${SERVER_URL}/api/expenses/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dihapus. Kurangi stok kue manual!`);this.fetchReport();}}catch(e){}},
-            async deleteStockHistory(id){const s=prompt(`🔒 BATALKAN STOK\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN BATALKAN STOK INI?`))return;const r2=await fetch(`${SERVER_URL}/api/stock-history/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dihapus.`);this.fetchReport();this.fetchCatalog();}}catch(e){}},
-            async fetchReport(){try{let qp=`?period=${this.reportPeriod}`;if(this.reportPeriod==='custom'){if(!this.startDate||!this.endDate)return alert('Isi Tanggal!');qp+=`&start=${this.startDate}&end=${this.endDate}`;}const rg=await fetch(`${SERVER_URL}/api/reports${qp}`);if((await rg.clone().json()).success)this.reportData=(await rg.json()).data;const ri=await fetch(`${SERVER_URL}/api/reports/items${qp}`);if((await ri.clone().json()).success)this.itemReports=(await ri.json()).data;}catch(e){}},
-            reprintTransaction(tx){let rc=[];let ip=tx.invoice&&tx.invoice.startsWith('PKT-');let ipd=tx.invoice&&tx.invoice.startsWith('DP-');if(tx.items){rc=tx.items.split(', ').map(p=>{let n=p.trim();let q=1;const m=p.match(/(.*) \(x(\d+)\)/);if(m){n=m[1].trim();q=parseInt(m[2]);}let fp=this.products.find(x=>x.name===n);return{name:n,qty:q,price:fp?fp.price:0};});}let tq=rc.reduce((s,i)=>s+(i.qty||1),0);this.lastTx={invoice:tx.invoice+" (COPY)",date:new Date(tx.time).toLocaleString('id-ID'),cart:rc,total:tx.total,cash:tx.total,change:0,isPackage:ip,method:tx.paymentMethod||'Tunai',totalQty:tq,isPO:ipd,downPayment:ipd?tx.total:0,remaining:0,shippingCost:0};this.printReceipt();},
-            async batalPiutang(i){const s=prompt(`🔒 BATALKAN PIUTANG\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS PIUTANG INI?`))return;const r2=await fetch(`${SERVER_URL}/api/transactions/${i}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dibatalkan.`);this.fetchPiutang();this.fetchReport();this.fetchCatalog();}}catch(e){}},
-            async terimaPelunasan(i){const m=prompt(`💰 TERIMA PELUNASAN\n1: TUNAI\n2: QRIS`,'1');if(m===null)return;const nm=m==='2'?'QRIS':'Tunai';if(!confirm(`Tandai LUNAS pakai ${nm}?`))return;try{const r=await fetch(`${SERVER_URL}/api/transactions/${i}/pay`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentMethod:nm})});if((await r.json()).success){alert(`✅ BERHASIL!`);if(this.currentTab==='piutang')this.fetchPiutang();if(this.currentTab==='laporan')this.fetchReport();}}catch(e){}},
-            printReceipt(){this.isPrintingReceipt=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingReceipt=false;},3000);},500);},
-            printCatalog(){this.isPrintingCatalog=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingCatalog=false;},3000);},500);},
-            async submitExpense(){if(!this.expDesc||!this.expAmount)return alert('Isi beban');try{const r=await fetch(`${SERVER_URL}/api/expenses`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:this.expCat,description:this.expDesc,amount:this.expAmount,paymentMethod:this.expMethod})});if((await r.json()).success){alert('Tercatat!');this.expDesc='';this.expAmount='';this.fetchReport();}}catch(e){}},
-            async fetchOptions(){try{const r=await fetch(`${SERVER_URL}/api/options`);const d=await r.json();if(d.success){this.options.categories=d.data.categories;this.options.suppliers=d.data.suppliers;this.updatePendingDrafts();}}catch(e){}},
-            async openAddProduct(){const s=prompt("🔒 OTORISASI ADMIN\nPIN:");if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");}catch(e){return;}this.fetchOptions();this.newProduct={name:'',categoryId:'',supplierId:'',buyPrice:'',sellPrice:'',stock:'',image:''};this.showAddProductModal=true;setTimeout(()=>lucide.createIcons(),10);},
-            closeAddProduct(){this.showAddProductModal=false;},
-            async submitProduct(){if(!this.newProduct.name||!this.newProduct.categoryId||!this.newProduct.supplierId||!this.newProduct.sellPrice)return alert('Isi data wajib');this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/products`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(this.newProduct)});if((await r.json()).success){alert('✅ Ditambahkan!');this.closeAddProduct();this.fetchCatalog();}}catch(e){}finally{this.isProcessing=false;}},
-            get totalProductTypes(){return this.products.filter(p=>p.type==='product').length;},get totalPhysicalStock(){return this.products.filter(p=>p.type==='product').reduce((s,p)=>s+(p.stock>0?p.stock:0),0);},get totalStockValue(){return this.products.filter(p=>p.type==='product').reduce((s,p)=>s+(p.price*(p.stock>0?p.stock:0)),0);},
-            async updateStock(p){const s=prompt("🔒 PIN Admin:");if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");const ins=prompt(`📦 KEDATANGAN STOK\nProduk: ${p.name}\n(Angka minus jika rusak)`,"0");if(ins===null||ins.trim()==="")return;const dq=parseInt(ins);if(isNaN(dq)||dq===0)return;const ns=p.stock+dq;if(ns<0)return alert('Stok akhir minus!');try{const r2=await fetch(`${SERVER_URL}/api/products/${p.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns})});if((await r2.json()).success){if(dq>0)localStorage.setItem('last_restock_date_'+p.id,new Date().toISOString());alert(`Berhasil!`);this.fetchCatalog();}}catch(e){}},
-            async deleteTransaction(inv){const s=prompt(`🔒 HAPUS STRUK ${inv}\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS ${inv}?`))return;try{const r2=await fetch(`${SERVER_URL}/api/transactions/${inv}`,{method:'DELETE'});if((await r2.json()).success){alert(`Dihapus & stok kembali.`);this.fetchReport();this.fetchCatalog();}}catch(e){}},
-            async deleteExpense(id){const s=prompt(`🔒 HAPUS PENGELUARAN\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS PENGELUARAN?`))return;try{const r2=await fetch(`${SERVER_URL}/api/expenses/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`Dihapus.`);this.fetchReport();}}catch(e){}}
-            }}
-        </script>
+        <!-- JENDELA TAMBAH PRODUK BARU -->
+        <div x-show="showAddProductModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 no-print" style="display: none;">
+            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closeAddProduct()">
+                <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
+                    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="package-plus"></i> Tambah Produk Baru</h2>
+                    <button @click="closeAddProduct()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[80vh]">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kue / Produk <span class="text-red-500">*</span></label>
+                            <input type="text" x-model="newProduct.name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
+                                <select x-model="newProduct.categoryId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
+                                    <option value="">Pilih...</option>
+                                    <template x-for="cat in options.categories" :key="cat.id">
+                                        <option :value="cat.id" x-text="cat.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Supplier Asal <span class="text-red-500">*</span></label>
+                                <select x-model="newProduct.supplierId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
+                                    <option value="">Pilih...</option>
+                                    <template x-for="sup in options.suppliers" :key="sup.id">
+                                        <option :value="sup.id" x-text="sup.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Modal</label>
+                                <input type="number" x-model="newProduct.buyPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Jual <span class="text-red-500">*</span></label>
+                                <input type="number" x-model="newProduct.sellPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Stok Fisik Awal</label>
+                            <input type="number" x-model="newProduct.stock" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown" placeholder="0">
+                        </div>
+                        <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Link Foto (Opsional)</label>
+                            <input type="text" x-model="newProduct.image" class="w-full p-2 border border-orange-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown text-sm bg-white" placeholder="Paste link dari postimages.org...">
+                            <p class="text-[10px] text-gray-500 mt-1"><i data-lucide="info" class="w-3 h-3 inline"></i> Kosongkan jika ingin menggunakan gambar kartun bawaan.</p>
+                        </div>
+                    </div>
+                    <button @click="submitProduct()" :disabled="isProcessing" class="w-full mt-6 bg-brand-brown text-white py-3 rounded-xl font-bold text-lg hover:bg-orange-800 disabled:opacity-50 flex justify-center items-center gap-2">
+                        <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
+                        <i data-lucide="save" x-show="!isProcessing"></i>
+                        <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PRODUK'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DETAIL TRANSAKSI KASIR (POP-UP) -->
+        <div x-show="showDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 no-print" style="display: none;">
+            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showDetailModal = false">
+                <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
+                    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="receipt"></i> Rincian Struk</h2>
+                    <button @click="showDetailModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[80vh]">
+                    <template x-if="selectedTx">
+                        <div>
+                            <div class="text-center border-b pb-4 mb-4">
+                                <h3 class="font-bold text-lg text-gray-800" x-text="selectedTx.invoice"></h3>
+                                <p class="text-xs text-gray-500 mt-1" x-text="new Date(selectedTx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', year:'numeric', hour: '2-digit', minute:'2-digit'})"></p>
+                                <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-bold" 
+                                      :class="selectedTx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : (selectedTx.paymentMethod === 'Mix' ? 'bg-purple-100 text-purple-700' : (selectedTx.paymentMethod === 'Piutang' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'))" 
+                                      x-text="selectedTx.paymentMethod || 'Tunai'">
+                                </span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <p class="text-[11px] font-bold text-gray-400 uppercase mb-2">Daftar Belanjaan:</p>
+                                <ul class="space-y-2">
+                                    <template x-for="item in selectedTxCart">
+                                        <li class="flex justify-between text-sm text-gray-700 border-b border-dashed border-gray-100 pb-1">
+                                            <div class="flex-1 pr-2">
+                                                <div x-text="item.name"></div>
+                                                <div class="text-[10px] text-gray-400" x-show="item.price > 0" x-text="'@ ' + formatRupiah(item.price)"></div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="font-bold text-brand-brown whitespace-nowrap" x-text="'x ' + item.qty"></div>
+                                                <div class="text-xs font-bold text-gray-800" x-show="item.price > 0" x-text="formatRupiah(item.price * item.qty)"></div>
+                                            </div>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                            
+                            <div class="flex justify-between items-center pt-2 border-t border-gray-200 mt-4 mb-6">
+                                <span class="font-bold text-gray-600">Total Transaksi</span>
+                                <span class="text-2xl font-extrabold text-brand-orange" x-text="formatRupiah(selectedTx.total)"></span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <button @click="deleteTransaction(selectedTx.invoice); showDetailModal = false" class="bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm border border-red-100">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i> Batal / Hapus
+                                </button>
+                                <button @click="reprintTransaction(selectedTx)" class="bg-brand-brown text-white hover:bg-orange-800 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md">
+                                    <i data-lucide="printer" class="w-4 h-4"></i> Cetak Ulang
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- COPY KODE PART 2 DI SINI -->
+<!-- FORMAT STRUK KASIR / PO -->
+    <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
+        <template x-if="lastTx">
+            <div style="padding: 10px;">
+                <div style="text-align: center; margin-bottom: 12px;">
+                    <div style="font-size: 18px; font-weight: bold;">KUKITA</div>
+                    <div style="font-size: 10px; font-weight: normal; line-height: 1.3; margin-top: 2px;">Jl. Amir Hamzah No. 2<br>Karang Sukun, Mataram</div>
+                    <div style="font-size: 12px; font-weight: normal; margin-top: 8px;" x-text="lastTx.isPO ? 'STRUK PESANAN (PO)' : 'Struk Pembelian'"></div>
+                    <div style="font-weight: normal;">------------------------</div>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <div>No : <span x-text="lastTx.invoice.split(' (')[0]"></span></div>
+                    <div>Tgl: <span x-text="lastTx.date"></span></div>
+                    <div>Kasir: <span x-text="activeCashier"></span></div>
+                    <div>------------------------</div>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <template x-if="lastTx.isPackage">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-weight: bold;"><div>Paket Custom</div><div x-text="formatRupiah(lastTx.total - (lastTx.shippingCost||0))"></div></div>
+                            <div style="font-size: 11px; margin-bottom: 3px; border-bottom: 1px dashed #ccc; display: inline-block;">Rincian Isi Paket:</div>
+                            <template x-for="item in lastTx.cart"><div style="font-size: 11px; padding-left: 5px; color: #333;" x-text="'- ' + item.name + ' (x' + item.qty + ')'"></div></template>
+                        </div>
+                    </template>
+                    <template x-if="!lastTx.isPackage">
+                        <div>
+                            <template x-for="item in lastTx.cart">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                    <div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div>
+                                    <div x-text="item.price > 0 ? formatRupiah(item.price * item.qty) : ''"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <div>------------------------</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;"><div>Total Barang:</div><div x-text="lastTx.totalQty + ' Pcs'"></div></div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;" x-show="!lastTx.isPO"><div>Total Harga:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
+                    
+                    <template x-if="lastTx.isPO">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kue Saja:</div><div x-text="formatRupiah(lastTx.total - (lastTx.shippingCost||0))"></div></div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 3px;" x-show="lastTx.shippingCost > 0"><div>Ongkos Kirim:</div><div x-text="formatRupiah(lastTx.shippingCost)"></div></div>
+                            <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;"><div>Total Tagihan:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 3px; color: red;"><div>Titip DP:</div><div x-text="'- ' + formatRupiah(lastTx.downPayment)"></div></div>
+                            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; margin-top: 3px; border-top: 1px dashed black; padding-top: 3px;"><div>SISA BAYAR:</div><div x-text="formatRupiah(lastTx.remaining)"></div></div>
+                        </div>
+                    </template>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Metode:</div><div style="font-weight: bold;" x-text="lastTx.method"></div></div>
+                    <template x-if="lastTx.method === 'Tunai' && !lastTx.isPO">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div>
+                        </div>
+                    </template>
+                    <div>------------------------</div>
+                </div>
+                <div style="text-align: center;"><div>Terima Kasih</div><div>Selamat Menikmati!</div></div>
+            </div>
+        </template>
+    </div>
+
+    <!-- FORMAT STRUK NOTA VENDOR -->
+    <div x-show="isPrintingVendor" id="print-area-vendor" style="display: none;">
+        <template x-if="lastVendorTx">
+            <div style="padding: 10px;">
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <div style="font-size: 14px; font-weight: bold;">BUKTI TERIMA BARANG</div>
+                    <div style="font-size: 10px;">TOKO KUKITA</div>
+                    <div>------------------------</div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
+                    <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
+                    <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                    <tr style="border-bottom: 1px dashed black; border-top: 1px dashed black;">
+                        <th style="text-align: left; padding: 2px 0; width: 15%;">Bnyk</th>
+                        <th style="text-align: left; width: 50%;">Nama Barang</th>
+                        <th style="text-align: right; width: 35%;">Jumlah</th>
+                    </tr>
+                    <template x-for="item in lastVendorTx.cart">
+                        <tr>
+                            <td style="vertical-align: top; padding-top: 3px;" x-text="item.qty"></td>
+                            <td style="vertical-align: top; padding-top: 3px;"><div x-text="item.name"></div><div style="font-size: 9px;" x-text="'@ ' + formatRupiah(item.buyPrice)"></div></td>
+                            <td style="text-align: right; vertical-align: top; padding-top: 3px;" x-text="formatRupiah(item.buyPrice * item.qty)"></td>
+                        </tr>
+                    </template>
+                    <template x-if="lastVendorTx.cart.some(i => i.returQty > 0)">
+                        <tr><td colspan="3" style="padding-top: 8px; font-weight: bold; font-size: 10px; border-bottom: 1px dashed black;">Dikurangi (Retur):</td></tr>
+                    </template>
+                    <template x-for="item in lastVendorTx.cart.filter(i => i.returQty > 0)">
+                        <tr>
+                            <td style="vertical-align: top; padding-top: 3px; color: red;" x-text="item.returQty"></td>
+                            <td style="vertical-align: top; padding-top: 3px; color: red;" x-text="item.name"></td>
+                            <td style="text-align: right; vertical-align: top; padding-top: 3px; color: red;" x-text="'- ' + formatRupiah(item.buyPrice * item.returQty)"></td>
+                        </tr>
+                    </template>
+                </table>
+                <div style="border-top: 1px dashed black; padding-top: 5px; margin-bottom: 5px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>Total Awal:</div>
+                        <div x-text="formatRupiah(lastVendorTx.cart.reduce((s,i)=>s+(i.buyPrice*i.qty),0))"></div>
+                    </div>
+                    <template x-if="lastVendorTx.cart.some(i => i.returQty > 0)">
+                        <div style="display: flex; justify-content: space-between; color: red;">
+                            <div>Total Retur:</div>
+                            <div x-text="'- ' + formatRupiah(lastVendorTx.cart.reduce((s,i)=>s+(i.buyPrice*(i.returQty||0)),0))"></div>
+                        </div>
+                    </template>
+                    <div x-show="lastVendorTx.discount > 0" style="display: flex; justify-content: space-between; color: red;">
+                        <div>Potongan Lain:</div>
+                        <div x-text="'- ' + formatRupiah(lastVendorTx.discount)"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 3px;">
+                        <div>Jumlah Bayar Rp:</div>
+                        <div x-text="formatRupiah(lastVendorTx.grandTotal)"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                        <div>Status:</div>
+                        <div style="font-weight: bold;" x-text="lastVendorTx.method === 'Titip Jual' ? 'Titip Jual (Belum Bayar)' : 'Lunas ' + lastVendorTx.method"></div>
+                    </div>
+                </div>
+                <div x-show="lastVendorTx.notes" style="margin-bottom: 10px; font-size: 10px; font-style: italic;" x-text="'Ket: ' + lastVendorTx.notes"></div>
+                <div style="display: flex; justify-content: space-between; margin-top: 20px; text-align: center;">
+                    <div><div style="margin-bottom: 25px;">Tanda Terima</div><div>(................)</div></div>
+                    <div><div style="margin-bottom: 25px;">Hormat Kami</div><div x-text="activeCashier"></div></div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- SCRIPT ALPINE JS -->
+    <script>
+        const SERVER_URL = 'https://pos-kukita.vercel.app';
+
+        function posApp() {
+            return {
+                activeCashier: null, loginPin: '', cashiersList: [], newCashierName: '', newCashierPin: '',
+                currentTab: 'pos', categories: ['Semua'], selectedCategory: 'Semua', searchQuery: '', masterSearchQuery: '', cart: [], products: [], 
+                showMobileCart: false, showPaymentModal: false, paymentStep: 'input', paymentMethod: 'Tunai', 
+                cashReceived: '', mixCash: '', isProcessing: false, isLoading: true, lastTx: null, isCustomPackage: false, 
+                currentTime: new Date().toLocaleString('id-ID'),
+                
+                cleanNotes(s) { return s ? s.replace(/\[RTR:.*?\]/g, '').trim() : ''; },
+                
+                expCat: 'Pembayaran Vendor (Kue / Stok)', expDesc: '', expAmount: '', expMethod: 'Tunai',
+                reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, piutang: 0, grossProfit: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, netProfit: 0, salesHistory: [], stockHistory: [], vendorHistory: [] }, 
+                customerName: '', itemReports: [], reportPeriod: 'today', startDate: '', endDate: '', reportSubTab: 'ringkasan',
+                oldPin: '', newPin: '', isPrintingReceipt: false, isPrintingCatalog: false,
+                showAddProductModal: false, options: { categories: [], suppliers: [] }, 
+                newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' },
+                
+                showDetailModal: false, selectedTx: null, selectedTxCart: [],
+                saldoAwalLaci: localStorage.getItem('saldo_laci') || 0,
+                packageTotal: 0, productSortBy: 'name_asc', poList: [], piutangList: [], showPoModal: false,
+                poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
+
+                restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
+                restockStockAddedPagi: false, pendingDrafts: [],
+
+                async init() {
+                    setTimeout(() => { lucide.createIcons(); }, 100);
+                    setInterval(() => { this.currentTime = new Date().toLocaleString('id-ID'); }, 1000);
+                    this.$watch('currentTab', () => { setTimeout(() => { lucide.createIcons(); }, 50); });
+                    this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
+                    await this.fetchCashiers(); 
+                    await this.fetchCatalog();
+                },
+
+                hasDraft(supId) { return localStorage.getItem('draft_restock_' + supId) !== null; },
+                
+                updatePendingDrafts() {
+                    if (!this.options || !this.options.suppliers) return;
+                    this.pendingDrafts = this.options.suppliers.filter(sup => {
+                        return localStorage.getItem('draft_restock_' + sup.id) !== null;
+                    });
+                },
+
+                viewTransactionDetail(tx) {
+                    this.selectedTx = tx;
+                    let reconstructedCart = [];
+                    if (tx.items) {
+                        const parts = tx.items.split(', ');
+                        reconstructedCart = parts.map(p => {
+                            let name = p.trim();
+                            let qty = 1;
+                            const match = p.match(/(.*) \(x(\d+)\)/);
+                            if (match) { name = match[1].trim(); qty = parseInt(match[2]); }
+                            let foundProduct = this.products.find(prod => prod.name === name);
+                            let price = foundProduct ? foundProduct.price : 0;
+                            return { name: name, qty: qty, price: price };
+                        });
+                    }
+                    this.selectedTxCart = reconstructedCart;
+                    this.showDetailModal = true;
+                    setTimeout(() => { lucide.createIcons(); }, 10);
+                },
+
+                isStockOld(product) {
+                    if(!product.lastRestock || product.stock <= 0) return false;
+                    const hours = (new Date() - new Date(product.lastRestock)) / (1000 * 60 * 60);
+                    const cat = (product.category || '').toLowerCase();
+                    let limit = 24; 
+                    if (cat.includes('minum') || cat.includes('cair')) limit = 24 * 30; 
+                    else if (cat.includes('kering') || cat.includes('snack') || cat.includes('keripik')) limit = 24 * 14; 
+                    return hours > limit;
+                },
+                
+                formatDateShort(d) {
+                    if (!d) return '-';
+                    const date = new Date(d);
+                    return date.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'}) + ' ' + date.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                },
+                
+                resetStockAge(id, name) {
+                    if(!confirm(`Perbarui umur kue ${name}?\n\nTanggal masuk kue ini akan di-reset menjadi hari ini sehingga peringatan kadaluarsa hilang.`)) return;
+                    localStorage.setItem('last_restock_date_' + id, new Date().toISOString());
+                    this.fetchCatalog();
+                },
+
+                restorePrices() {
+                    if(this.isCustomPackage) {
+                        this.isCustomPackage = false;
+                        this.packageTotal = 0;
+                        this.customerName = '';
+                        this.cart.forEach(item => {
+                            const prod = this.products.find(p => p.id === item.id && p.type === item.type);
+                            if(prod) item.price = prod.price;
+                        });
+                    }
+                },
+
+                async editSaldoAwal() {
+                    const sandi = prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin untuk mengubah modal laci:"); 
+                    if (!sandi) return;
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
+                        const inputStr = prompt("💰 MASUKKAN SALDO AWAL LACI\nKetik jumlah uang kas di laci pagi ini:", this.saldoAwalLaci);
+                        if (inputStr === null || inputStr.trim() === "") return;
+                        const nominal = parseInt(inputStr);
+                        if (isNaN(nominal) || nominal < 0) return alert('Nominal tidak valid!');
+                        this.saldoAwalLaci = nominal;
+                        localStorage.setItem('saldo_laci', this.saldoAwalLaci);
+                        alert('✅ Saldo Awal berhasil disimpan!');
+                    } catch (e) { alert('Gagal memverifikasi PIN.'); }
+                },
+
+                async fetchCashiers() { 
+                    try { 
+                        const res = await fetch(`${SERVER_URL}/api/cashiers`); 
+                        const data = await res.json(); 
+                        if(data.success) this.cashiersList = data.data; 
+                    } catch(e){} 
+                },
+                
+                async login() {
+                    if(!this.loginPin) return;
+                    if (this.loginPin === '030388' || this.loginPin === '100515' || this.loginPin === '818283') { 
+                        this.activeCashier = 'Admin Toko'; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); 
+                        await this.fetchCashiers(); await this.fetchCatalog(); return; 
+                    }
+                    const found = this.cashiersList.find(c => c.pin === this.loginPin);
+                    if (found) { 
+                        this.activeCashier = found.name; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; 
+                    }
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: this.loginPin }) });
+                        if ((await resPin.json()).success) { 
+                            this.activeCashier = 'Admin Toko'; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; 
+                        }
+                    } catch(e){}
+                    alert('❌ Akses Ditolak!'); this.loginPin = '';
+                },
+                
+                logout() { this.activeCashier = null; this.currentTab = 'pos'; },
+                
+                async fetchCatalog() {
+                    this.isLoading = true;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/catalog`); const result = await res.json();
+                        if(result.success) {
+                            const prodList = result.data.products.map(p => {
+                                const lastRestock = localStorage.getItem('last_restock_date_' + p.id);
+                                return { 
+                                    id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, supplierId: p.supplier.id, 
+                                    price: p.sellPrice, buyPrice: p.buyPrice, stock: p.stock, image: p.image || null, 
+                                    icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product',
+                                    lastRestock: lastRestock
+                                };
+                            });
+                            const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', supplierId: null, price: p.sellPrice, stock: 999, image: p.image || null, icon: '🎁', type: 'package' }));
+                            this.products = [...prodList, ...pkgList]; 
+                            this.categories = ['Semua', ...Array.from(new Set(this.products.map(p => p.category)))];
+                        }
+                    } catch (e) {} finally { this.isLoading = false; setTimeout(() => { lucide.createIcons(); }, 10); }
+                },
+
+                get filteredProducts() { 
+                    return this.products.filter(p => { 
+                        const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; 
+                        const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); 
+                        return matchCat && matchSearch; 
+                    }); 
+                },
+                
+                get filteredMasterProducts() { 
+                    let filtered = this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); 
+                    if (this.productSortBy === 'stock_desc') { 
+                        filtered.sort((a, b) => (b.stock || 0) - (a.stock || 0)); 
+                    } else if (this.productSortBy === 'stock_asc') { 
+                        filtered.sort((a, b) => (a.stock || 0) - (b.stock || 0)); 
+                    } else { 
+                        filtered.sort((a, b) => a.name.localeCompare(b.name)); 
+                    }
+                    return filtered;
+                },
+                
+                addToCart(product) { 
+                    this.restorePrices(); 
+                    const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; 
+                    const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); 
+                    if (existing) { existing.qty++; } else { this.cart.unshift(itemToAdd); } 
+                },
+                
+                increaseQty(index) { this.restorePrices(); this.cart[index].qty++; },
+                decreaseQty(index) { this.restorePrices(); if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
+                removeFromCart(index) { this.restorePrices(); this.cart.splice(index, 1); },
+                validateQty(index) { this.restorePrices(); let val = parseInt(this.cart[index].qty); if (isNaN(val) || val < 1) val = 1; this.cart[index].qty = val; },
+
+                get total() { return this.isCustomPackage ? this.packageTotal : this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
+                get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
+                get change() { return parseFloat(this.cashReceived || 0) - this.total; },
+                formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); },
+                
+                setCustomPrice() { 
+                    if (this.cart.length === 0) return alert('Keranjang kosong!'); 
+                    const qtyStr = prompt('📦 SET HARGA PAKET\nJumlah Kotak?', '1'); if (!qtyStr) return; const qtyBox = parseInt(qtyStr); if (isNaN(qtyBox) || qtyBox <= 0) return alert('Tidak valid!');
+                    const priceStr = prompt(`Harga Per Kotak?`, '0'); if (!priceStr) return; const pricePerBox = parseFloat(priceStr); if (isNaN(pricePerBox) || pricePerBox < 0) return alert('Tidak valid!');
+                    const newTotal = qtyBox * pricePerBox;
+                    const inputNama = prompt(`Nama Pemesan:`, ''); let namaPemesan = inputNama ? inputNama.trim() + " - " : "Pesanan Umum - ";
+                    this.customerName = `${namaPemesan}${qtyBox} Kotak`; 
+                    this.isCustomPackage = true; 
+                    this.packageTotal = newTotal; 
+                    
+                    let originalTotal = 0; this.cart.forEach(item => { const prod = this.products.find(p => p.id === item.id && p.type === item.type); originalTotal += ((prod ? prod.price : item.price) * item.qty); });
+                    if (originalTotal > 0) {
+                        const ratio = newTotal / originalTotal; let runningTotal = 0; 
+                        for (let i = 0; i < this.cart.length; i++) { 
+                            const prod = this.products.find(p => p.id === this.cart[i].id && p.type === this.cart[i].type); const normalPrice = prod ? prod.price : this.cart[i].price;
+                            if (i === this.cart.length - 1) { this.cart[i].price = Math.round((newTotal - runningTotal) / this.cart[i].qty); } 
+                            else { const newPrice = Math.round(normalPrice * ratio); this.cart[i].price = newPrice; runningTotal += (newPrice * this.cart[i].qty); } 
+                        } 
+                    }
+                    alert(`✅ SET BERHASIL! Silakan klik BAYAR ATAU SIMPAN PO.`);
+                },
+                
+                openPayment() { 
+                    let stokKurang = false; 
+                    let namaBarangKurang = '';
+                    
+                    for (let item of this.cart) {
+                        if (item.type === 'product') {
+                            const prod = this.products.find(p => p.id === item.id && p.type === item.type);
+                            if (prod && item.qty > Number(prod.stock || 0)) { 
+                                stokKurang = true; 
+                                namaBarangKurang = item.name; 
+                                break; 
+                            }
+                        }
+                    }
+                    
+                    if (stokKurang) { 
+                        return alert(`❌ STOK TIDAK CUKUP!\n\nSisa stok fisik '${namaBarangKurang}' di etalase tidak mencukupi untuk dijual hari ini.\n\n💡 Jika ini pesanan untuk besok/lusa, silakan gunakan tombol "Simpan sbg PO".`); 
+                    }
+                    
+                    this.cashReceived = ''; 
+                    this.mixCash = ''; 
+                    this.paymentMethod = 'Tunai'; 
+                    this.paymentStep = 'input'; 
+                    this.showPaymentModal = true; 
+                    
+                    setTimeout(() => { lucide.createIcons(); }, 10); 
+                },
+                
+                closePayment() { 
+                    if (this.paymentStep === 'success') { 
+                        this.resetCart(); 
+                    } else { 
+                        this.showPaymentModal = false; 
+                    } 
+                },
+                
+                async processTransaction() {
+                    let totalBelanja = this.total; let qtyBelanja = this.totalQty; let uangMasuk = 0;
+                    if (this.paymentMethod === 'Tunai') { uangMasuk = parseFloat(this.cashReceived) || totalBelanja; } 
+                    else if (this.paymentMethod === 'Mix') { uangMasuk = parseFloat(this.mixCash) || 0; if (uangMasuk <= 0 || uangMasuk >= totalBelanja) return alert('❌ Nominal Tunai Mix tidak valid!'); } 
+                    else if (this.paymentMethod === 'Piutang') { if (!this.customerName) return alert('❌ Nama Pemesan WAJIB diisi untuk kasbon!'); uangMasuk = 0; }
+
+                    this.isProcessing = true;
+                    let uangKembali = this.paymentMethod === 'Tunai' ? (uangMasuk - totalBelanja) : 0;
+                    let keranjangFix = JSON.parse(JSON.stringify(this.cart));
+                    let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
+                    let finalName = this.customerName ? `${this.customerName} [Kasir: ${this.activeCashier}]` : `[Kasir: ${this.activeCashier}]`;
+
+                    const payload = { cart: mappedCart, paymentMethod: this.paymentMethod, cashReceived: uangMasuk, totalAmount: totalBelanja, isPackage: this.isCustomPackage, customerName: finalName };
+                    
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const result = await res.json();
+                        if (result.success) { 
+                            this.lastTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), cart: keranjangFix, total: totalBelanja, cash: uangMasuk, change: uangKembali, isPackage: this.isCustomPackage, method: this.paymentMethod, totalQty: qtyBelanja }; 
+                            this.paymentStep = 'success'; this.fetchCatalog();
+                        } else alert('Gagal.');
+                    } catch (e) { alert('Error.'); } finally { this.isProcessing = false; }
+                },
+
+                openPoForm() { this.poForm = { name: this.customerName || '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' }; this.showPoModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
+                
+                async fetchOrders() { try { const res = await fetch(`${SERVER_URL}/api/orders`); const data = await res.json(); if (data.success) { this.poList = data.data; setTimeout(() => { lucide.createIcons(); }, 10); } } catch (error) {} },
+                
+                async fetchPiutang() { try { const res = await fetch(`${SERVER_URL}/api/piutang`); const result = await res.json(); if(result.success) { this.piutangList = result.data; setTimeout(() => { lucide.createIcons(); }, 10); } } catch(e) {} },
+                
+                isPast(dateString) { return new Date(dateString) < new Date(); },
+
+                async submitPo() {
+                    if (!this.poForm.name || !this.poForm.pickupDate) return alert('Nama dan Waktu Pengambilan Wajib Diisi!');
+                    this.isProcessing = true;
+                    let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
+                    const payload = { customerName: this.poForm.name, customerPhone: this.poForm.phone, pickupDate: this.poForm.pickupDate, shippingCost: this.poForm.shippingCost, downPayment: this.poForm.dp, paymentMethod: this.poForm.paymentMethod, notes: this.poForm.notes, cashierName: this.activeCashier, cart: mappedCart, totalAmount: this.total };
+
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        const result = await res.json();
+                        if (result.success) { alert('✅ BUKU PESANAN TERSIMPAN!\nStok barang belum dipotong. Anda bisa mengeceknya di menu Buku Pesanan.'); this.showPoModal = false; this.resetCart(); this.fetchOrders(); } else { alert('Gagal menyimpan PO.'); }
+                    } catch (e) {} finally { this.isProcessing = false; }
+                },
+
+                async completeOrder(order) {
+                    const remaining = (order.totalAmount + order.shippingCost) - order.downPayment;
+                    let method = order.paymentMethod || 'Tunai';
+
+                    if (remaining > 0) {
+                        const inputMethod = prompt(`💰 PELUNASAN KUE\n\nPesanan ini memiliki sisa tagihan: Rp ${new Intl.NumberFormat('id-ID').format(remaining)}\n\nSisa tagihan ini diselesaikan menggunakan metode apa?\nKetik "1" untuk TUNAI\nKetik "2" untuk QRIS / Transfer\nKetik "3" untuk KASBON / PIUTANG INSTANSI`, '1');
+                        if (inputMethod === null) return;
+                        if (inputMethod === '3') { method = 'Piutang'; } else { method = inputMethod === '2' ? 'QRIS' : 'Tunai'; }
+                    }
+
+                    if (!confirm(`⚠️ Selesaikan pesanan ${order.customerName}?\n\n- Stok fisik kue akan otomatis dipotong hari ini.\n- Jika ada sisa tagihan/piutang, akan masuk ke laporan hari ini.`)) return;
+
+                    this.isProcessing = true;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/orders/${order.id}/complete`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentMethod: method }) });
+                        const result = await res.json();
+                        if (result.success) {
+                            this.lastTx = { invoice: `LUNAS-${order.invoice} (${order.customerName})`, date: new Date().toLocaleString('id-ID'), cart: order.items.map(i => ({ name: i.product ? i.product.name : i.package.name, qty: i.qty, price: i.price })), total: remaining, cash: method === 'Tunai' ? remaining : 0, change: 0, isPackage: false, method: method, totalQty: order.items.reduce((sum, i) => sum + i.qty, 0) };
+                            this.paymentStep = 'success'; this.showPaymentModal = true; this.fetchOrders(); this.fetchCatalog();
+                        } else alert('Gagal memproses pesanan.');
+                    } catch (e) {} finally { this.isProcessing = false; }
+                },
+
+                async deleteOrder(id, name) {
+                    const sandi = prompt(`🔒 HAPUS PESANAN\n\nMasukkan PIN Admin Anda untuk menghapus pesanan atas nama ${name}:`); if (!sandi) return;
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                    if (!(await resPin.json()).success) return alert("❌ Akses ditolak! Password salah.");
+                    if (!confirm('Yakin ingin membatalkan dan menghapus pesanan ini dari buku?')) return;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/orders/${id}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { alert('Pesanan dibatalkan.'); this.fetchOrders(); }
+                    } catch (e) {}
+                },
+
+                resetCart() { this.cart = []; this.isCustomPackage = false; this.packageTotal = 0; this.customerName = ''; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; },
+
+                printPO(order) {
+                    this.lastTx = {
+                        invoice: order.invoice,
+                        date: new Date(order.pickupDate).toLocaleString('id-ID'),
+                        cart: order.items.map(i => ({ name: i.product ? i.product.name : i.package.name, qty: i.qty, price: i.price })),
+                        total: order.totalAmount + order.shippingCost,
+                        cash: order.downPayment, 
+                        change: 0,
+                        isPackage: false,
+                        method: order.paymentMethod || 'Tunai',
+                        totalQty: order.items.reduce((sum, i) => sum + i.qty, 0),
+                        isPO: true, 
+                        shippingCost: order.shippingCost,
+                        downPayment: order.downPayment,
+                        remaining: (order.totalAmount + order.shippingCost) - order.downPayment
+                    };
+                    this.printReceipt();
+                },
+
+                loadDraftSupplier() {
+                    if(this.restockSupplierId) {
+                        const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
+                        this.restockSupplierName = selectedSup ? selectedSup.name : '';
+                    } else {
+                        this.restockSupplierName = '';
+                    }
+
+                    this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
+                    this.restockStockAddedPagi = false;
+
+                    if(!this.restockSupplierId) return;
+                    const savedDraft = localStorage.getItem(`draft_restock_${this.restockSupplierId}`);
+                    if(savedDraft) {
+                        try {
+                            const parsed = JSON.parse(savedDraft);
+                            this.restockCart = parsed.cart || [];
+                            this.restockDiscount = parsed.discount || '';
+                            this.restockMethod = parsed.method || 'Tunai';
+                            this.restockNotes = parsed.notes || '';
+                            if (this.restockCart.some(i => i.alreadyInStock)) {
+                                this.restockStockAddedPagi = true;
+                            }
+                        } catch(e) {}
+                    }
+                },
+                
+                saveDraftLocally() {
+                    if(!this.restockSupplierId) return;
+                    if(this.restockCart.length === 0 && !this.restockDiscount && !this.restockNotes) {
+                        localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
+                    } else {
+                        const draftData = { cart: this.restockCart, discount: this.restockDiscount, method: this.restockMethod, notes: this.restockNotes };
+                        localStorage.setItem(`draft_restock_${this.restockSupplierId}`, JSON.stringify(draftData));
+                    }
+                    this.updatePendingDrafts();
+                },
+
+                addToRestockCart(product) { 
+                    if(!product.buyPrice || product.buyPrice <= 0) return alert('❌ Harga Modal produk ini masih 0 atau belum diisi. Silakan edit terlebih dahulu di menu Master Produk!');
+                    const existing = this.restockCart.find(item => item.id === product.id && !item.alreadyInStock); 
+                    if (existing) { existing.qty++; } else { this.restockCart.unshift({ ...product, qty: 1, returQty: 0, alreadyInStock: false }); } 
+                    this.saveDraftLocally();
+                },
+                
+                updateRestockQty(index, diff) {
+                    if(this.restockCart[index].alreadyInStock) return alert('Barang ini sudah masuk ke stok fisik pagi. Jumlahnya tidak bisa dikurangi dari draft.');
+                    if(diff < 0 && this.restockCart[index].qty <= 1) return;
+                    this.restockCart[index].qty += diff;
+                    this.saveDraftLocally();
+                },
+                
+                setRestockQty(index, val) {
+                    if(this.restockCart[index].alreadyInStock) return alert('Barang ini sudah masuk ke stok fisik pagi.');
+                    let num = parseInt(val); if(isNaN(num) || num < 1) num = 1;
+                    this.restockCart[index].qty = num;
+                    this.saveDraftLocally();
+                },
+
+                updateReturQty(index, diff) {
+                    let item = this.restockCart[index];
+                    if(!item.returQty) item.returQty = 0;
+                    let newVal = item.returQty + diff;
+                    if(newVal < 0) newVal = 0;
+                    if(newVal > item.qty) return alert('Jumlah retur tidak boleh lebih besar dari jumlah barang masuk!');
+                    item.returQty = newVal;
+                    this.saveDraftLocally();
+                },
+
+                validateReturQty(index) {
+                    let item = this.restockCart[index];
+                    let val = parseInt(item.returQty);
+                    if(isNaN(val) || val < 0) val = 0;
+                    if(val > item.qty) { alert('Jumlah retur tidak boleh lebih besar dari jumlah barang masuk!'); val = item.qty; }
+                    item.returQty = val;
+                    this.saveDraftLocally();
+                },
+
+                async removeRestockItem(index) {
+                    if(this.isProcessing) return;
+                    let item = this.restockCart[index];
+                    
+                    if(item.alreadyInStock) {
+                        const sandi = prompt(`🔒 HAPUS DARI DRAFT\n\nBarang ini sudah masuk etalase pagi tadi. Masukkan PIN Admin untuk menghapusnya dari nota sekaligus menarik kembali stok ${item.name} (${item.qty} pcs):`);
+                        if (!sandi) return;
+                        
+                        this.isProcessing = true;
+                        try {
+                            const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                            if (!(await resPin.json()).success) {
+                                this.isProcessing = false;
+                                return alert("❌ Akses ditolak! PIN Salah.");
+                            }
+                        } catch(e) { this.isProcessing = false; return alert("Gagal verifikasi PIN."); }
+
+                        const prod = this.products.find(p => p.id === item.id);
+                        if (prod) {
+                            const newStock = prod.stock - item.qty;
+                            try {
+                                await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, {
+                                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: newStock >= 0 ? newStock : 0 })
+                                });
+                            } catch(e) {}
+                        }
+                        alert(`✅ Barang ${item.name} batal diterima. Stok etalase telah ditarik kembali.`);
+                        this.isProcessing = false;
+                    }
+                    
+                    this.restockCart.splice(index, 1);
+                    this.saveDraftLocally();
+                    this.fetchCatalog(); 
+                },
+
+                get restockTotal() { 
+                    return this.restockCart.reduce((sum, i) => sum + ((i.buyPrice || 0) * (i.qty - (i.returQty || 0))), 0); 
+                },
+                get restockGrandTotal() { return this.restockTotal - (parseInt(this.restockDiscount) || 0); },
+                
+                async submitRestock(isPrintingMalam) {
+                    if(this.restockCart.length === 0) return alert('Keranjang penerimaan kosong!');
+                    if(!this.restockSupplierId) return alert('Silakan pilih Supplier/Vendor terlebih dahulu!');
+                    
+                    const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
+                    this.restockSupplierName = selectedSup ? selectedSup.name : 'Vendor Tidak Diketahui';
+
+                    const pesan = isPrintingMalam ? 
+                        "🔒 TUTUP NOTA MALAM\n\nMasukkan PIN Admin untuk menyetujui Pembayaran ke Vendor & Cetak Nota:" : 
+                        "🔒 SIMPAN DRAFT PAGI/SIANG\n\nMasukkan PIN Admin untuk menyetujui Penambahan Stok tanpa mengeluarkan uang:";
+                    
+                    const sandi = prompt(pesan); 
+                    if (!sandi) return;
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ PIN Salah.");
+                    } catch(e) { return alert("Gagal verifikasi PIN."); }
+
+                    this.isProcessing = true;
+                    try {
+                        const hasNewItems = this.restockCart.some(item => !item.alreadyInStock);
+                        
+                        // JIKA KLIK DRAFT PAGI
+                        if (!isPrintingMalam) {
+                            if (!hasNewItems) {
+                                this.isProcessing = false;
+                                return alert('Tidak ada barang baru untuk ditambahkan ke stok pagi. Silakan klik Tutup Nota Malam jika ingin membayar.');
+                            }
+                            
+                            for (let item of this.restockCart) {
+                                if (!item.alreadyInStock) {
+                                    const prod = this.products.find(p => p.id === item.id);
+                                    if (prod) {
+                                        const newStock = prod.stock + item.qty;
+                                        await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
+                                            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) 
+                                        });
+                                        item.alreadyInStock = true;
+                                        localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
+                                    }
+                                }
+                            }
+                            this.restockStockAddedPagi = true;
+                            this.saveDraftLocally();
+                            alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase aplikasi. Tersimpan di Draft untuk dibayar nanti malam.');
+                            
+                            this.restockSupplierId = '';
+                            this.restockSupplierName = '';
+                            this.restockCart = [];
+                            this.restockDiscount = '';
+                            this.restockNotes = '';
+                            this.restockStockAddedPagi = false;
+                            
+                            this.fetchCatalog();
+                            this.isProcessing = false;
+                            return;
+                        }
+
+                        // JIKA KLIK TUTUP NOTA MALAM
+                        if (isPrintingMalam) {
+                            const payloadItems = this.restockCart.map(item => ({
+                                ...item,
+                                qty: item.qty - (item.returQty || 0)
+                            })).filter(item => item.qty > 0);
+
+                            // MENGOBATI PENYAKIT STOK GANDA
+                            // 1. Amankan / Rekam dulu stok fisik aslinya SEBELUM server ngapa-ngapain
+                            let stokAsli = {};
+                            for (let item of this.restockCart) {
+                                if (this.restockStockAddedPagi || item.alreadyInStock) {
+                                    const prod = this.products.find(p => p.id === item.id);
+                                    if (prod) {
+                                        stokAsli[item.id] = prod.stock; 
+                                    }
+                                }
+                            }
+
+                            const payload = { supplierId: this.restockSupplierId, supplierName: this.restockSupplierName, items: payloadItems, discount: this.restockDiscount, paymentMethod: this.restockMethod, notes: this.cleanNotes(this.restockNotes), printNow: true };
+                            const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                            const result = await res.json();
+                            
+                            if(result.success) {
+                                // 2. Kembalikan stoknya ke posisi aman tadi (Timpa balik perbuatan server)
+                                for (let idKue in stokAsli) {
+                                    try {
+                                        await fetch(`${SERVER_URL}/api/products/${idKue}/stock-v2`, { 
+                                            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: stokAsli[idKue] }) 
+                                        });
+                                    } catch(e) {}
+                                }
+                                
+                                for (let item of this.restockCart) {
+                                    if (!item.alreadyInStock) {
+                                        localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
+                                    }
+                                }
+
+                                const savedCartForReceipt = JSON.parse(JSON.stringify(this.restockCart));
+                                this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: savedCartForReceipt, total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.cleanNotes(this.restockNotes) };
+                                alert(`✅ NOTA LUNAS DITUTUP!\nPengeluaran kas sudah tercatat otomatis.`);
+                                
+                                localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
+                                
+                                this.restockSupplierId = '';
+                                this.restockSupplierName = '';
+                                this.restockCart = [];
+                                this.restockDiscount = '';
+                                this.restockNotes = '';
+                                this.restockStockAddedPagi = false;
+                                this.updatePendingDrafts(); 
+                                
+                                this.fetchReport();
+                                this.isPrintingVendor = true;
+                                setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
+                                this.fetchCatalog(); 
+                            } else {
+                                alert('Gagal menyimpan!\nAlasan Server: ' + (result.message || 'Error Database Tidak Dikenal'));
+                            }
+                        }
+                    } catch(e) { alert('Error koneksi.'); }
+                    finally { this.isProcessing = false; }
+                },
+
+                reprintVendorNota(notaDetail) {
+                    const reconstructedCart = notaDetail.cart.map(c => {
+                        if(c.name) return c; 
+                        const prod = this.products.find(p => p.id === c.id || p.id === c[0]); 
+                        return { name: prod ? prod.name : 'Produk', qty: c.qty || c[1], buyPrice: c.buyPrice || c[2], returQty: c.returQty || 0 };
+                    });
+                    
+                    this.lastVendorTx = {
+                        invoice: notaDetail.invoice,
+                        date: new Date().toLocaleString('id-ID'), 
+                        supplier: notaDetail.supplier || 'Data Lama (Tanpa Nama)',
+                        cart: reconstructedCart,
+                        total: notaDetail.total,
+                        discount: notaDetail.discount,
+                        grandTotal: notaDetail.grandTotal,
+                        method: notaDetail.method,
+                        notes: this.cleanNotes(notaDetail.keteranganManual)
+                    };
+                    this.isPrintingVendor = true;
+                    setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
+                },
+
+                async deleteVendorNota(id, detailNota) {
+                    const namaSup = detailNota.supplier || 'Vendor';
+                    const sandi = prompt(`🔒 HAPUS NOTA VENDOR\nMasukkan PIN Admin untuk menghapus nota dari ${namaSup} dan mengembalikan stok:`); 
+                    if (!sandi) return;
+                    
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
+                        
+                        if (!confirm(`⚠️ YAKIN HAPUS NOTA ${detailNota.invoice}?\nIni akan MENGHAPUS pengeluaran kas. Stok kue mohon dikurangi manual di Master Produk.`)) return;
+
+                        const res = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { 
+                            alert(`✅ Nota dan Pengeluaran Kas berhasil dihapus.\n\n⚠️ PENTING: Sistem tidak mengurangi stok kue secara otomatis. Silakan kurangi stok kue secara manual di menu Master Produk jika perlu.`); 
+                            this.fetchReport(); 
+                        } 
+                    } catch (e) {
+                        alert('Gagal menghapus nota.');
+                    }
+                },
+
+                async deleteStockHistory(id) {
+                    const sandi = prompt(`🔒 BATALKAN STOK MASUK\nMasukkan PIN Admin untuk menghapus riwayat dan mengurangi stok kue di etalase:`); 
+                    if (!sandi) return;
+                    
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
+                        
+                        if (!confirm(`⚠️ YAKIN MEMBATALKAN STOK INI?\nStok fisik produk ini di etalase akan otomatis dikurangi/ditarik kembali.`)) return;
+
+                        const res = await fetch(`${SERVER_URL}/api/stock-history/${id}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { 
+                            alert(`✅ Berhasil! Riwayat penerimaan barang dihapus dan stok kue telah dikurangi.`); 
+                            this.fetchReport(); 
+                            this.fetchCatalog(); 
+                        } else {
+                            alert('Gagal menghapus riwayat stok.');
+                        }
+                    } catch (e) {
+                        alert('Error saat menghapus riwayat stok.');
+                    }
+                },
+
+                async fetchReport() {
+                    try {
+                        let queryParam = `?period=${this.reportPeriod}`;
+                        if (this.reportPeriod === 'custom') { if (!this.startDate || !this.endDate) return alert('Isi Tanggal!'); queryParam += `&start=${this.startDate}&end=${this.endDate}`; }
+                        const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}`); if((await resGlobal.clone().json()).success) this.reportData = (await resGlobal.json()).data;
+                        const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`); if((await resItems.clone().json()).success) this.itemReports = (await resItems.json()).data;
+                    } catch (error) {}
+                },
+
+                reprintTransaction(tx) {
+                    let reconstructedCart = [];
+                    let isPkg = tx.invoice && tx.invoice.startsWith('PKT-');
+                    let isPoDP = tx.invoice && tx.invoice.startsWith('DP-');
+                    
+                    if (tx.items) {
+                        const parts = tx.items.split(', ');
+                        reconstructedCart = parts.map(p => {
+                            let name = p.trim();
+                            let qty = 1;
+                            const match = p.match(/(.*) \(x(\d+)\)/);
+                            if (match) { name = match[1].trim(); qty = parseInt(match[2]); }
+                            let foundProduct = this.products.find(prod => prod.name === name);
+                            let price = foundProduct ? foundProduct.price : 0;
+                            return { name: name, qty: qty, price: price };
+                        });
+                    }
+
+                    let totalQty = reconstructedCart.reduce((sum, i) => sum + (i.qty || 1), 0);
+
+                    this.lastTx = {
+                        invoice: tx.invoice + " (COPY)",
+                        date: new Date(tx.time).toLocaleString('id-ID'),
+                        cart: reconstructedCart,
+                        total: tx.total,
+                        cash: tx.total, 
+                        change: 0,
+                        isPackage: isPkg,
+                        method: tx.paymentMethod || 'Tunai',
+                        totalQty: totalQty,
+                        isPO: isPoDP,
+                        downPayment: isPoDP ? tx.total : 0,
+                        remaining: 0,
+                        shippingCost: 0
+                    };
+                    this.printReceipt();
+                },
+
+                async batalPiutang(invoice) {
+                    const sandi = prompt(`🔒 BATALKAN KASBON / PIUTANG\nMasukkan PIN Admin untuk menghapus piutang dari ${invoice.split(' [')[0]} dan mengembalikan stok ke etalase:`); 
+                    if (!sandi) return;
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
+                        if (!confirm(`⚠️ YAKIN MENGHAPUS PIUTANG INI?\nStok kue di etalase akan otomatis ditarik kembali/ditambahkan.`)) return;
+
+                        const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { 
+                            alert(`✅ Kasbon berhasil dibatalkan. Stok kue sudah dikembalikan.`); 
+                            this.fetchPiutang(); this.fetchReport(); this.fetchCatalog();
+                        } else { alert('Gagal menghapus kasbon.'); }
+                    } catch (e) { alert('Error saat menghapus kasbon.'); }
+                },
+
+                async terimaPelunasan(invoice) {
+                    const method = prompt(`💰 TERIMA PELUNASAN KASBON\n\nPelanggan: ${invoice.split(' [')[0]}\n\nUang pelunasan dibayar menggunakan apa?\nKetik "1" untuk TUNAI\nKetik "2" untuk QRIS / Transfer`, '1');
+                    if (method === null) return; const newMethod = method === '2' ? 'QRIS' : 'Tunai';
+                    if (!confirm(`Tandai piutang ini LUNAS menggunakan ${newMethod.toUpperCase()}?\n\nUang akan langsung tercatat masuk ke Laporan Hari Ini.`)) return;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}/pay`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentMethod: newMethod }) });
+                        if ((await res.json()).success) { alert(`✅ BERHASIL! Status piutang lunas dan uang masuk ke Laci Hari Ini.`); if(this.currentTab === 'piutang') this.fetchPiutang(); if(this.currentTab === 'laporan') this.fetchReport(); } 
+                    } catch (e) {}
+                },
+
+                printReceipt() { this.isPrintingReceipt = true; setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingReceipt = false; }, 3000); }, 500); },
+                printCatalog() { this.isPrintingCatalog = true; setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingCatalog = false; }, 3000); }, 500); },
+
+                async submitExpense() {
+                    if(!this.expDesc || !this.expAmount) return alert('Isi keterangan & nominal beban');
+                    try {
+                        const payload = { category: this.expCat, description: this.expDesc, amount: this.expAmount, paymentMethod: this.expMethod };
+                        const res = await fetch(`${SERVER_URL}/api/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        if((await res.json()).success) { alert('Tercatat!'); this.expDesc = ''; this.expAmount = ''; this.fetchReport(); }
+                    } catch(e) {}
+                },
+
+                async fetchOptions() {
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/options`); const data = await res.json();
+                        if (data.success) { 
+                            this.options.categories = data.data.categories; 
+                            this.options.suppliers = data.data.suppliers; 
+                            this.updatePendingDrafts(); 
+                        }
+                    } catch(e) {}
+                },
+
+                async openAddProduct() {
+                    const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin Anda untuk menambah produk baru ke dalam sistem:"); if (!sandi) return;
+                    try {
+                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN yang dimasukkan salah.");
+                    } catch(e) { return alert("Gagal memverifikasi PIN. Pastikan internet lancar."); }
+
+                    this.fetchOptions();
+                    this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' };
+                    this.showAddProductModal = true;
+                    setTimeout(() => { lucide.createIcons(); }, 10);
+                },
+
+                closeAddProduct() { this.showAddProductModal = false; },
+
+                async submitProduct() {
+                    if (!this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.supplierId || !this.newProduct.sellPrice) return alert('Lengkapi data wajib (*)');
+                    this.isProcessing = true;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.newProduct) });
+                        const result = await res.json();
+                        if (result.success) { alert('✅ Produk berhasil ditambahkan!'); this.closeAddProduct(); this.fetchCatalog(); } else { alert('Gagal.'); }
+                    } catch (e) {} finally { this.isProcessing = false; }
+                },
+
+                get totalProductTypes() { return this.products.filter(p => p.type === 'product').length; },
+                get totalPhysicalStock() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.stock > 0 ? p.stock : 0), 0); },
+                get totalStockValue() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.price * (p.stock > 0 ? p.stock : 0)), 0); },
+                
+                async updateStock(product) {
+                    const sandi = prompt("🔒 Masukkan PIN Admin:"); if (!sandi) return;
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                    if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
+                    const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\n\nKetik jumlah kedatangan barang. (Gunakan angka minus jika barang rusak)`, "0");
+                    if (inputStr === null || inputStr.trim() === "") return; const diffQty = parseInt(inputStr); if (isNaN(diffQty) || diffQty === 0) return alert('Batal.');
+                    const newStock = product.stock + diffQty; if (newStock < 0) return alert('Stok akhir tidak boleh minus!');
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) });
+                        if ((await res.json()).success) { 
+                            if (diffQty > 0) { localStorage.setItem('last_restock_date_' + product.id, new Date().toISOString()); }
+                            alert(`Berhasil!`); this.fetchCatalog(); 
+                        } 
+                    } catch (e) {}
+                },
+                
+                async deleteTransaction(invoice) {
+                    const sandi = prompt(`🔒 HAPUS STRUK ${invoice}\nMasukkan PIN Admin:`); if (!sandi) return;
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                    if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
+                    if (!confirm(`⚠️ YAKIN INGIN MEMBATALKAN STRUK ${invoice}?`)) return;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { alert(`Struk dihapus & stok dikembalikan.`); this.fetchReport(); this.fetchCatalog(); } 
+                    } catch (e) {}
+                },
+
+                async deleteExpense(id) {
+                    const sandi = prompt(`🔒 HAPUS PENGELUARAN\nMasukkan PIN Admin:`); if (!sandi) return;
+                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                    if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
+                    if (!confirm(`⚠️ YAKIN INGIN MENGHAPUS PENGELUARAN INI?`)) return;
+                    try {
+                        const res = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
+                        if ((await res.json()).success) { alert(`Pengeluaran dihapus.`); this.fetchReport(); } 
+                    } catch (e) {}
+                }
+            }
+        }
+    </script>
+
 </body>
 </html>
