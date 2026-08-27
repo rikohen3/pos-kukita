@@ -194,7 +194,8 @@
                         <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
                             <option value="">-- Sentuh untuk Pilih Supplier --</option>
                             <template x-for="sup in options.suppliers" :key="sup.id">
-                                <option :value="sup.id" x-text="sup.name"></option>
+                                <!-- INDIKATOR KUNING ADA DRAFT -->
+                                <option :value="sup.id" x-text="hasDraft(sup.id) ? '🟡 ' + sup.name + ' (Ada Draft)' : sup.name"></option>
                             </template>
                         </select>
                     </div>
@@ -1152,6 +1153,11 @@
                     await this.fetchCashiers(); await this.fetchCatalog();
                 },
 
+                // FITUR INDIKATOR DRAFT KUNING 🟡
+                hasDraft(supId) {
+                    return localStorage.getItem('draft_restock_' + supId) !== null;
+                },
+
                 // FITUR LIHAT DETAIL TRANSAKSI (POP-UP)
                 viewTransactionDetail(tx) {
                     this.selectedTx = tx;
@@ -1594,6 +1600,15 @@
                             this.restockStockAddedPagi = true;
                             this.saveDraftLocally();
                             alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase aplikasi. Tersimpan di Draft untuk dibayar nanti malam.');
+                            
+                            // AUTO BERSIH LAYAR (FIX)
+                            this.restockSupplierId = '';
+                            this.restockSupplierName = '';
+                            this.restockCart = [];
+                            this.restockDiscount = '';
+                            this.restockNotes = '';
+                            this.restockStockAddedPagi = false;
+                            
                             this.fetchCatalog();
                             this.isProcessing = false;
                             return;
@@ -1633,7 +1648,13 @@
                                 alert(`✅ NOTA LUNAS DITUTUP!\nPengeluaran kas sudah tercatat otomatis.`);
                                 
                                 localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
-                                this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
+                                
+                                // AUTO BERSIH LAYAR (FIX)
+                                this.restockSupplierId = '';
+                                this.restockSupplierName = '';
+                                this.restockCart = [];
+                                this.restockDiscount = '';
+                                this.restockNotes = '';
                                 this.restockStockAddedPagi = false;
                                 
                                 this.fetchReport();
