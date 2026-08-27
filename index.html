@@ -30,29 +30,15 @@
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
 
-        /* PERBAIKAN TAMPILAN PDF DAN KERTAS THERMAL */
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
-            
-            /* Paksa browser menggunakan ukuran kertas thermal 58mm */
-            .receipt-mode @page, .vendor-mode @page { margin: 0; size: 58mm auto; }
+            .receipt-mode @page { margin: 0; }
             .catalog-mode @page { margin: 10mm; size: A4 portrait; }
-            
-            body.receipt-mode #print-area, 
-            body.vendor-mode #print-area-vendor { 
-                display: block !important; 
-                width: 58mm; 
-                max-width: 100%; 
-                margin: 0 auto; 
-                font-family: monospace; 
-                font-size: 12px; 
-                color: black; 
-                padding: 2mm; 
-                box-sizing: border-box;
-            }
-            body.vendor-mode #print-area-vendor { font-size: 11px; }
+            body.receipt-mode #print-area { display: block !important; width: 58mm; font-family: monospace; font-size: 12px; color: black; margin: 0; padding: 0; }
             body.catalog-mode #catalog-area { display: block !important; }
+            body.vendor-mode @page { margin: 0; }
+            body.vendor-mode #print-area-vendor { display: block !important; width: 58mm; font-family: monospace; font-size: 11px; color: black; margin: 0; padding: 0; }
         }
     </style>
 </head>
@@ -203,27 +189,12 @@
             
             <div class="flex flex-1 overflow-hidden relative flex-col md:flex-row">
                 <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
-                    
-                    <!-- FITUR BARU: ALARM VENDOR BELUM TUTUP NOTA -->
-                    <div x-show="activeDrafts.length > 0" class="p-3 bg-yellow-100 border-b border-yellow-200 z-10" style="display: none;">
-                        <label class="block text-[11px] font-extrabold text-yellow-800 mb-2 flex items-center gap-1">
-                            <i data-lucide="alert-triangle" class="w-4 h-4"></i> PENGINGAT: DRAFT NOTA BELUM DITUTUP LUNAS
-                        </label>
-                        <div class="flex flex-wrap gap-2">
-                            <template x-for="draft in activeDrafts" :key="draft.id">
-                                <button @click="restockSupplierId = String(draft.id); loadDraftSupplier();" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 shadow-sm transition">
-                                    <i data-lucide="clock" class="w-3 h-3"></i> <span x-text="draft.name"></span>
-                                </button>
-                            </template>
-                        </div>
-                    </div>
-
                     <div class="p-4 bg-white border-b shadow-sm z-10">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">1. Pilih Supplier (Vendor Asal)</label>
                         <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
                             <option value="">-- Sentuh untuk Pilih Supplier --</option>
                             <template x-for="sup in options.suppliers" :key="sup.id">
-                                <option :value="String(sup.id)" x-text="sup.name"></option>
+                                <option :value="sup.id" x-text="sup.name"></option>
                             </template>
                         </select>
                     </div>
@@ -233,7 +204,7 @@
                             <p class="font-medium">Pilih supplier di atas terlebih dahulu.</p>
                         </div>
                         <div x-show="restockSupplierId" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                            <template x-for="product in products.filter(p => p.type === 'product' && String(p.supplierId) === restockSupplierId)" :key="product.id">
+                            <template x-for="product in products.filter(p => p.type === 'product' && p.supplierId == restockSupplierId)" :key="product.id">
                                 <div @click="addToRestockCart(product)" class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition flex flex-col relative group">
                                     <div class="absolute top-2 right-2 bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i data-lucide="plus" class="w-4 h-4"></i></div>
                                     <h3 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6" x-text="product.name"></h3>
@@ -367,7 +338,6 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="order in poList" :key="order.id">
                         <div class="bg-white border-2 border-red-100 rounded-xl shadow-sm overflow-hidden flex flex-col relative">
-                            <!-- Label Status DP -->
                             <div class="absolute top-0 right-0 px-3 py-1 text-[10px] font-bold text-white rounded-bl-lg" 
                                  :class="order.paymentStatus === 'Lunas' ? 'bg-green-500' : (order.downPayment > 0 ? 'bg-yellow-500' : 'bg-red-500')">
                                 <span x-text="order.paymentStatus === 'Lunas' ? 'LUNAS' : (order.downPayment > 0 ? 'SUDAH DP' : 'BELUM BAYAR')"></span>
@@ -727,8 +697,8 @@
                                     <template x-for="tx in reportData.salesHistory" :key="tx.invoice">
                                         <tr class="border-b hover:bg-gray-50">
                                             <td class="p-3 text-sm">
-                                                <div class="font-bold text-brand-brown" x-text="tx.invoice"></div>
-                                                <div class="text-gray-500 text-xs" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
+                                                <div class="font-bold text-brand-brown hover:text-orange-600 hover:underline cursor-pointer transition" @click="viewTransactionDetail(tx)" title="Klik untuk lihat rincian struk" x-text="tx.invoice"></div>
+                                                <div class="text-gray-500 text-xs mt-0.5" x-text="new Date(tx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></div>
                                             </td>
                                             <td class="p-3 text-sm text-gray-600 max-w-xs">
                                                 <template x-if="tx.invoice && tx.invoice.startsWith('PKT-')">
@@ -740,7 +710,7 @@
                                                 <template x-if="tx.invoice && tx.invoice.startsWith('LUNAS-')">
                                                     <span class="inline-block bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded mr-1 mb-1">✅ PELUNASAN PO</span>
                                                 </template>
-                                                <span x-text="tx.items"></span>
+                                                <span class="line-clamp-2" x-text="tx.items"></span>
                                             </td>
                                             <td class="p-3 text-center">
                                                 <span :class="tx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : (tx.paymentMethod === 'Mix' ? 'bg-purple-100 text-purple-700' : (tx.paymentMethod === 'Piutang' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'))" 
@@ -750,7 +720,9 @@
                                             </td>
                                             <td class="p-3 text-right">
                                                 <div class="font-bold text-green-600 mb-2" x-text="formatRupiah(tx.total)"></div>
-                                                <button @click="deleteTransaction(tx.invoice)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition"><i data-lucide="trash-2" class="w-3 h-3"></i> Batal / Hapus</button>
+                                                <button @click="viewTransactionDetail(tx)" class="bg-orange-50 hover:bg-orange-100 text-brand-orange border border-orange-200 text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center justify-center gap-1 ml-auto transition shadow-sm">
+                                                    <i data-lucide="eye" class="w-3 h-3"></i> Lihat Detail
+                                                </button>
                                             </td>
                                         </tr>
                                     </template>
@@ -790,7 +762,7 @@
                                             <td class="p-3 text-sm text-gray-600 max-w-xs">
                                                 <span x-text="nota.detailNota.rincianTeks"></span>
                                                 <div x-show="nota.detailNota.discount > 0" class="text-[10px] text-red-500 mt-1" x-text="'*Dipotong: ' + formatRupiah(nota.detailNota.discount)"></div>
-                                                <div x-show="nota.detailNota.keteranganManual && nota.detailNota.keteranganManual.split('[RTR:')[0].trim() !== ''" class="text-[10px] text-gray-400 italic mt-0.5" x-text="'Ket: ' + nota.detailNota.keteranganManual.split('[RTR:')[0].trim()"></div>
+                                                <div x-show="nota.detailNota.keteranganManual" class="text-[10px] text-gray-400 italic mt-0.5" x-text="'Ket: ' + nota.detailNota.keteranganManual"></div>
                                             </td>
                                             <td class="p-3 text-right">
                                                 <div class="font-bold text-blue-600 mb-2" x-text="formatRupiah(nota.amount)"></div>
@@ -798,7 +770,7 @@
                                                     <button @click="deleteVendorNota(nota.id, nota.detailNota)" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition">
                                                         <i data-lucide="trash-2" class="w-3 h-3"></i> Hapus Nota
                                                     </button>
-                                                    <button @click="reprintVendorNota(nota.detailNota, nota.time)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition">
+                                                    <button @click="reprintVendorNota(nota.detailNota)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition">
                                                         <i data-lucide="printer" class="w-3 h-3"></i> Cetak Ulang
                                                     </button>
                                                 </div>
@@ -933,72 +905,52 @@
             </div>
         </div>
 
-        <!-- JENDELA PEMBAYARAN KASIR -->
-        <div x-show="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
-            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closePayment()">
-                <div class="bg-brand-brown p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg" x-text="paymentStep === 'input' ? 'Pembayaran' : 'Transaksi Berhasil'"></h2><button @click="closePayment()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
-                <div class="p-6">
-                    <div x-show="paymentStep === 'input'">
-                        <div class="text-center mb-6"><p class="text-gray-500 text-sm">Total Tagihan (<span x-text="cart.length"></span> Item | <span x-text="totalQty"></span> Pcs)</p><p class="text-4xl font-bold text-brand-orange" x-text="formatRupiah(total)"></p></div>
-                        <div class="mb-4"><label class="block text-sm font-semibold text-gray-700 mb-1">Nama Instansi / Pembeli</label><input type="text" x-model="customerName" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50" placeholder="Wajib diisi jika Kasbon/Piutang"></div>
-                        <div class="mb-4">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <button @click="paymentMethod = 'Tunai'" :class="paymentMethod === 'Tunai' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai</button>
-                                <button @click="paymentMethod = 'QRIS'" :class="paymentMethod === 'QRIS' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">QRIS</button>
-                                <button @click="paymentMethod = 'Mix'" :class="paymentMethod === 'Mix' ? 'bg-brand-brown text-white' : 'bg-gray-100 text-gray-600'" class="py-2 rounded-lg font-bold text-xs transition">Tunai+QRIS</button>
-                                <button @click="paymentMethod = 'Piutang'" :class="paymentMethod === 'Piutang' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-500 border border-red-200'" class="py-2 rounded-lg font-bold text-xs transition">Utang / Tempo</button>
+        <!-- MODAL DETAIL TRANSAKSI KASIR (POP-UP) -->
+        <div x-show="showDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
+            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showDetailModal = false">
+                <div class="bg-brand-brown p-4 text-white flex justify-between items-center">
+                    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="receipt"></i> Rincian Struk</h2>
+                    <button @click="showDetailModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[80vh]">
+                    <template x-if="selectedTx">
+                        <div>
+                            <div class="text-center border-b pb-4 mb-4">
+                                <h3 class="font-bold text-lg text-gray-800" x-text="selectedTx.invoice"></h3>
+                                <p class="text-xs text-gray-500 mt-1" x-text="new Date(selectedTx.time).toLocaleString('id-ID', {day: 'numeric', month: 'short', year:'numeric', hour: '2-digit', minute:'2-digit'})"></p>
+                                <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-bold" 
+                                      :class="selectedTx.paymentMethod === 'QRIS' ? 'bg-blue-100 text-blue-700' : (selectedTx.paymentMethod === 'Mix' ? 'bg-purple-100 text-purple-700' : (selectedTx.paymentMethod === 'Piutang' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'))" 
+                                      x-text="selectedTx.paymentMethod || 'Tunai'">
+                                </span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <p class="text-[11px] font-bold text-gray-400 uppercase mb-2">Daftar Belanjaan:</p>
+                                <ul class="space-y-2">
+                                    <template x-for="item in selectedTxCart">
+                                        <li class="flex justify-between text-sm text-gray-700 border-b border-dashed border-gray-100 pb-1">
+                                            <span x-text="item.name" class="flex-1 pr-2"></span>
+                                            <span class="font-bold text-brand-brown whitespace-nowrap" x-text="'x ' + item.qty"></span>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                            
+                            <div class="flex justify-between items-center pt-2 border-t border-gray-200 mt-4 mb-6">
+                                <span class="font-bold text-gray-600">Total Transaksi</span>
+                                <span class="text-2xl font-extrabold text-brand-orange" x-text="formatRupiah(selectedTx.total)"></span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <button @click="deleteTransaction(selectedTx.invoice); showDetailModal = false" class="bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm border border-red-100">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i> Batal / Hapus
+                                </button>
+                                <button @click="reprintTransaction(selectedTx)" class="bg-brand-brown text-white hover:bg-orange-800 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md">
+                                    <i data-lucide="printer" class="w-4 h-4"></i> Cetak Ulang
+                                </button>
                             </div>
                         </div>
-                        <div x-show="paymentMethod === 'Tunai'" class="mb-6">
-                            <input type="number" x-model="cashReceived" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right" placeholder="0">
-                            <div class="grid grid-cols-4 gap-2 mt-2"><button @click="cashReceived = 50000" class="bg-gray-100 py-1 rounded text-sm font-medium">50k</button><button @click="cashReceived = 100000" class="bg-gray-100 py-1 rounded text-sm font-medium">100k</button><button @click="cashReceived = total" class="bg-gray-100 py-1 rounded text-sm font-medium col-span-2">Uang Pas</button></div>
-                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-gray-50"><span class="font-semibold text-gray-600">Kembalian</span><span class="text-xl font-bold text-brand-green" x-text="formatRupiah(change > 0 ? change : 0)"></span></div>
-                        </div>
-                        <div x-show="paymentMethod === 'Mix'" class="mb-6" style="display: none;">
-                            <label class="block text-xs font-semibold text-gray-500 mb-1">Berapa Uang TUNAI FISIK yang diterima?</label>
-                            <input type="number" x-model="mixCash" class="w-full text-2xl font-bold p-3 border rounded-lg outline-none text-right focus:border-brand-brown" placeholder="Ketik nominal tunai">
-                            <div class="mt-4 flex justify-between items-center p-3 rounded-lg bg-blue-50 border border-blue-100"><span class="font-semibold text-blue-800 text-sm">Sisa tagihan di-QRIS-kan</span><span class="text-xl font-bold text-blue-600" x-text="formatRupiah(total - (parseFloat(mixCash) || 0))"></span></div>
-                        </div>
-                        <button @click="processTransaction()" :disabled="(paymentMethod === 'Tunai' && change < 0) || isProcessing" class="w-full bg-brand-green text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50"><i data-lucide="check-circle" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Memproses...' : 'SELESAIKAN TRANSAKSI'"></span></button>
-                    </div>
-                    
-                    <div x-show="paymentStep === 'success'" style="display: none;" class="text-center">
-                        <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
-                        <p class="text-gray-500 text-sm font-bold" x-text="lastTx && lastTx.method === 'Piutang' ? 'PESANAN (KASBON) TERCATAT' : 'UANG KEMBALIAN'"></p>
-                        <p class="text-5xl font-bold text-brand-green my-2" x-show="lastTx && lastTx.method !== 'Piutang'" x-text="formatRupiah(lastTx ? lastTx.change : 0)"></p>
-                        <div class="mt-8 flex gap-3"><button @click="printReceipt()" class="flex-1 bg-brand-brown text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-orange-800 transition"><i data-lucide="printer" class="w-5 h-5"></i> Cetak Struk</button><button @click="resetCart()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-gray-300 transition">Selesai</button></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL FORM PO -->
-        <div x-show="showPoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
-            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="showPoModal = false">
-                <div class="bg-purple-600 p-4 text-white flex justify-between items-center"><h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="calendar-plus"></i> Simpan Buku Pesanan</h2><button @click="showPoModal = false" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button></div>
-                <div class="p-6 overflow-y-auto max-h-[80vh]">
-                    <div class="space-y-4">
-                        <div><label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemesan / Instansi</label><input type="text" x-model="poForm.name" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-gray-50" placeholder="Wajib diisi"></div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div><label class="block text-xs font-semibold text-gray-700 mb-1">Waktu Diambil (Hari H)</label><input type="datetime-local" x-model="poForm.pickupDate" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-xs font-bold"></div>
-                            <div><label class="block text-xs font-semibold text-gray-700 mb-1">No. HP (Opsional)</label><input type="text" x-model="poForm.phone" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="08..."></div>
-                        </div>
-                        <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Biaya Ongkos Kirim (Opsional)</label><input type="number" x-model="poForm.shippingCost" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div><label class="block text-xs font-semibold text-gray-700 mb-1">Titip DP / Uang Muka</label><input type="number" x-model="poForm.dp" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm" placeholder="0"></div>
-                            <div><label class="block text-xs font-semibold text-gray-700 mb-1">Metode Bayar DP</label><select x-model="poForm.paymentMethod" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm"><option value="Tunai">Tunai</option><option value="QRIS">QRIS / Transfer</option></select></div>
-                        </div>
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1">Catatan Tambahan (Misal: Pita merah)</label><input type="text" x-model="poForm.notes" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 text-sm"></div>
-                    </div>
-                    <div class="mt-6 border-t pt-4">
-                        <div class="flex justify-between text-sm text-gray-600 mb-1"><span>Harga Kue Saja</span><span x-text="formatRupiah(total)"></span></div>
-                        <div class="flex justify-between text-sm text-gray-600 mb-1" x-show="parseInt(poForm.shippingCost) > 0"><span>Ongkir</span><span x-text="formatRupiah(parseInt(poForm.shippingCost) || 0)"></span></div>
-                        <div class="flex justify-between text-sm text-gray-600 mb-3 border-b pb-2"><span>Titip DP</span><span class="text-red-500" x-text="'- ' + formatRupiah(parseInt(poForm.dp) || 0)"></span></div>
-                        <div class="flex justify-between items-center mb-6"><span class="font-bold text-gray-800">Sisa Tagihan</span><span class="text-xl font-bold text-brand-orange" x-text="formatRupiah((total + (parseInt(poForm.shippingCost) || 0)) - (parseInt(poForm.dp) || 0))"></span></div>
-                        <button @click="submitPo()" :disabled="isProcessing" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-purple-700 disabled:opacity-50"><i data-lucide="save" x-show="!isProcessing"></i><i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i><span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PESANAN (PO)'"></span></button>
-                    </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -1033,7 +985,10 @@
                     <template x-if="!lastTx.isPackage">
                         <div>
                             <template x-for="item in lastTx.cart">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;"><div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div><div x-text="formatRupiah(item.price * item.qty)"></div></div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                    <div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div>
+                                    <div x-text="item.price > 0 ? formatRupiah(item.price * item.qty) : ''"></div>
+                                </div>
                             </template>
                         </div>
                     </template>
@@ -1164,6 +1119,9 @@
                 showAddProductModal: false, options: { categories: [], suppliers: [] }, 
                 newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' },
                 
+                // POP-UP DETAIL TRANSAKSI
+                showDetailModal: false, selectedTx: null, selectedTxCart: [],
+
                 // SALDO AWAL LACI
                 saldoAwalLaci: localStorage.getItem('saldo_laci') || 0,
                 // SIMPAN TOTAL PAKET FIX
@@ -1178,7 +1136,6 @@
                 // VARIABEL BUKU TERIMA BARANG (VENDOR) DRAFT
                 restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
                 restockStockAddedPagi: false, // Checkbox pengaman stok ganda
-                activeDrafts: [], // ALARM VENDOR BELUM DITUTUP
 
                 async init() {
                     setTimeout(() => { lucide.createIcons(); }, 100);
@@ -1187,6 +1144,23 @@
                     this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
                     
                     await this.fetchCashiers(); await this.fetchCatalog();
+                },
+
+                // FITUR LIHAT DETAIL TRANSAKSI
+                viewTransactionDetail(tx) {
+                    this.selectedTx = tx;
+                    let reconstructedCart = [];
+                    if (tx.items) {
+                        const parts = tx.items.split(', ');
+                        reconstructedCart = parts.map(p => {
+                            const match = p.match(/(.*) \(x(\d+)\)/);
+                            if (match) return { name: match[1].trim(), qty: parseInt(match[2]) };
+                            return { name: p.trim(), qty: 1 };
+                        });
+                    }
+                    this.selectedTxCart = reconstructedCart;
+                    this.showDetailModal = true;
+                    setTimeout(() => { lucide.createIcons(); }, 10);
                 },
 
                 // FITUR CEK UMUR KUE (ALARM MERAH)
@@ -1445,36 +1419,10 @@
                 // ==========================================
                 // FUNGSI TERIMA BARANG VENDOR (SISTEM DRAFT + RETUR)
                 // ==========================================
-
-                checkActiveDrafts() {
-                    if (!this.options || !this.options.suppliers) return;
-                    this.activeDrafts = [];
-                    this.options.suppliers.forEach(sup => {
-                        const draft = localStorage.getItem(`draft_restock_${sup.id}`);
-                        if (draft) {
-                            try {
-                                const parsed = JSON.parse(draft);
-                                if (parsed && parsed.cart && parsed.cart.length > 0) {
-                                    this.activeDrafts.push(sup);
-                                }
-                            } catch(e) {}
-                        }
-                    });
-                },
                 
-                resetRestockUI() {
-                    this.restockSupplierId = '';
-                    this.restockSupplierName = '';
-                    this.restockCart = [];
-                    this.restockDiscount = '';
-                    this.restockNotes = '';
-                    this.restockStockAddedPagi = false;
-                    this.checkActiveDrafts();
-                },
-
                 loadDraftSupplier() {
                     if(this.restockSupplierId) {
-                        const selectedSup = this.options.suppliers.find(s => String(s.id) === String(this.restockSupplierId));
+                        const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
                         this.restockSupplierName = selectedSup ? selectedSup.name : '';
                     } else {
                         this.restockSupplierName = '';
@@ -1483,11 +1431,7 @@
                     this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
                     this.restockStockAddedPagi = false; // Reset checkbox
 
-                    if(!this.restockSupplierId) {
-                        this.checkActiveDrafts();
-                        return;
-                    }
-                    
+                    if(!this.restockSupplierId) return;
                     const savedDraft = localStorage.getItem(`draft_restock_${this.restockSupplierId}`);
                     if(savedDraft) {
                         try {
@@ -1503,14 +1447,12 @@
                             }
                         } catch(e) {}
                     }
-                    this.checkActiveDrafts();
                 },
                 
                 saveDraftLocally() {
                     if(!this.restockSupplierId) return;
                     const draftData = { cart: this.restockCart, discount: this.restockDiscount, method: this.restockMethod, notes: this.restockNotes };
                     localStorage.setItem(`draft_restock_${this.restockSupplierId}`, JSON.stringify(draftData));
-                    this.checkActiveDrafts();
                 },
 
                 addToRestockCart(product) { 
@@ -1553,7 +1495,6 @@
                     this.saveDraftLocally();
                 },
 
-                // FITUR BATAL BARANG DARI NOTA
                 async removeRestockItem(index) {
                     if(this.isProcessing) return;
                     let item = this.restockCart[index];
@@ -1599,15 +1540,8 @@
                     if(this.restockCart.length === 0) return alert('Keranjang penerimaan kosong!');
                     if(!this.restockSupplierId) return alert('Silakan pilih Supplier/Vendor terlebih dahulu!');
                     
-                    // PERBAIKAN BUG 1: Pastikan tipe data ID Vendor asli dari database terkirim (String / Integer)
-                    let finalSupplierId = this.restockSupplierId;
-                    const selectedSup = this.options.suppliers.find(s => String(s.id) === String(this.restockSupplierId));
-                    if (selectedSup) {
-                        finalSupplierId = selectedSup.id;
-                        this.restockSupplierName = selectedSup.name;
-                    } else {
-                        this.restockSupplierName = 'Vendor Tidak Diketahui';
-                    }
+                    const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
+                    this.restockSupplierName = selectedSup ? selectedSup.name : 'Vendor Tidak Diketahui';
 
                     const pesan = isPrintingMalam ? 
                         "🔒 TUTUP NOTA MALAM\n\nMasukkan PIN Admin untuk menyetujui Pembayaran ke Vendor & Cetak Nota:" : 
@@ -1626,44 +1560,28 @@
                         
                         // JIKA KLIK DRAFT PAGI (Hanya Menambah Stok Etalase, Tidak Mencetak Nota Pembayaran)
                         if (!isPrintingMalam) {
-                            if (!hasNewItems && !this.restockStockAddedPagi) {
-                                this.saveDraftLocally();
-                                alert('✅ DRAFT DIPERBARUI!\nPerubahan telah disimpan ke draft (stok sudah ditambahkan sebelumnya).');
-                                this.resetRestockUI();
+                            if (!hasNewItems) {
                                 this.isProcessing = false;
-                                return;
+                                return alert('Tidak ada barang baru untuk ditambahkan ke stok pagi. Silakan klik Tutup Nota Malam jika ingin membayar.');
                             }
                             
-                            let addedCount = 0;
                             for (let item of this.restockCart) {
                                 if (!item.alreadyInStock) {
-                                    // PERBAIKAN BUG 2: Cek dulu apakah centang koreksi aktif? Kalau belum dicentang, baru tambah stok etalase.
-                                    if (!this.restockStockAddedPagi) {
-                                        const prod = this.products.find(p => p.id === item.id);
-                                        if (prod) {
-                                            const newStock = prod.stock + item.qty;
-                                            await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
-                                                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) 
-                                            });
-                                        }
-                                        addedCount++;
+                                    const prod = this.products.find(p => p.id === item.id);
+                                    if (prod) {
+                                        const newStock = prod.stock + item.qty;
+                                        await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
+                                            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) 
+                                        });
+                                        item.alreadyInStock = true;
+                                        localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
                                     }
-                                    item.alreadyInStock = true;
-                                    localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
                                 }
                             }
-                            
-                            this.restockStockAddedPagi = true; // Tandai bahwa stok sudah dikoreksi/ditambah agar malam aman
+                            this.restockStockAddedPagi = true;
                             this.saveDraftLocally();
-                            
-                            if (addedCount > 0) {
-                                alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase aplikasi. Tersimpan di Draft untuk dibayar nanti malam.');
-                            } else {
-                                alert('✅ DRAFT DISIMPAN!\nKarena kotak "Koreksi Stok" dicentang, angka stok di etalase tidak ditambahkan lagi agar tidak ganda.');
-                            }
-                            
+                            alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase aplikasi. Tersimpan di Draft untuk dibayar nanti malam.');
                             this.fetchCatalog();
-                            this.resetRestockUI(); // Reset Layar
                             this.isProcessing = false;
                             return;
                         }
@@ -1675,13 +1593,7 @@
                                 qty: item.qty - (item.returQty || 0)
                             })).filter(item => item.qty > 0);
 
-                            const grossInfo = this.restockCart.map(i => `${i.id}*${i.qty}*${i.returQty || 0}`).join('|');
-                            const finalNotes = (this.restockNotes && this.restockNotes.trim() !== '') 
-                                               ? `${this.restockNotes} [RTR:${grossInfo}]` 
-                                               : `[RTR:${grossInfo}]`;
-
-                            // Gunakan finalSupplierId yang sudah dijamin sesuai tipe datanya
-                            const payload = { supplierId: finalSupplierId, supplierName: this.restockSupplierName, items: payloadItems, discount: this.restockDiscount, paymentMethod: this.restockMethod, notes: finalNotes, printNow: true };
+                            const payload = { supplierId: this.restockSupplierId, supplierName: this.restockSupplierName, items: payloadItems, discount: this.restockDiscount, paymentMethod: this.restockMethod, notes: this.restockNotes, printNow: true };
                             const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                             const result = await res.json();
                             
@@ -1695,7 +1607,7 @@
                                                 await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
                                                     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: newStock >= 0 ? newStock : 0 }) 
                                                 });
-                                            } catch(e) {}
+                                            } catch(e) { console.error('Gagal koreksi stok ganda', e); }
                                         }
                                     }
                                     if (!item.alreadyInStock) {
@@ -1707,21 +1619,14 @@
                                 this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: savedCartForReceipt, total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.restockNotes };
                                 alert(`✅ NOTA LUNAS DITUTUP!\nPengeluaran kas sudah tercatat otomatis.`);
                                 
-                                const currentId = this.restockSupplierId;
-                                localStorage.removeItem(`draft_restock_${currentId}`);
-                                
-                                this.resetRestockUI(); // RESET LAYAR
+                                localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
+                                this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
+                                this.restockStockAddedPagi = false;
                                 
                                 this.fetchReport();
                                 this.isPrintingVendor = true;
-                                setTimeout(() => { 
-                                    window.print(); 
-                                    setTimeout(() => { 
-                                        this.isPrintingVendor = false; 
-                                        this.fetchCatalog(); 
-                                    }, 3000); 
-                                }, 500);
-                                
+                                setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
+                                this.fetchCatalog(); 
                             } else {
                                 alert('Gagal menyimpan!\nAlasan Server: ' + (result.message || 'Error Database Tidak Dikenal'));
                             }
@@ -1730,50 +1635,23 @@
                     finally { this.isProcessing = false; }
                 },
 
-                reprintVendorNota(notaDetail, txTime) {
-                    let notesRaw = notaDetail.keteranganManual || notaDetail.notes || "";
-                    let displayNotes = notesRaw;
-                    let rtrData = "";
-                    
-                    if (notesRaw.includes('[RTR:')) {
-                        let parts = notesRaw.split('[RTR:');
-                        displayNotes = parts[0].trim();
-                        rtrData = parts[1].split(']')[0];
-                    }
-
+                reprintVendorNota(notaDetail) {
                     const reconstructedCart = notaDetail.cart.map(c => {
-                        let pid = c.id || c[0];
-                        let netQty = c.qty || c[1];
-                        let name = c.name || (this.products.find(p => p.id == pid) ? this.products.find(p => p.id == pid).name : 'Produk');
-                        let buyPrice = c.buyPrice || c[2];
-                        
-                        let grossQty = netQty;
-                        let returQty = c.returQty || 0;
-
-                        if (rtrData) {
-                            let items = rtrData.split('|');
-                            for (let item of items) {
-                                let [rId, rQty, rRetur] = item.split('*');
-                                if (rId == pid) {
-                                    grossQty = parseInt(rQty);
-                                    returQty = parseInt(rRetur);
-                                }
-                            }
-                        }
-                        
-                        return { name: name, qty: grossQty, buyPrice: buyPrice, returQty: returQty };
+                        if(c.name) return c; 
+                        const prod = this.products.find(p => p.id === c.id || p.id === c[0]); 
+                        return { name: prod ? prod.name : 'Produk', qty: c.qty || c[1], buyPrice: c.buyPrice || c[2], returQty: c.returQty || 0 };
                     });
                     
                     this.lastVendorTx = {
                         invoice: notaDetail.invoice,
-                        date: txTime ? new Date(txTime).toLocaleString('id-ID') : new Date().toLocaleString('id-ID'), 
-                        supplier: notaDetail.supplier || 'Data Lama',
+                        date: new Date().toLocaleString('id-ID'), 
+                        supplier: notaDetail.supplier || 'Data Lama (Tanpa Nama)',
                         cart: reconstructedCart,
-                        total: notaDetail.total || reconstructedCart.reduce((s,i)=>s+(i.buyPrice*i.qty),0),
-                        discount: notaDetail.discount || 0,
+                        total: notaDetail.total,
+                        discount: notaDetail.discount,
                         grandTotal: notaDetail.grandTotal,
-                        method: notaDetail.method || 'Tunai',
-                        notes: displayNotes
+                        method: notaDetail.method,
+                        notes: notaDetail.keteranganManual
                     };
                     this.isPrintingVendor = true;
                     setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
@@ -1823,9 +1701,6 @@
                     }
                 },
 
-                // ==========================================
-                // SISA FUNGSI BAWAAN (LAPORAN, MASTER)
-                // ==========================================
                 async fetchReport() {
                     try {
                         let queryParam = `?period=${this.reportPeriod}`;
@@ -1833,6 +1708,44 @@
                         const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}`); if((await resGlobal.clone().json()).success) this.reportData = (await resGlobal.json()).data;
                         const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`); if((await resItems.clone().json()).success) this.itemReports = (await resItems.json()).data;
                     } catch (error) {}
+                },
+
+                // FITUR CETAK ULANG STRUK KASIR
+                reprintTransaction(tx) {
+                    let reconstructedCart = [];
+                    let isPkg = tx.invoice && tx.invoice.startsWith('PKT-');
+                    let isPoDP = tx.invoice && tx.invoice.startsWith('DP-');
+                    
+                    if (tx.items) {
+                        const parts = tx.items.split(', ');
+                        reconstructedCart = parts.map(p => {
+                            const match = p.match(/(.*) \(x(\d+)\)/);
+                            if (match) {
+                                return { name: match[1].trim(), qty: parseInt(match[2]), price: 0 };
+                            }
+                            return { name: p.trim(), qty: 1, price: 0 };
+                        });
+                    }
+
+                    let totalQty = reconstructedCart.reduce((sum, i) => sum + (i.qty || 1), 0);
+
+                    this.lastTx = {
+                        invoice: tx.invoice + " (COPY)",
+                        date: new Date(tx.time).toLocaleString('id-ID'),
+                        cart: reconstructedCart,
+                        total: tx.total,
+                        cash: tx.total, 
+                        change: 0,
+                        isPackage: isPkg,
+                        method: tx.paymentMethod || 'Tunai',
+                        totalQty: totalQty,
+                        isPO: isPoDP,
+                        downPayment: isPoDP ? tx.total : 0,
+                        remaining: 0,
+                        shippingCost: 0
+                    };
+                    
+                    this.printReceipt();
                 },
 
                 async batalPiutang(invoice) {
@@ -1884,11 +1797,7 @@
                 async fetchOptions() {
                     try {
                         const res = await fetch(`${SERVER_URL}/api/options`); const data = await res.json();
-                        if (data.success) { 
-                            this.options.categories = data.data.categories; 
-                            this.options.suppliers = data.data.suppliers; 
-                            this.checkActiveDrafts(); // Cek antrean vendor pas menu direload
-                        }
+                        if (data.success) { this.options.categories = data.data.categories; this.options.suppliers = data.data.suppliers; }
                     } catch(e) {}
                 },
 
@@ -1931,6 +1840,7 @@
                     try {
                         const res = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) });
                         if ((await res.json()).success) { 
+                            // Update tanggal masuk memori kalau ditambah stoknya (Bukan dikurangi)
                             if (diffQty > 0) { localStorage.setItem('last_restock_date_' + product.id, new Date().toISOString()); }
                             alert(`Berhasil!`); this.fetchCatalog(); 
                         } 
