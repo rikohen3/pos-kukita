@@ -1145,6 +1145,141 @@
 
     </div>
 
+    <!-- FORMAT STRUK KASIR / PO -->
+        <div x-show="isPrintingReceipt" id="print-area" style="display: none;">
+            <template x-if="lastTx">
+                <div style="padding: 10px;">
+                    <div style="text-align: center; margin-bottom: 12px;">
+                        <div style="font-size: 18px; font-weight: bold;">KUKITA</div>
+                        <div style="font-size: 10px; font-weight: normal; line-height: 1.3; margin-top: 2px;">Jl. Amir Hamzah No. 2<br>Karang Sukun, Mataram</div>
+                        <div style="font-size: 12px; font-weight: normal; margin-top: 8px;" x-text="lastTx.isPO ? 'STRUK PESANAN (PO)' : 'Struk Pembelian'"></div>
+                        <div style="font-weight: normal;">------------------------</div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <div>No : <span x-text="lastTx.invoice.split(' (')[0]"></span></div>
+                        <div>Tgl: <span x-text="lastTx.date"></span></div>
+                        <div>Kasir: <span x-text="activeCashier"></span></div>
+                        <div>------------------------</div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <template x-if="lastTx.isPackage">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-weight: bold;"><div>Paket Custom</div><div x-text="formatRupiah(lastTx.total - (lastTx.shippingCost||0))"></div></div>
+                                <div style="font-size: 11px; margin-bottom: 3px; border-bottom: 1px dashed #ccc; display: inline-block;">Rincian Isi Paket:</div>
+                                <template x-for="item in lastTx.cart"><div style="font-size: 11px; padding-left: 5px; color: #333;" x-text="'- ' + item.name + ' (x' + item.qty + ')'"></div></template>
+                            </div>
+                        </template>
+                        <template x-if="!lastTx.isPackage">
+                            <div>
+                                <template x-for="item in lastTx.cart">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <div x-text="item.name + ' (x' + item.qty + ')'" style="flex: 1; padding-right: 5px;"></div>
+                                        <div x-text="item.price > 0 ? formatRupiah(item.price * item.qty) : ''"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div>------------------------</div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 5px;"><div>Total Barang:</div><div x-text="lastTx.totalQty + ' Pcs'"></div></div>
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;" x-show="!lastTx.isPO"><div>Total Harga:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
+                        
+                        <template x-if="lastTx.isPO">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kue Saja:</div><div x-text="formatRupiah(lastTx.total - (lastTx.shippingCost||0))"></div></div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 3px;" x-show="lastTx.shippingCost > 0"><div>Ongkos Kirim:</div><div x-text="formatRupiah(lastTx.shippingCost)"></div></div>
+                                <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 3px;"><div>Total Tagihan:</div><div x-text="formatRupiah(lastTx.total)"></div></div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 3px; color: red;"><div>Titip DP:</div><div x-text="'- ' + formatRupiah(lastTx.downPayment)"></div></div>
+                                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; margin-top: 3px; border-top: 1px dashed black; padding-top: 3px;"><div>SISA BAYAR:</div><div x-text="formatRupiah(lastTx.remaining)"></div></div>
+                            </div>
+                        </template>
+
+                        <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Metode:</div><div style="font-weight: bold;" x-text="lastTx.method"></div></div>
+                        <template x-if="lastTx.method === 'Tunai' && !lastTx.isPO">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Tunai:</div><div x-text="formatRupiah(lastTx.cash)"></div></div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 3px;"><div>Kembali:</div><div x-text="formatRupiah(lastTx.change)"></div></div>
+                            </div>
+                        </template>
+                        <div>------------------------</div>
+                    </div>
+                    <div style="text-align: center;"><div>Terima Kasih</div><div>Selamat Menikmati!</div></div>
+                </div>
+            </template>
+        </div>
+
+        <!-- FORMAT STRUK NOTA VENDOR -->
+        <div x-show="isPrintingVendor" id="print-area-vendor" style="display: none;">
+            <template x-if="lastVendorTx">
+                <div style="padding: 10px;">
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <div style="font-size: 14px; font-weight: bold;">BUKTI TERIMA BARANG</div>
+                        <div style="font-size: 10px;">TOKO KUKITA</div>
+                        <div>------------------------</div>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <div>Tgl : <span x-text="lastVendorTx.date.split(',')[0]"></span></div>
+                        <div>Tuan/Toko: <span style="font-weight: bold;" x-text="lastVendorTx.supplier"></span></div>
+                        <div>Nota: <span x-text="lastVendorTx.invoice"></span></div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                        <tr style="border-bottom: 1px dashed black; border-top: 1px dashed black;">
+                            <th style="text-align: left; padding: 2px 0; width: 15%;">Bnyk</th>
+                            <th style="text-align: left; width: 50%;">Nama Barang</th>
+                            <th style="text-align: right; width: 35%;">Jumlah</th>
+                        </tr>
+                        <template x-for="item in lastVendorTx.cart">
+                            <tr>
+                                <td style="vertical-align: top; padding-top: 3px;" x-text="item.qty"></td>
+                                <td style="vertical-align: top; padding-top: 3px;"><div x-text="item.name"></div><div style="font-size: 9px;" x-text="'@ ' + formatRupiah(item.buyPrice)"></div></td>
+                                <td style="text-align: right; vertical-align: top; padding-top: 3px;" x-text="formatRupiah(item.buyPrice * item.qty)"></td>
+                            </tr>
+                        </template>
+                        <template x-if="lastVendorTx.cart.some(i => i.returQty > 0)">
+                            <tr><td colspan="3" style="padding-top: 8px; font-weight: bold; font-size: 10px; border-bottom: 1px dashed black;">Dikurangi (Retur):</td></tr>
+                        </template>
+                        <template x-for="item in lastVendorTx.cart.filter(i => i.returQty > 0)">
+                            <tr>
+                                <td style="vertical-align: top; padding-top: 3px; color: red;" x-text="item.returQty"></td>
+                                <td style="vertical-align: top; padding-top: 3px; color: red;" x-text="item.name"></td>
+                                <td style="text-align: right; vertical-align: top; padding-top: 3px; color: red;" x-text="'- ' + formatRupiah(item.buyPrice * item.returQty)"></td>
+                            </tr>
+                        </template>
+                    </table>
+                    <div style="border-top: 1px dashed black; padding-top: 5px; margin-bottom: 5px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>Total Awal:</div>
+                            <div x-text="formatRupiah(lastVendorTx.cart.reduce((s,i)=>s+(i.buyPrice*i.qty),0))"></div>
+                        </div>
+                        <template x-if="lastVendorTx.cart.some(i => i.returQty > 0)">
+                            <div style="display: flex; justify-content: space-between; color: red;">
+                                <div>Total Retur:</div>
+                                <div x-text="'- ' + formatRupiah(lastVendorTx.cart.reduce((s,i)=>s+(i.buyPrice*(i.returQty||0)),0))"></div>
+                            </div>
+                        </template>
+                        <div x-show="lastVendorTx.discount > 0" style="display: flex; justify-content: space-between; color: red;">
+                            <div>Potongan Lain:</div>
+                            <div x-text="'- ' + formatRupiah(lastVendorTx.discount)"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 3px;">
+                            <div>Jumlah Bayar Rp:</div>
+                            <div x-text="formatRupiah(lastVendorTx.grandTotal)"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                            <div>Status:</div>
+                            <div style="font-weight: bold;" x-text="lastVendorTx.method === 'Titip Jual' ? 'Titip Jual (Belum Bayar)' : 'Lunas ' + lastVendorTx.method"></div>
+                        </div>
+                    </div>
+                    <div x-show="lastVendorTx.notes" style="margin-bottom: 10px; font-size: 10px; font-style: italic;" x-text="'Ket: ' + lastVendorTx.notes"></div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 20px; text-align: center;">
+                        <div><div style="margin-bottom: 25px;">Tanda Terima</div><div>(................)</div></div>
+                        <div><div style="margin-bottom: 25px;">Hormat Kami</div><div x-text="activeCashier"></div></div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
     <!-- Panggil File Javascript Eksternal -->
     <script src="app.js"></script>
 
