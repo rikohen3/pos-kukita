@@ -26,10 +26,8 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         body { -webkit-user-select: none; user-select: none; }
         input, select, textarea { -webkit-user-select: auto; user-select: auto; }
-        
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
-
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
@@ -77,9 +75,7 @@
                 <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="layout-dashboard" class="w-6 h-6 md:mr-3"></i><span class="hidden md:block font-medium">POS Kasir</span></button>
                 <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="calendar-days" class="w-6 h-6 md:mr-3 text-purple-500"></i><span class="hidden md:block font-bold">Buku Pesanan (PO)</span></button>
                 <button @click="currentTab = 'piutang'; fetchPiutang();" :class="currentTab === 'piutang' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="book-down" class="w-6 h-6 md:mr-3 text-red-500"></i><span class="hidden md:block font-bold">Buku Piutang</span></button>
-                
                 <button x-show="activeCashier === 'Admin Toko'" @click="currentTab = 'restock'; fetchOptions();" :class="currentTab === 'restock' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="truck" class="w-6 h-6 md:mr-3 text-blue-500"></i><span class="hidden md:block font-bold">Terima Barang</span></button>
-
                 <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="package" class="w-6 h-6 md:mr-3"></i><span class="hidden md:block font-medium">Master Produk</span></button>
                 <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="wallet" class="w-6 h-6 md:mr-3"></i><span class="hidden md:block font-medium">Pengeluaran</span></button>
                 <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="bar-chart-3" class="w-6 h-6 md:mr-3"></i><span class="hidden md:block font-medium">Laporan & Analitik</span></button>
@@ -94,7 +90,6 @@
                 <div class="flex items-center w-full max-w-xl relative"><i data-lucide="search" class="absolute left-3 text-gray-400 w-5 h-5"></i><input type="text" x-model="searchQuery" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-brand-brown bg-gray-50"></div>
                 <div class="ml-4 flex items-center gap-2 md:gap-4">
                     <button @click="fetchCatalog()" class="text-brand-brown hover:text-orange-600 flex items-center p-2 rounded-full hover:bg-orange-50 transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
-                    <!-- TAMPILAN KASIR AKTIF -->
                     <div class="flex items-center gap-2 bg-orange-100 px-3 py-1.5 rounded-full border border-orange-200">
                         <i data-lucide="user-check" class="w-4 h-4 text-brand-orange"></i>
                         <span class="text-xs md:text-sm font-bold text-brand-brown" x-text="activeCashier"></span>
@@ -145,7 +140,6 @@
                                     <p class="text-brand-brown text-sm" x-show="!isCustomPackage" x-text="formatRupiah(item.price)"></p>
                                     <p class="text-brand-orange text-[10px] font-bold italic" x-show="isCustomPackage">Tergabung dlm Paket</p>
                                 </div>
-                                
                                 <div class="flex items-center gap-1 md:gap-2">
                                     <div class="flex items-center bg-gray-100 rounded-lg">
                                         <button @click="decreaseQty(index)" class="w-7 h-7 hover:bg-gray-200 rounded-l-lg">-</button>
@@ -164,14 +158,12 @@
                             <button @click="setCustomPrice()" x-show="cart.length > 0" class="w-full bg-orange-100 text-brand-orange border border-orange-200 py-2 rounded-lg font-bold hover:bg-orange-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="edit-3" class="w-3 h-3"></i> Set Hrg Paket</button>
                             <button @click.stop="openPoForm()" x-show="cart.length > 0" class="w-full bg-purple-100 text-purple-700 border border-purple-200 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex justify-center items-center gap-1 text-[11px] md:text-xs"><i data-lucide="book-check" class="w-3 h-3"></i> Simpan sbg PO</button>
                         </div>
-                        
                         <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Total Barang</span><span class="font-semibold text-brand-brown" x-text="totalQty + ' Pcs'"></span></div>
                         <div class="flex justify-between mb-2 text-sm text-gray-600"><span>Subtotal</span><span class="font-semibold" x-text="formatRupiah(total)"></span></div>
                         <div class="flex justify-between mt-2 mb-6"><span class="text-lg font-bold">Total</span><span class="text-2xl font-bold text-brand-orange" x-text="formatRupiah(total)"></span></div>
                         
                         <!-- TOMBOL BAYAR SEKARANG -->
                         <button @click.stop="openPayment()" :disabled="cart.length === 0" :class="cart.length === 0 ? 'bg-gray-300' : 'bg-brand-orange hover:bg-orange-600'" class="w-full text-white py-4 rounded-xl font-bold flex justify-center items-center gap-2 transition"><i data-lucide="credit-card"></i> BAYAR SEKARANG</button>
-                    
                     </div>
                 </aside>
                 <button @click="showMobileCart = true" class="md:hidden fixed bottom-24 right-4 bg-brand-orange text-white px-5 py-4 rounded-full shadow-2xl z-30 hover:bg-orange-600 flex items-center justify-center gap-3 transition-transform hover:scale-105" x-show="!showMobileCart">
@@ -189,7 +181,6 @@
             <header class="flex-shrink-0 h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
                 <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="truck" class="text-blue-500"></i> Terima Barang (Konsinyasi)</h1>
             </header>
-            
             <div class="flex flex-1 overflow-hidden relative flex-col md:flex-row">
                 <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
                     
@@ -200,8 +191,7 @@
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <template x-for="sup in pendingDrafts" :key="sup.id">
-                                <button @click="restockSupplierId = sup.id; loadDraftSupplier()" 
-                                        class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 shadow-sm transition-transform hover:scale-105">
+                                <button @click="restockSupplierId = sup.id; loadDraftSupplier()" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 shadow-sm transition-transform hover:scale-105">
                                     <i data-lucide="clock" class="w-3 h-3"></i> <span x-text="sup.name"></span>
                                 </button>
                             </template>
@@ -240,7 +230,6 @@
                         <div class="flex items-center"><i data-lucide="clipboard-list" class="w-4 h-4 mr-2"></i> Rincian Nota Datang</div>
                         <div x-show="restockCart.length > 0" class="text-[10px] bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full animate-pulse">Draft Tersimpan</div>
                     </div>
-                    
                     <div class="flex-1 overflow-y-auto p-3 flex flex-col gap-2 relative">
                         <template x-if="restockCart.length === 0">
                             <div class="text-center text-gray-400 mt-10"><i data-lucide="box" class="w-10 h-10 mx-auto mb-2 opacity-30"></i><p class="text-xs">Klik kue di sebelah kiri<br>untuk memasukkan ke nota.</p></div>
@@ -264,7 +253,6 @@
                                         <button @click="updateRestockQty(index, 1)" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-r-md text-sm font-bold text-gray-600">+</button>
                                     </div>
                                 </div>
-                                
                                 <div class="mt-2 pt-2 border-t border-dashed border-gray-200">
                                     <div class="flex items-center justify-between mb-1">
                                         <div class="text-[10px] font-bold text-red-500">Jumlah Retur (Ditarik Vendor):</div>
@@ -276,11 +264,9 @@
                                     </div>
                                     <p class="text-[8px] text-gray-400 italic mt-0.5">*(Kue yang lanjut nginap di toko tidak usah diketik)</p>
                                 </div>
-                                
                                 <div class="text-right mt-2 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded" x-text="'Dibayar: ' + formatRupiah(item.buyPrice * (item.qty - (item.returQty || 0)))"></div>
                             </div>
                         </template>
-                        
                         <div x-show="restockCart.length > 0" class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <label class="flex items-start gap-2 text-sm text-yellow-800 font-medium cursor-pointer">
                                 <input type="checkbox" x-model="restockStockAddedPagi" class="w-5 h-5 mt-0.5 accent-brand-brown">
@@ -288,7 +274,6 @@
                             </label>
                         </div>
                     </div>
-                    
                     <div class="p-4 border-t bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                         <div class="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
                             <div class="flex items-center justify-between text-xs">
@@ -304,11 +289,10 @@
                                 <span class="font-extrabold text-lg text-blue-600" x-text="formatRupiah(restockGrandTotal)"></span>
                             </div>
                         </div>
-                        
                         <div class="grid grid-cols-2 gap-2 mb-4">
                             <div>
                                 <label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Metode Saat Dicetak</label>
-                                <select x-model="restockMethod" @change="saveDraftLocally()" class="w-full p-2 border border-gray-300 rounded text-xs font-bold outline-none focus:border-blue-500 bg-white">
+                                <select x-model="restockMethod" @change="saveDraftLocally()" class="w-full p-2 border border-gray-300 rounded text-xs font-bold outline-none focus:border-blue-50 bg-white">
                                     <option value="Tunai">Tunai Laci</option>
                                     <option value="Transfer">Transfer Bank</option>
                                     <option value="Titip Jual">Belum Dibayar (Kasbon)</option>
@@ -319,7 +303,6 @@
                                 <input type="text" x-model="restockNotes" @input="saveDraftLocally()" placeholder="Ket..." class="w-full p-2 border border-gray-300 rounded text-xs outline-none focus:border-blue-500 bg-white">
                             </div>
                         </div>
-                        
                         <div class="flex gap-2">
                             <button @click="submitRestock(false)" :disabled="restockCart.length === 0 || isProcessing" class="flex-1 bg-yellow-500 text-yellow-900 py-3 rounded-xl font-bold text-xs flex flex-col items-center justify-center hover:bg-yellow-600 disabled:opacity-50 transition-all shadow-sm">
                                 <i data-lucide="archive" class="w-4 h-4 mb-1"></i>
@@ -404,7 +387,6 @@
 
                             <div class="p-3 grid grid-cols-3 gap-2">
                                 <button @click="printPO(order)" class="col-span-3 bg-brand-brown text-white hover:bg-orange-800 font-bold py-2 rounded-lg text-xs md:text-sm flex justify-center items-center gap-1 transition shadow-sm mb-1"><i data-lucide="printer" class="w-4 h-4"></i> Cetak Struk PO</button>
-                                
                                 <button @click="deleteOrder(order.id, order.customerName)" class="col-span-1 bg-red-50 text-red-600 hover:bg-red-100 font-bold py-2 rounded-lg text-xs flex justify-center items-center gap-1 transition"><i data-lucide="trash-2" class="w-3 h-3"></i> Batal</button>
                                 <button @click="completeOrder(order)" class="col-span-2 bg-green-500 text-white hover:bg-green-600 font-bold py-2 rounded-lg text-xs md:text-sm flex justify-center items-center gap-1 transition shadow-sm"><i data-lucide="check-circle" class="w-4 h-4"></i> Selesai & Ambil Kue</button>
                             </div>
@@ -1297,674 +1279,72 @@
         </template>
     </div>
 
-    <!-- Script Utama -->
+    <!-- Script Utama (SANGAT DIPADATKAN AGAR TIDAK TERPOTONG BROWSER) -->
     <script>
-        const SERVER_URL = 'https://pos-kukita.vercel.app';
-
-        function posApp() {
-            return {
-                // FITUR KASIR UMUM
-                activeCashier: null, loginPin: '', cashiersList: [], newCashierName: '', newCashierPin: '',
-                currentTab: 'pos', categories: ['Semua'], selectedCategory: 'Semua', searchQuery: '', masterSearchQuery: '', cart: [], products: [], 
-                showMobileCart: false, showPaymentModal: false, paymentStep: 'input', paymentMethod: 'Tunai', 
-                cashReceived: '', mixCash: '', isProcessing: false, isLoading: true, lastTx: null, isCustomPackage: false, 
-                currentTime: new Date().toLocaleString('id-ID'),
-                expCat: 'Pembayaran Vendor (Kue / Stok)', expDesc: '', expAmount: '', expMethod: 'Tunai',
-                reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, piutang: 0, grossProfit: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, netProfit: 0, salesHistory: [], stockHistory: [], vendorHistory: [] }, 
-                customerName: '', itemReports: [], reportPeriod: 'today', startDate: '', endDate: '', reportSubTab: 'ringkasan',
-                oldPin: '', newPin: '', isPrintingReceipt: false, isPrintingCatalog: false,
-                showAddProductModal: false, options: { categories: [], suppliers: [] }, 
-                newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' },
-                
-                // POP-UP DETAIL TRANSAKSI
-                showDetailModal: false, selectedTx: null, selectedTxCart: [],
-
-                // SALDO AWAL LACI
-                saldoAwalLaci: localStorage.getItem('saldo_laci') || 0,
-                // SIMPAN TOTAL PAKET FIX
-                packageTotal: 0,
-                // MENAMBAH FITUR SORTING (MENGURUTKAN PRODUK)
-                productSortBy: 'name_asc',
-
-                // VARIABEL BUKU PESANAN & PIUTANG
-                poList: [], piutangList: [], showPoModal: false,
-                poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
-
-                // VARIABEL BUKU TERIMA BARANG (VENDOR) DRAFT
-                restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
-                restockStockAddedPagi: false, // Checkbox pengaman stok ganda
-                pendingDrafts: [], // Array untuk menyimpan daftar vendor yang punya draft
-
-                async init() {
-                    setTimeout(() => { lucide.createIcons(); }, 100);
-                    setInterval(() => { this.currentTime = new Date().toLocaleString('id-ID'); }, 1000);
-                    this.$watch('currentTab', () => { setTimeout(() => { lucide.createIcons(); }, 50); });
-                    this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
-                    
-                    await this.fetchCashiers(); await this.fetchCatalog();
-                },
-
-                // FITUR INDIKATOR DRAFT KUNING 🟡 (Di dalam Dropdown)
-                hasDraft(supId) {
-                    return localStorage.getItem('draft_restock_' + supId) !== null;
-                },
-
-                // FITUR PENGINGAT KOTAK KUNING (Sesuai Foto Mba Ayu)
-                updatePendingDrafts() {
-                    if (!this.options || !this.options.suppliers) return;
-                    this.pendingDrafts = this.options.suppliers.filter(sup => {
-                        return localStorage.getItem('draft_restock_' + sup.id) !== null;
-                    });
-                },
-
-                // FITUR LIHAT DETAIL TRANSAKSI (POP-UP)
-                viewTransactionDetail(tx) {
-                    this.selectedTx = tx;
-                    let reconstructedCart = [];
-                    if (tx.items) {
-                        const parts = tx.items.split(', ');
-                        reconstructedCart = parts.map(p => {
-                            let name = p.trim();
-                            let qty = 1;
-                            const match = p.match(/(.*) \(x(\d+)\)/);
-                            if (match) { name = match[1].trim(); qty = parseInt(match[2]); }
-                            
-                            // MENGOBATI AMNESIA HARGA: Cari produknya di Master Katalog
-                            let foundProduct = this.products.find(prod => prod.name === name);
-                            let price = foundProduct ? foundProduct.price : 0;
-                            
-                            return { name: name, qty: qty, price: price };
-                        });
-                    }
-                    this.selectedTxCart = reconstructedCart;
-                    this.showDetailModal = true;
-                    setTimeout(() => { lucide.createIcons(); }, 10);
-                },
-
-                // FITUR CEK UMUR KUE (ALARM MERAH)
-                isStockOld(product) {
-                    if(!product.lastRestock || product.stock <= 0) return false;
-                    const hours = (new Date() - new Date(product.lastRestock)) / (1000 * 60 * 60);
-                    const cat = (product.category || '').toLowerCase();
-                    let limit = 24; // Default kue basah / jajan pasar 1 hari (24 Jam)
-                    if (cat.includes('minum') || cat.includes('cair')) limit = 24 * 30; // Minuman 30 hari
-                    else if (cat.includes('kering') || cat.includes('snack') || cat.includes('keripik')) limit = 24 * 14; // Snack 14 hari
-                    return hours > limit;
-                },
-                formatDateShort(d) {
-                    if (!d) return '-';
-                    const date = new Date(d);
-                    return date.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'}) + ' ' + date.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
-                },
-                resetStockAge(id, name) {
-                    if(!confirm(`Perbarui umur kue ${name}?\n\nTanggal masuk kue ini akan di-reset menjadi hari ini sehingga peringatan kadaluarsa hilang.`)) return;
-                    localStorage.setItem('last_restock_date_' + id, new Date().toISOString());
-                    this.fetchCatalog();
-                },
-
-                restorePrices() {
-                    if(this.isCustomPackage) {
-                        this.isCustomPackage = false;
-                        this.packageTotal = 0;
-                        this.customerName = '';
-                        this.cart.forEach(item => {
-                            const prod = this.products.find(p => p.id === item.id && p.type === item.type);
-                            if(prod) item.price = prod.price;
-                        });
-                    }
-                },
-
-                async editSaldoAwal() {
-                    const sandi = prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin untuk mengubah modal laci:"); 
-                    if (!sandi) return;
-                    try {
-                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
-                        const inputStr = prompt("💰 MASUKKAN SALDO AWAL LACI\nKetik jumlah uang kas di laci pagi ini:", this.saldoAwalLaci);
-                        if (inputStr === null || inputStr.trim() === "") return;
-                        const nominal = parseInt(inputStr);
-                        if (isNaN(nominal) || nominal < 0) return alert('Nominal tidak valid!');
-                        this.saldoAwalLaci = nominal;
-                        localStorage.setItem('saldo_laci', this.saldoAwalLaci);
-                        alert('✅ Saldo Awal berhasil disimpan!');
-                    } catch (e) { alert('Gagal memverifikasi PIN.'); }
-                },
-
-                // LOGIKA KASIR
-                async fetchCashiers() { try { const res = await fetch(`${SERVER_URL}/api/cashiers`); const data = await res.json(); if(data.success) this.cashiersList = data.data; } catch(e){} },
-                async login() {
-                    if(!this.loginPin) return;
-                    if (this.loginPin === '030388' || this.loginPin === '100515' || this.loginPin === '818283') { this.activeCashier = 'Admin Toko'; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); await this.fetchCashiers(); await this.fetchCatalog(); return; }
-                    const found = this.cashiersList.find(c => c.pin === this.loginPin);
-                    if (found) { this.activeCashier = found.name; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; }
-                    try {
-                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: this.loginPin }) });
-                        if ((await resPin.json()).success) { this.activeCashier = 'Admin Toko'; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); return; }
-                    } catch(e){}
-                    alert('❌ Akses Ditolak!'); this.loginPin = '';
-                },
-                logout() { this.activeCashier = null; this.currentTab = 'pos'; },
-                
-                async fetchCatalog() {
-                    this.isLoading = true;
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/catalog`); const result = await res.json();
-                        if(result.success) {
-                            const prodList = result.data.products.map(p => {
-                                // Ambil riwayat tanggal masuk dari memori tablet
-                                const lastRestock = localStorage.getItem('last_restock_date_' + p.id);
-                                return { 
-                                    id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, supplierId: p.supplier.id, 
-                                    price: p.sellPrice, buyPrice: p.buyPrice, stock: p.stock, image: p.image || null, 
-                                    icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product',
-                                    lastRestock: lastRestock
-                                };
-                            });
-                            const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', supplierId: null, price: p.sellPrice, stock: 999, image: p.image || null, icon: '🎁', type: 'package' }));
-                            this.products = [...prodList, ...pkgList]; this.categories = ['Semua', ...Array.from(new Set(this.products.map(p => p.category)))];
-                        }
-                    } catch (e) {} finally { this.isLoading = false; setTimeout(() => { lucide.createIcons(); }, 10); }
-                },
-
-                get filteredProducts() { return this.products.filter(p => { const matchCat = this.selectedCategory === 'Semua' || p.category === this.selectedCategory; const matchSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase()); return matchCat && matchSearch; }); },
-                
-                get filteredMasterProducts() { 
-                    let filtered = this.products.filter(p => p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase())); 
-                    if (this.productSortBy === 'stock_desc') { 
-                        filtered.sort((a, b) => (b.stock || 0) - (a.stock || 0)); 
-                    } else if (this.productSortBy === 'stock_asc') { 
-                        filtered.sort((a, b) => (a.stock || 0) - (b.stock || 0)); 
-                    } else { 
-                        filtered.sort((a, b) => a.name.localeCompare(b.name)); 
-                    }
-                    return filtered;
-                },
-                
-                addToCart(product) { 
-                    this.restorePrices(); 
-                    const itemToAdd = { ...product, cartItemId: Date.now() + Math.random(), qty: 1 }; 
-                    const existing = this.cart.find(item => item.id === product.id && item.type === product.type && item.price === product.price); 
-                    if (existing) { existing.qty++; } else { this.cart.unshift(itemToAdd); } 
-                },
-                
-                increaseQty(index) { this.restorePrices(); this.cart[index].qty++; },
-                decreaseQty(index) { this.restorePrices(); if (this.cart[index].qty > 1) this.cart[index].qty--; else this.removeFromCart(index); },
-                removeFromCart(index) { this.restorePrices(); this.cart.splice(index, 1); },
-                validateQty(index) { this.restorePrices(); let val = parseInt(this.cart[index].qty); if (isNaN(val) || val < 1) val = 1; this.cart[index].qty = val; },
-
-                get total() { return this.isCustomPackage ? this.packageTotal : this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0); },
-                get totalQty() { return this.cart.reduce((sum, item) => sum + item.qty, 0); },
-                get change() { return parseFloat(this.cashReceived || 0) - this.total; },
-                formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); },
-                
-                setCustomPrice() { 
-                    if (this.cart.length === 0) return alert('Keranjang kosong!'); 
-                    const qtyStr = prompt('📦 SET HARGA PAKET\nJumlah Kotak?', '1'); if (!qtyStr) return; const qtyBox = parseInt(qtyStr); if (isNaN(qtyBox) || qtyBox <= 0) return alert('Tidak valid!');
-                    const priceStr = prompt(`Harga Per Kotak?`, '0'); if (!priceStr) return; const pricePerBox = parseFloat(priceStr); if (isNaN(pricePerBox) || pricePerBox < 0) return alert('Tidak valid!');
-                    const newTotal = qtyBox * pricePerBox;
-                    const inputNama = prompt(`Nama Pemesan:`, ''); let namaPemesan = inputNama ? inputNama.trim() + " - " : "Pesanan Umum - ";
-                    this.customerName = `${namaPemesan}${qtyBox} Kotak`; 
-                    this.isCustomPackage = true; 
-                    this.packageTotal = newTotal; 
-                    
-                    let originalTotal = 0; this.cart.forEach(item => { const prod = this.products.find(p => p.id === item.id && p.type === item.type); originalTotal += ((prod ? prod.price : item.price) * item.qty); });
-                    if (originalTotal > 0) {
-                        const ratio = newTotal / originalTotal; let runningTotal = 0; 
-                        for (let i = 0; i < this.cart.length; i++) { 
-                            const prod = this.products.find(p => p.id === this.cart[i].id && p.type === this.cart[i].type); const normalPrice = prod ? prod.price : this.cart[i].price;
-                            if (i === this.cart.length - 1) { this.cart[i].price = Math.round((newTotal - runningTotal) / this.cart[i].qty); } 
-                            else { const newPrice = Math.round(normalPrice * ratio); this.cart[i].price = newPrice; runningTotal += (newPrice * this.cart[i].qty); } 
-                        } 
-                    }
-                    alert(`✅ SET BERHASIL! Silakan klik BAYAR ATAU SIMPAN PO.`);
-                },
-                
-                openPayment() { 
-                    let stokKurang = false; 
-                    let namaBarangKurang = '';
-                    
-                    for (let item of this.cart) {
-                        if (item.type === 'product') {
-                            const prod = this.products.find(p => p.id === item.id && p.type === item.type);
-                            // Safety check untuk memastikan angka tidak error
-                            if (prod && item.qty > Number(prod.stock || 0)) { 
-                                stokKurang = true; 
-                                namaBarangKurang = item.name; 
-                                break; 
-                            }
-                        }
-                    }
-                    
-                    if (stokKurang) { 
-                        return alert(`❌ STOK TIDAK CUKUP!\n\nSisa stok fisik '${namaBarangKurang}' di etalase tidak mencukupi untuk dijual hari ini.\n\n💡 Jika ini pesanan untuk besok/lusa, silakan gunakan tombol "Simpan sbg PO".`); 
-                    }
-                    
-                    this.cashReceived = ''; 
-                    this.mixCash = ''; 
-                    this.paymentMethod = 'Tunai'; 
-                    this.paymentStep = 'input'; 
-                    this.showPaymentModal = true; 
-                    
-                    setTimeout(() => { lucide.createIcons(); }, 10); 
-                },
-                
-                closePayment() { 
-                    if (this.paymentStep === 'success') { 
-                        this.resetCart(); 
-                    } else { 
-                        this.showPaymentModal = false; 
-                    } 
-                },
-                
-                async processTransaction() {
-                    let totalBelanja = this.total; let qtyBelanja = this.totalQty; let uangMasuk = 0;
-                    if (this.paymentMethod === 'Tunai') { uangMasuk = parseFloat(this.cashReceived) || totalBelanja; } 
-                    else if (this.paymentMethod === 'Mix') { uangMasuk = parseFloat(this.mixCash) || 0; if (uangMasuk <= 0 || uangMasuk >= totalBelanja) return alert('❌ Nominal Tunai Mix tidak valid!'); } 
-                    else if (this.paymentMethod === 'Piutang') { if (!this.customerName) return alert('❌ Nama Pemesan WAJIB diisi untuk kasbon!'); uangMasuk = 0; }
-
-                    this.isProcessing = true;
-                    let uangKembali = this.paymentMethod === 'Tunai' ? (uangMasuk - totalBelanja) : 0;
-                    let keranjangFix = JSON.parse(JSON.stringify(this.cart));
-                    let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
-                    let finalName = this.customerName ? `${this.customerName} [Kasir: ${this.activeCashier}]` : `[Kasir: ${this.activeCashier}]`;
-
-                    const payload = { cart: mappedCart, paymentMethod: this.paymentMethod, cashReceived: uangMasuk, totalAmount: totalBelanja, isPackage: this.isCustomPackage, customerName: finalName };
-                    
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                        const result = await res.json();
-                        if (result.success) { 
-                            this.lastTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), cart: keranjangFix, total: totalBelanja, cash: uangMasuk, change: uangKembali, isPackage: this.isCustomPackage, method: this.paymentMethod, totalQty: qtyBelanja }; 
-                            this.paymentStep = 'success'; this.fetchCatalog();
-                        } else alert('Gagal.');
-                    } catch (e) { alert('Error.'); } finally { this.isProcessing = false; }
-                },
-
-                // ==========================================
-                // FUNGSI BUKU PESANAN (PO) & PIUTANG
-                // ==========================================
-                openPoForm() { this.poForm = { name: this.customerName || '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' }; this.showPoModal = true; setTimeout(() => { lucide.createIcons(); }, 10); },
-                
-                async fetchOrders() { try { const res = await fetch(`${SERVER_URL}/api/orders`); const data = await res.json(); if (data.success) { this.poList = data.data; setTimeout(() => { lucide.createIcons(); }, 10); } } catch (error) {} },
-                async fetchPiutang() { try { const res = await fetch(`${SERVER_URL}/api/piutang`); const result = await res.json(); if(result.success) { this.piutangList = result.data; setTimeout(() => { lucide.createIcons(); }, 10); } } catch(e) {} },
-                isPast(dateString) { return new Date(dateString) < new Date(); },
-
-                async submitPo() {
-                    if (!this.poForm.name || !this.poForm.pickupDate) return alert('Nama dan Waktu Pengambilan Wajib Diisi!');
-                    this.isProcessing = true;
-                    let mappedCart = this.cart.map(item => ({ id: item.id, type: item.type, qty: item.qty, price: item.price }));
-                    const payload = { customerName: this.poForm.name, customerPhone: this.poForm.phone, pickupDate: this.poForm.pickupDate, shippingCost: this.poForm.shippingCost, downPayment: this.poForm.dp, paymentMethod: this.poForm.paymentMethod, notes: this.poForm.notes, cashierName: this.activeCashier, cart: mappedCart, totalAmount: this.total };
-
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                        const result = await res.json();
-                        if (result.success) { alert('✅ BUKU PESANAN TERSIMPAN!\nStok barang belum dipotong. Anda bisa mengeceknya di menu Buku Pesanan.'); this.showPoModal = false; this.resetCart(); this.fetchOrders(); } else { alert('Gagal menyimpan PO.'); }
-                    } catch (e) {} finally { this.isProcessing = false; }
-                },
-
-                async completeOrder(order) {
-                    const remaining = (order.totalAmount + order.shippingCost) - order.downPayment;
-                    let method = order.paymentMethod || 'Tunai';
-
-                    if (remaining > 0) {
-                        const inputMethod = prompt(`💰 PELUNASAN KUE\n\nPesanan ini memiliki sisa tagihan: Rp ${new Intl.NumberFormat('id-ID').format(remaining)}\n\nSisa tagihan ini diselesaikan menggunakan metode apa?\nKetik "1" untuk TUNAI\nKetik "2" untuk QRIS / Transfer\nKetik "3" untuk KASBON / PIUTANG INSTANSI`, '1');
-                        if (inputMethod === null) return;
-                        if (inputMethod === '3') { method = 'Piutang'; } else { method = inputMethod === '2' ? 'QRIS' : 'Tunai'; }
-                    }
-
-                    if (!confirm(`⚠️ Selesaikan pesanan ${order.customerName}?\n\n- Stok fisik kue akan otomatis dipotong hari ini.\n- Jika ada sisa tagihan/piutang, akan masuk ke laporan hari ini.`)) return;
-
-                    this.isProcessing = true;
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/orders/${order.id}/complete`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentMethod: method }) });
-                        const result = await res.json();
-                        if (result.success) {
-                            this.lastTx = { invoice: `LUNAS-${order.invoice} (${order.customerName})`, date: new Date().toLocaleString('id-ID'), cart: order.items.map(i => ({ name: i.product ? i.product.name : i.package.name, qty: i.qty, price: i.price })), total: remaining, cash: method === 'Tunai' ? remaining : 0, change: 0, isPackage: false, method: method, totalQty: order.items.reduce((sum, i) => sum + i.qty, 0) };
-                            this.paymentStep = 'success'; this.showPaymentModal = true; this.fetchOrders(); this.fetchCatalog();
-                        } else alert('Gagal memproses pesanan.');
-                    } catch (e) {} finally { this.isProcessing = false; }
-                },
-
-                async deleteOrder(id, name) {
-                    const sandi = prompt(`🔒 HAPUS PESANAN\n\nMasukkan PIN Admin Anda untuk menghapus pesanan atas nama ${name}:`); if (!sandi) return;
-                    const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                    if (!(await resPin.json()).success) return alert("❌ Akses ditolak! Password salah.");
-                    if (!confirm('Yakin ingin membatalkan dan menghapus pesanan ini dari buku?')) return;
-                    try {
-                        const res = await fetch(`${SERVER_URL}/api/orders/${id}`, { method: 'DELETE' });
-                        if ((await res.json()).success) { alert('Pesanan dibatalkan.'); this.fetchOrders(); }
-                    } catch (e) {}
-                },
-
-                resetCart() { this.cart = []; this.isCustomPackage = false; this.packageTotal = 0; this.customerName = ''; this.showPaymentModal = false; this.paymentStep = 'input'; this.showMobileCart = false; },
-
-                printPO(order) {
-                    this.lastTx = {
-                        invoice: order.invoice,
-                        date: new Date(order.pickupDate).toLocaleString('id-ID'),
-                        cart: order.items.map(i => ({ name: i.product ? i.product.name : i.package.name, qty: i.qty, price: i.price })),
-                        total: order.totalAmount + order.shippingCost,
-                        cash: order.downPayment, 
-                        change: 0,
-                        isPackage: false,
-                        method: order.paymentMethod || 'Tunai',
-                        totalQty: order.items.reduce((sum, i) => sum + i.qty, 0),
-                        isPO: true, 
-                        shippingCost: order.shippingCost,
-                        downPayment: order.downPayment,
-                        remaining: (order.totalAmount + order.shippingCost) - order.downPayment
-                    };
-                    this.printReceipt();
-                },
-
-                // ==========================================
-                // FUNGSI TERIMA BARANG VENDOR (SISTEM DRAFT + RETUR)
-                // ==========================================
-                
-                loadDraftSupplier() {
-                    if(this.restockSupplierId) {
-                        const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
-                        this.restockSupplierName = selectedSup ? selectedSup.name : '';
-                    } else {
-                        this.restockSupplierName = '';
-                    }
-
-                    this.restockCart = []; this.restockDiscount = ''; this.restockNotes = '';
-                    this.restockStockAddedPagi = false; // Reset checkbox
-
-                    if(!this.restockSupplierId) return;
-                    const savedDraft = localStorage.getItem(`draft_restock_${this.restockSupplierId}`);
-                    if(savedDraft) {
-                        try {
-                            const parsed = JSON.parse(savedDraft);
-                            this.restockCart = parsed.cart || [];
-                            this.restockDiscount = parsed.discount || '';
-                            this.restockMethod = parsed.method || 'Tunai';
-                            this.restockNotes = parsed.notes || '';
-                            
-                            // Jika draft punya checkmark alreadyInStock, otomatis centang pengamannya
-                            if (this.restockCart.some(i => i.alreadyInStock)) {
-                                this.restockStockAddedPagi = true;
-                            }
-                        } catch(e) {}
-                    }
-                },
-                
-                saveDraftLocally() {
-                    if(!this.restockSupplierId) return;
-                    
-                    // Kalau keranjangnya kosong, kita hapus draftnya supaya tombol kuning peringatannya hilang
-                    if(this.restockCart.length === 0 && !this.restockDiscount && !this.restockNotes) {
-                        localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
-                    } else {
-                        const draftData = { cart: this.restockCart, discount: this.restockDiscount, method: this.restockMethod, notes: this.restockNotes };
-                        localStorage.setItem(`draft_restock_${this.restockSupplierId}`, JSON.stringify(draftData));
-                    }
-                    
-                    // Perbarui kotak kuning (Sesuai foto)
-                    this.updatePendingDrafts();
-                },
-
-                addToRestockCart(product) { 
-                    if(!product.buyPrice || product.buyPrice <= 0) return alert('❌ Harga Modal produk ini masih 0 atau belum diisi. Silakan edit terlebih dahulu di menu Master Produk!');
-                    const existing = this.restockCart.find(item => item.id === product.id && !item.alreadyInStock); 
-                    if (existing) { existing.qty++; } else { this.restockCart.unshift({ ...product, qty: 1, returQty: 0, alreadyInStock: false }); } 
-                    this.saveDraftLocally();
-                },
-                
-                updateRestockQty(index, diff) {
-                    if(this.restockCart[index].alreadyInStock) return alert('Barang ini sudah masuk ke stok fisik pagi. Jumlahnya tidak bisa dikurangi dari draft.');
-                    if(diff < 0 && this.restockCart[index].qty <= 1) return;
-                    this.restockCart[index].qty += diff;
-                    this.saveDraftLocally();
-                },
-                
-                setRestockQty(index, val) {
-                    if(this.restockCart[index].alreadyInStock) return alert('Barang ini sudah masuk ke stok fisik pagi.');
-                    let num = parseInt(val); if(isNaN(num) || num < 1) num = 1;
-                    this.restockCart[index].qty = num;
-                    this.saveDraftLocally();
-                },
-
-                updateReturQty(index, diff) {
-                    let item = this.restockCart[index];
-                    if(!item.returQty) item.returQty = 0;
-                    let newVal = item.returQty + diff;
-                    if(newVal < 0) newVal = 0;
-                    if(newVal > item.qty) return alert('Jumlah retur tidak boleh lebih besar dari jumlah barang masuk!');
-                    item.returQty = newVal;
-                    this.saveDraftLocally();
-                },
-
-                validateReturQty(index) {
-                    let item = this.restockCart[index];
-                    let val = parseInt(item.returQty);
-                    if(isNaN(val) || val < 0) val = 0;
-                    if(val > item.qty) { alert('Jumlah retur tidak boleh lebih besar dari jumlah barang masuk!'); val = item.qty; }
-                    item.returQty = val;
-                    this.saveDraftLocally();
-                },
-
-                async removeRestockItem(index) {
-                    if(this.isProcessing) return;
-                    let item = this.restockCart[index];
-                    
-                    if(item.alreadyInStock) {
-                        const sandi = prompt(`🔒 HAPUS DARI DRAFT\n\nBarang ini sudah masuk etalase pagi tadi. Masukkan PIN Admin untuk menghapusnya dari nota sekaligus menarik kembali stok ${item.name} (${item.qty} pcs):`);
-                        if (!sandi) return;
-                        
-                        this.isProcessing = true;
-                        try {
-                            const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                            if (!(await resPin.json()).success) {
-                                this.isProcessing = false;
-                                return alert("❌ Akses ditolak! PIN Salah.");
-                            }
-                        } catch(e) { this.isProcessing = false; return alert("Gagal verifikasi PIN."); }
-
-                        // Kurangi stok di server
-                        const prod = this.products.find(p => p.id === item.id);
-                        if (prod) {
-                            const newStock = prod.stock - item.qty;
-                            try {
-                                await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, {
-                                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: newStock >= 0 ? newStock : 0 })
-                                });
-                            } catch(e) { console.error('Gagal mengurangi stok', e); }
-                        }
-                        alert(`✅ Barang ${item.name} batal diterima. Stok etalase telah ditarik kembali.`);
-                        this.isProcessing = false;
-                    }
-                    
-                    this.restockCart.splice(index, 1);
-                    this.saveDraftLocally();
-                    this.fetchCatalog(); 
-                },
-
-                get restockTotal() { 
-                    return this.restockCart.reduce((sum, i) => sum + ((i.buyPrice || 0) * (i.qty - (i.returQty || 0))), 0); 
-                },
-                get restockGrandTotal() { return this.restockTotal - (parseInt(this.restockDiscount) || 0); },
-                
-                async submitRestock(isPrintingMalam) {
-                    if(this.restockCart.length === 0) return alert('Keranjang penerimaan kosong!');
-                    if(!this.restockSupplierId) return alert('Silakan pilih Supplier/Vendor terlebih dahulu!');
-                    
-                    const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
-                    this.restockSupplierName = selectedSup ? selectedSup.name : 'Vendor Tidak Diketahui';
-
-                    const pesan = isPrintingMalam ? 
-                        "🔒 TUTUP NOTA MALAM\n\nMasukkan PIN Admin untuk menyetujui Pembayaran ke Vendor & Cetak Nota:" : 
-                        "🔒 SIMPAN DRAFT PAGI/SIANG\n\nMasukkan PIN Admin untuk menyetujui Penambahan Stok tanpa mengeluarkan uang:";
-                    
-                    const sandi = prompt(pesan); 
-                    if (!sandi) return;
-                    try {
-                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                        if (!(await resPin.json()).success) return alert("❌ PIN Salah.");
-                    } catch(e) { return alert("Gagal verifikasi PIN."); }
-
-                    this.isProcessing = true;
-                    try {
-                        const hasNewItems = this.restockCart.some(item => !item.alreadyInStock);
-                        
-                        // JIKA KLIK DRAFT PAGI (Hanya Menambah Stok Etalase, Tidak Mencetak Nota Pembayaran)
-                        if (!isPrintingMalam) {
-                            if (!hasNewItems) {
-                                this.isProcessing = false;
-                                return alert('Tidak ada barang baru untuk ditambahkan ke stok pagi. Silakan klik Tutup Nota Malam jika ingin membayar.');
-                            }
-                            
-                            for (let item of this.restockCart) {
-                                if (!item.alreadyInStock) {
-                                    const prod = this.products.find(p => p.id === item.id);
-                                    if (prod) {
-                                        const newStock = prod.stock + item.qty;
-                                        await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
-                                            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) 
-                                        });
-                                        item.alreadyInStock = true;
-                                        localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
-                                    }
-                                }
-                            }
-                            this.restockStockAddedPagi = true;
-                            this.saveDraftLocally();
-                            alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase aplikasi. Tersimpan di Draft untuk dibayar nanti malam.');
-                            
-                            // AUTO BERSIH LAYAR
-                            this.restockSupplierId = '';
-                            this.restockSupplierName = '';
-                            this.restockCart = [];
-                            this.restockDiscount = '';
-                            this.restockNotes = '';
-                            this.restockStockAddedPagi = false;
-                            
-                            this.fetchCatalog();
-                            this.isProcessing = false;
-                            return;
-                        }
-
-                        // JIKA KLIK TUTUP NOTA MALAM (Koreksi Stok, Bayar, Cetak)
-                        if (isPrintingMalam) {
-                            const payloadItems = this.restockCart.map(item => ({
-                                ...item,
-                                qty: item.qty - (item.returQty || 0)
-                            })).filter(item => item.qty > 0);
-
-                            const payload = { supplierId: this.restockSupplierId, supplierName: this.restockSupplierName, items: payloadItems, discount: this.restockDiscount, paymentMethod: this.restockMethod, notes: this.restockNotes, printNow: true };
-                            const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                            const result = await res.json();
-                            
-                            if(result.success) {
-                                for (let item of this.restockCart) {
-                                    if (this.restockStockAddedPagi || item.alreadyInStock) {
-                                        const prod = this.products.find(p => p.id === item.id);
-                                        if (prod) {
-                                            const newStock = prod.stock - item.qty; 
-                                            try {
-                                                await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
-                                                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: newStock >= 0 ? newStock : 0 }) 
-                                                });
-                                            } catch(e) { console.error('Gagal koreksi stok ganda', e); }
-                                        }
-                                    }
-                                    if (!item.alreadyInStock) {
-                                        localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
-                                    }
-                                }
-
-                                const savedCartForReceipt = JSON.parse(JSON.stringify(this.restockCart));
-                                this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: savedCartForReceipt, total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.restockNotes };
-                                alert(`✅ NOTA LUNAS DITUTUP!\nPengeluaran kas sudah tercatat otomatis.`);
-                                
-                                localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
-                                
-                                // AUTO BERSIH LAYAR 
-                                this.restockSupplierId = '';
-                                this.restockSupplierName = '';
-                                this.restockCart = [];
-                                this.restockDiscount = '';
-                                this.restockNotes = '';
-                                this.restockStockAddedPagi = false;
-                                this.updatePendingDrafts(); // Update kotak kuning
-                                
-                                this.fetchReport();
-                                this.isPrintingVendor = true;
-                                setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
-                                this.fetchCatalog(); 
-                            } else {
-                                alert('Gagal menyimpan!\nAlasan Server: ' + (result.message || 'Error Database Tidak Dikenal'));
-                            }
-                        }
-                    } catch(e) { alert('Error koneksi.'); }
-                    finally { this.isProcessing = false; }
-                },
-
-                reprintVendorNota(notaDetail) {
-                    const reconstructedCart = notaDetail.cart.map(c => {
-                        if(c.name) return c; 
-                        const prod = this.products.find(p => p.id === c.id || p.id === c[0]); 
-                        return { name: prod ? prod.name : 'Produk', qty: c.qty || c[1], buyPrice: c.buyPrice || c[2], returQty: c.returQty || 0 };
-                    });
-                    
-                    this.lastVendorTx = {
-                        invoice: notaDetail.invoice,
-                        date: new Date().toLocaleString('id-ID'), 
-                        supplier: notaDetail.supplier || 'Data Lama (Tanpa Nama)',
-                        cart: reconstructedCart,
-                        total: notaDetail.total,
-                        discount: notaDetail.discount,
-                        grandTotal: notaDetail.grandTotal,
-                        method: notaDetail.method,
-                        notes: notaDetail.keteranganManual
-                    };
-                    this.isPrintingVendor = true;
-                    setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
-                },
-
-                async deleteVendorNota(id, detailNota) {
-                    const namaSup = detailNota.supplier || 'Vendor';
-                    const sandi = prompt(`🔒 HAPUS NOTA VENDOR\nMasukkan PIN Admin untuk menghapus nota dari ${namaSup} dan mengembalikan stok:`); 
-                    if (!sandi) return;
-                    
-                    try {
-                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
-                        
-                        if (!confirm(`⚠️ YAKIN HAPUS NOTA ${detailNota.invoice}?\nIni akan MENGHAPUS pengeluaran kas. Stok kue mohon dikurangi manual di Master Produk.`)) return;
-
-                        const res = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
-                        if ((await res.json()).success) { 
-                            alert(`✅ Nota dan Pengeluaran Kas berhasil dihapus.\n\n⚠️ PENTING: Sistem tidak mengurangi stok kue secara otomatis. Silakan kurangi stok kue secara manual di menu Master Produk jika perlu.`); 
-                            this.fetchReport(); 
-                        } 
-                    } catch (e) {
-                        alert('Gagal menghapus nota.');
-                    }
-                },
-
-                async deleteStockHistory(id) {
-                    const sandi = prompt(`🔒 BATALKAN STOK MASUK\nMasukkan PIN Admin untuk menghapus riwayat dan mengurangi stok kue di etalase:`); 
-                    if (!sandi) return;
-                    
-                    try {
-                        const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                        if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
-                        
-                        if (!confirm(`⚠️ YAKIN MEMBATALKAN STOK INI?\nStok fisik produk ini di etalase akan otomatis dikurangi/ditarik kembali.`)) return;
-
-                        const res = await fetch(`${SERVER_URL}/api/stock-history/${id}`, { method: 'DELETE' });
-                        if ((await res.json()).success) { 
-                            alert(`✅ Berhasil! Riwayat penerimaan barang dihapus dan stok kue telah dikurangi.`); 
-                            this.fetchReport(); 
-                            this.fetchCatalog(); 
-                        } else {
-                            alert('Gagal menghapus riwayat stok.');
-                        }
-                    } catch (e) {
-                        alert('Error saat menghapus riwayat stok.');
-                    }
-                },
-
-Saya adalah AI berbasis teks, dan hal itu di luar kemampuan saya.
+        const SERVER_URL='https://pos-kukita.vercel.app';
+        function posApp(){return{
+        activeCashier:null,loginPin:'',cashiersList:[],newCashierName:'',newCashierPin:'',currentTab:'pos',categories:['Semua'],selectedCategory:'Semua',searchQuery:'',masterSearchQuery:'',cart:[],products:[],showMobileCart:false,showPaymentModal:false,paymentStep:'input',paymentMethod:'Tunai',cashReceived:'',mixCash:'',isProcessing:false,isLoading:true,lastTx:null,isCustomPackage:false,currentTime:new Date().toLocaleString('id-ID'),expCat:'Pembayaran Vendor (Kue / Stok)',expDesc:'',expAmount:'',expMethod:'Tunai',reportData:{revenue:0,revenueCash:0,revenueQris:0,piutang:0,grossProfit:0,expenses:0,expCash:0,expTransfer:0,transactions:0,netProfit:0,salesHistory:[],stockHistory:[],vendorHistory:[]},customerName:'',itemReports:[],reportPeriod:'today',startDate:'',endDate:'',reportSubTab:'ringkasan',oldPin:'',newPin:'',isPrintingReceipt:false,isPrintingCatalog:false,showAddProductModal:false,options:{categories:[],suppliers:[]},newProduct:{name:'',categoryId:'',supplierId:'',buyPrice:'',sellPrice:'',stock:'',image:''},showDetailModal:false,selectedTx:null,selectedTxCart:[],saldoAwalLaci:localStorage.getItem('saldo_laci')||0,packageTotal:0,productSortBy:'name_asc',poList:[],piutangList:[],showPoModal:false,poForm:{name:'',phone:'',pickupDate:'',shippingCost:'',dp:'',paymentMethod:'Tunai',notes:''},restockSupplierId:'',restockSupplierName:'',restockCart:[],restockDiscount:'',restockMethod:'Tunai',restockNotes:'',isPrintingVendor:false,lastVendorTx:null,restockStockAddedPagi:false,pendingDrafts:[],
+        async init(){setTimeout(()=>lucide.createIcons(),100);setInterval(()=>this.currentTime=new Date().toLocaleString('id-ID'),1000);this.$watch('currentTab',()=>setTimeout(()=>lucide.createIcons(),50));this.$watch('showMobileCart',()=>setTimeout(()=>lucide.createIcons(),10));await this.fetchCashiers();await this.fetchCatalog();},
+        hasDraft(id){return localStorage.getItem('draft_restock_'+id)!==null;},
+        updatePendingDrafts(){if(!this.options||!this.options.suppliers)return;this.pendingDrafts=this.options.suppliers.filter(s=>localStorage.getItem('draft_restock_'+s.id)!==null);},
+        viewTransactionDetail(tx){this.selectedTx=tx;let rc=[];if(tx.items){rc=tx.items.split(', ').map(p=>{let n=p.trim();let q=1;const m=p.match(/(.*) \(x(\d+)\)/);if(m){n=m[1].trim();q=parseInt(m[2]);}let fp=this.products.find(x=>x.name===n);return{name:n,qty:q,price:fp?fp.price:0};});}this.selectedTxCart=rc;this.showDetailModal=true;setTimeout(()=>lucide.createIcons(),10);},
+        isStockOld(p){if(!p.lastRestock||p.stock<=0)return false;const h=(new Date()-new Date(p.lastRestock))/(1000*60*60);const c=(p.category||'').toLowerCase();let l=24;if(c.includes('minum')||c.includes('cair'))l=24*30;else if(c.includes('kering')||c.includes('snack')||c.includes('keripik'))l=24*14;return h>l;},
+        formatDateShort(d){if(!d)return '-';const dt=new Date(d);return dt.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+' '+dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});},
+        resetStockAge(id,n){if(!confirm(`Perbarui umur kue ${n}?\n\nTanggal masuk direset ke hari ini.`))return;localStorage.setItem('last_restock_date_'+id,new Date().toISOString());this.fetchCatalog();},
+        restorePrices(){if(this.isCustomPackage){this.isCustomPackage=false;this.packageTotal=0;this.customerName='';this.cart.forEach(i=>{const p=this.products.find(x=>x.id===i.id&&x.type===i.type);if(p)i.price=p.price;});}},
+        async editSaldoAwal(){const s=prompt("🔒 SET SALDO AWAL\nMasukkan PIN Admin:");if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ PIN Salah.");const val=prompt("💰 SALDO LACI PAGI INI:",this.saldoAwalLaci);if(val===null||val.trim()==="")return;const nom=parseInt(val);if(isNaN(nom)||nom<0)return alert('Tidak valid!');this.saldoAwalLaci=nom;localStorage.setItem('saldo_laci',nom);alert('✅ Tersimpan!');}catch(e){alert('Error');}},
+        async fetchCashiers(){try{const r=await fetch(`${SERVER_URL}/api/cashiers`);const d=await r.json();if(d.success)this.cashiersList=d.data;}catch(e){}},
+        async login(){if(!this.loginPin)return;if(['030388','100515','818283'].includes(this.loginPin)){this.activeCashier='Admin Toko';this.loginPin='';setTimeout(()=>lucide.createIcons(),50);await this.fetchCashiers();await this.fetchCatalog();return;}const f=this.cashiersList.find(c=>c.pin===this.loginPin);if(f){this.activeCashier=f.name;this.loginPin='';setTimeout(()=>lucide.createIcons(),50);return;}try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:this.loginPin})});if((await r.json()).success){this.activeCashier='Admin Toko';this.loginPin='';setTimeout(()=>lucide.createIcons(),50);return;}}catch(e){}alert('❌ Akses Ditolak!');this.loginPin='';},
+        logout(){this.activeCashier=null;this.currentTab='pos';},
+        async fetchCatalog(){this.isLoading=true;try{const r=await fetch(`${SERVER_URL}/api/catalog`);const dt=await r.json();if(dt.success){const pl=dt.data.products.map(p=>({id:p.id,name:p.name,category:p.category.name,supplier:p.supplier.name,supplierId:p.supplier.id,price:p.sellPrice,buyPrice:p.buyPrice,stock:p.stock,image:p.image||null,icon:p.category.name.includes('Minuman')?'🍹':'🍩',type:'product',lastRestock:localStorage.getItem('last_restock_date_'+p.id)}));const kl=dt.data.packages.map(p=>({id:p.id,name:p.name,category:'Paket',supplier:'Kombinasi',supplierId:null,price:p.sellPrice,stock:999,image:p.image||null,icon:'🎁',type:'package'}));this.products=[...pl,...kl];this.categories=['Semua',...Array.from(new Set(this.products.map(p=>p.category)))];}}catch(e){}finally{this.isLoading=false;setTimeout(()=>lucide.createIcons(),10);}},
+        get filteredProducts(){return this.products.filter(p=>{const mc=this.selectedCategory==='Semua'||p.category===this.selectedCategory;const ms=p.name.toLowerCase().includes(this.searchQuery.toLowerCase());return mc&&ms;});},
+        get filteredMasterProducts(){let f=this.products.filter(p=>p.name.toLowerCase().includes(this.masterSearchQuery.toLowerCase()));if(this.productSortBy==='stock_desc')f.sort((a,b)=>(b.stock||0)-(a.stock||0));else if(this.productSortBy==='stock_asc')f.sort((a,b)=>(a.stock||0)-(b.stock||0));else f.sort((a,b)=>a.name.localeCompare(b.name));return f;},
+        addToCart(p){this.restorePrices();const ex=this.cart.find(i=>i.id===p.id&&i.type===p.type&&i.price===p.price);if(ex)ex.qty++;else this.cart.unshift({...p,cartItemId:Date.now()+Math.random(),qty:1});},
+        increaseQty(i){this.restorePrices();this.cart[i].qty++;},decreaseQty(i){this.restorePrices();if(this.cart[i].qty>1)this.cart[i].qty--;else this.removeFromCart(i);},removeFromCart(i){this.restorePrices();this.cart.splice(i,1);},validateQty(i){this.restorePrices();let v=parseInt(this.cart[i].qty);if(isNaN(v)||v<1)v=1;this.cart[i].qty=v;},
+        get total(){return this.isCustomPackage?this.packageTotal:this.cart.reduce((s,i)=>s+(i.price*i.qty),0);},get totalQty(){return this.cart.reduce((s,i)=>s+i.qty,0);},get change(){return parseFloat(this.cashReceived||0)-this.total;},
+        formatRupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);},
+        setCustomPrice(){if(this.cart.length===0)return alert('Keranjang kosong!');const qs=prompt('📦 Jumlah Kotak?','1');if(!qs)return;const q=parseInt(qs);if(isNaN(q)||q<=0)return alert('Tidak valid!');const ps=prompt('Harga Per Kotak?','0');if(!ps)return;const pr=parseFloat(ps);if(isNaN(pr)||pr<0)return alert('Tidak valid!');const nt=q*pr;const inN=prompt('Nama Pemesan:','');this.customerName=(inN?inN.trim()+" - ":"Pesanan Umum - ")+q+" Kotak";this.isCustomPackage=true;this.packageTotal=nt;let ot=0;this.cart.forEach(i=>{const p=this.products.find(x=>x.id===i.id&&x.type===i.type);ot+=((p?p.price:i.price)*i.qty);});if(ot>0){const rat=nt/ot;let rt=0;for(let i=0;i<this.cart.length;i++){const p=this.products.find(x=>x.id===this.cart[i].id&&x.type===this.cart[i].type);const np=p?p.price:this.cart[i].price;if(i===this.cart.length-1)this.cart[i].price=Math.round((nt-rt)/this.cart[i].qty);else{const npr=Math.round(np*rat);this.cart[i].price=npr;rt+=(npr*this.cart[i].qty);}}}alert('✅ SET BERHASIL!');},
+        openPayment(){let sk=false;let nk='';for(let i of this.cart){if(i.type==='product'){const p=this.products.find(x=>x.id===i.id&&x.type===i.type);if(p&&i.qty>Number(p.stock||0)){sk=true;nk=i.name;break;}}}if(sk)return alert(`❌ STOK KURANG!\nSisa stok '${nk}' tidak cukup.`);this.cashReceived='';this.mixCash='';this.paymentMethod='Tunai';this.paymentStep='input';this.showPaymentModal=true;setTimeout(()=>lucide.createIcons(),10);},
+        closePayment(){if(this.paymentStep==='success')this.resetCart();else this.showPaymentModal=false;},
+        async processTransaction(){let t=this.total;let q=this.totalQty;let u=0;if(this.paymentMethod==='Tunai')u=parseFloat(this.cashReceived)||t;else if(this.paymentMethod==='Mix'){u=parseFloat(this.mixCash)||0;if(u<=0||u>=t)return alert('❌ Tunai Mix tidak valid!');}else if(this.paymentMethod==='Piutang'){if(!this.customerName)return alert('❌ Nama WAJIB untuk kasbon!');u=0;}this.isProcessing=true;let ch=this.paymentMethod==='Tunai'?(u-t):0;let kf=JSON.parse(JSON.stringify(this.cart));let mc=this.cart.map(i=>({id:i.id,type:i.type,qty:i.qty,price:i.price}));let fn=this.customerName?`${this.customerName} [Kasir: ${this.activeCashier}]`:`[Kasir: ${this.activeCashier}]`;try{const r=await fetch(`${SERVER_URL}/api/checkout`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cart:mc,paymentMethod:this.paymentMethod,cashReceived:u,totalAmount:t,isPackage:this.isCustomPackage,customerName:fn})});const d=await r.json();if(d.success){this.lastTx={invoice:d.data.invoice,date:new Date().toLocaleString('id-ID'),cart:kf,total:t,cash:u,change:ch,isPackage:this.isCustomPackage,method:this.paymentMethod,totalQty:q};this.paymentStep='success';this.fetchCatalog();}else alert('Gagal.');}catch(e){alert('Error.');}finally{this.isProcessing=false;}},
+        openPoForm(){this.poForm={name:this.customerName||'',phone:'',pickupDate:'',shippingCost:'',dp:'',paymentMethod:'Tunai',notes:''};this.showPoModal=true;setTimeout(()=>lucide.createIcons(),10);},
+        async fetchOrders(){try{const r=await fetch(`${SERVER_URL}/api/orders`);const d=await r.json();if(d.success){this.poList=d.data;setTimeout(()=>lucide.createIcons(),10);}}catch(e){}},
+        async fetchPiutang(){try{const r=await fetch(`${SERVER_URL}/api/piutang`);const d=await r.json();if(d.success){this.piutangList=d.data;setTimeout(()=>lucide.createIcons(),10);}}catch(e){}},
+        isPast(ds){return new Date(ds)<new Date();},
+        async submitPo(){if(!this.poForm.name||!this.poForm.pickupDate)return alert('Nama dan Waktu Wajib Diisi!');this.isProcessing=true;let mc=this.cart.map(i=>({id:i.id,type:i.type,qty:i.qty,price:i.price}));try{const r=await fetch(`${SERVER_URL}/api/orders`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerName:this.poForm.name,customerPhone:this.poForm.phone,pickupDate:this.poForm.pickupDate,shippingCost:this.poForm.shippingCost,downPayment:this.poForm.dp,paymentMethod:this.poForm.paymentMethod,notes:this.poForm.notes,cashierName:this.activeCashier,cart:mc,totalAmount:this.total})});const d=await r.json();if(d.success){alert('✅ PO TERSIMPAN!');this.showPoModal=false;this.resetCart();this.fetchOrders();}else alert('Gagal.');}catch(e){}finally{this.isProcessing=false;}},
+        async completeOrder(o){const rm=(o.totalAmount+o.shippingCost)-o.downPayment;let m=o.paymentMethod||'Tunai';if(rm>0){const im=prompt(`💰 Sisa tagihan: Rp ${new Intl.NumberFormat('id-ID').format(rm)}\nMetode:\n1: TUNAI\n2: QRIS\n3: PIUTANG`,'1');if(im===null)return;if(im==='3')m='Piutang';else m=im==='2'?'QRIS':'Tunai';}if(!confirm(`⚠️ Selesaikan pesanan ${o.customerName}?`))return;this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/orders/${o.id}/complete`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentMethod:m})});const d=await r.json();if(d.success){this.lastTx={invoice:`LUNAS-${o.invoice} (${o.customerName})`,date:new Date().toLocaleString('id-ID'),cart:o.items.map(i=>({name:i.product?i.product.name:i.package.name,qty:i.qty,price:i.price})),total:rm,cash:m==='Tunai'?rm:0,change:0,isPackage:false,method:m,totalQty:o.items.reduce((s,i)=>s+i.qty,0)};this.paymentStep='success';this.showPaymentModal=true;this.fetchOrders();this.fetchCatalog();}else alert('Gagal.');}catch(e){}finally{this.isProcessing=false;}},
+        async deleteOrder(id,n){const s=prompt(`🔒 HAPUS PESANAN\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm('Yakin membatalkan?'))return;try{const r2=await fetch(`${SERVER_URL}/api/orders/${id}`,{method:'DELETE'});if((await r2.json()).success){alert('Dibatalkan.');this.fetchOrders();}}catch(e){}},
+        resetCart(){this.cart=[];this.isCustomPackage=false;this.packageTotal=0;this.customerName='';this.showPaymentModal=false;this.paymentStep='input';this.showMobileCart=false;},
+        printPO(o){this.lastTx={invoice:o.invoice,date:new Date(o.pickupDate).toLocaleString('id-ID'),cart:o.items.map(i=>({name:i.product?i.product.name:i.package.name,qty:i.qty,price:i.price})),total:o.totalAmount+o.shippingCost,cash:o.downPayment,change:0,isPackage:false,method:o.paymentMethod||'Tunai',totalQty:o.items.reduce((s,i)=>s+i.qty,0),isPO:true,shippingCost:o.shippingCost,downPayment:o.downPayment,remaining:(o.totalAmount+o.shippingCost)-o.downPayment};this.printReceipt();},
+        loadDraftSupplier(){if(this.restockSupplierId){const s=this.options.suppliers.find(x=>x.id==this.restockSupplierId);this.restockSupplierName=s?s.name:'';}else this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;if(!this.restockSupplierId)return;const sd=localStorage.getItem(`draft_restock_${this.restockSupplierId}`);if(sd){try{const p=JSON.parse(sd);this.restockCart=p.cart||[];this.restockDiscount=p.discount||'';this.restockMethod=p.method||'Tunai';this.restockNotes=p.notes||'';if(this.restockCart.some(i=>i.alreadyInStock))this.restockStockAddedPagi=true;}catch(e){}}},
+        saveDraftLocally(){if(!this.restockSupplierId)return;if(this.restockCart.length===0&&!this.restockDiscount&&!this.restockNotes)localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);else localStorage.setItem(`draft_restock_${this.restockSupplierId}`,JSON.stringify({cart:this.restockCart,discount:this.restockDiscount,method:this.restockMethod,notes:this.restockNotes}));this.updatePendingDrafts();},
+        addToRestockCart(p){if(!p.buyPrice||p.buyPrice<=0)return alert('❌ Harga Modal 0!');const e=this.restockCart.find(i=>i.id===p.id&&!i.alreadyInStock);if(e)e.qty++;else this.restockCart.unshift({...p,qty:1,returQty:0,alreadyInStock:false});this.saveDraftLocally();},
+        updateRestockQty(i,d){if(this.restockCart[i].alreadyInStock)return alert('Sudah masuk stok pagi.');if(d<0&&this.restockCart[i].qty<=1)return;this.restockCart[i].qty+=d;this.saveDraftLocally();},
+        setRestockQty(i,v){if(this.restockCart[i].alreadyInStock)return alert('Sudah masuk stok pagi.');let n=parseInt(v);if(isNaN(n)||n<1)n=1;this.restockCart[i].qty=n;this.saveDraftLocally();},
+        updateReturQty(i,d){let it=this.restockCart[i];if(!it.returQty)it.returQty=0;let nv=it.returQty+d;if(nv<0)nv=0;if(nv>it.qty)return alert('Lebih dari masuk!');it.returQty=nv;this.saveDraftLocally();},
+        validateReturQty(i){let it=this.restockCart[i];let v=parseInt(it.returQty);if(isNaN(v)||v<0)v=0;if(v>it.qty){alert('Lebih dari masuk!');v=it.qty;}it.returQty=v;this.saveDraftLocally();},
+        async removeRestockItem(i){if(this.isProcessing)return;let it=this.restockCart[i];if(it.alreadyInStock){const s=prompt(`🔒 HAPUS DARI DRAFT\nBarang sudah masuk etalase. Masukkan PIN Admin untuk menghapus & narik stok ${it.name}:`);if(!s)return;this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success){this.isProcessing=false;return alert("❌ Ditolak!");}}catch(e){this.isProcessing=false;return;}const p=this.products.find(x=>x.id===it.id);if(p){const ns=p.stock-it.qty;try{await fetch(`${SERVER_URL}/api/products/${it.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns>=0?ns:0})});}catch(e){}}alert(`✅ Batal diterima.`);this.isProcessing=false;}this.restockCart.splice(i,1);this.saveDraftLocally();this.fetchCatalog();},
+        get restockTotal(){return this.restockCart.reduce((s,i)=>s+((i.buyPrice||0)*(i.qty-(i.returQty||0))),0);},get restockGrandTotal(){return this.restockTotal-(parseInt(this.restockDiscount)||0);},
+        async submitRestock(ipm){if(this.restockCart.length===0)return alert('Kosong!');if(!this.restockSupplierId)return alert('Pilih Vendor!');const ss=this.options.suppliers.find(s=>s.id==this.restockSupplierId);this.restockSupplierName=ss?ss.name:'Vendor';const m=ipm?"🔒 TUTUP NOTA MALAM\nPIN Admin:":"🔒 SIMPAN DRAFT PAGI\nPIN Admin:";const s=prompt(m);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ PIN Salah.");}catch(e){return;}this.isProcessing=true;try{const hni=this.restockCart.some(i=>!i.alreadyInStock);if(!ipm){if(!hni){this.isProcessing=false;return alert('Tidak ada barang baru.');}for(let i of this.restockCart){if(!i.alreadyInStock){const p=this.products.find(x=>x.id===i.id);if(p){await fetch(`${SERVER_URL}/api/products/${i.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:p.stock+i.qty})});i.alreadyInStock=true;localStorage.setItem('last_restock_date_'+i.id,new Date().toISOString());}}}this.restockStockAddedPagi=true;this.saveDraftLocally();alert('✅ STOK BERTAMBAH!');this.restockSupplierId='';this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;this.fetchCatalog();this.isProcessing=false;return;}if(ipm){const pi=this.restockCart.map(i=>({...i,qty:i.qty-(i.returQty||0)})).filter(i=>i.qty>0);const r2=await fetch(`${SERVER_URL}/api/restock`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({supplierId:this.restockSupplierId,supplierName:this.restockSupplierName,items:pi,discount:this.restockDiscount,paymentMethod:this.restockMethod,notes:this.restockNotes,printNow:true})});const d2=await r2.json();if(d2.success){for(let i of this.restockCart){if(this.restockStockAddedPagi||i.alreadyInStock){const p=this.products.find(x=>x.id===i.id);if(p){const ns=p.stock-i.qty;try{await fetch(`${SERVER_URL}/api/products/${i.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns>=0?ns:0})});}catch(e){}}}if(!i.alreadyInStock)localStorage.setItem('last_restock_date_'+i.id,new Date().toISOString());}const sc=JSON.parse(JSON.stringify(this.restockCart));this.lastVendorTx={invoice:d2.data.invoice,date:new Date().toLocaleString('id-ID'),supplier:this.restockSupplierName,cart:sc,total:this.restockTotal,discount:parseInt(this.restockDiscount)||0,grandTotal:d2.data.grandTotal,method:this.restockMethod,notes:this.restockNotes};alert(`✅ NOTA LUNAS DITUTUP!`);localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);this.restockSupplierId='';this.restockSupplierName='';this.restockCart=[];this.restockDiscount='';this.restockNotes='';this.restockStockAddedPagi=false;this.updatePendingDrafts();this.fetchReport();this.isPrintingVendor=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingVendor=false;},3000);},500);this.fetchCatalog();}else alert('Gagal: '+d2.message);}}catch(e){}finally{this.isProcessing=false;}},
+        reprintVendorNota(nd){const rc=nd.cart.map(c=>{if(c.name)return c;const p=this.products.find(x=>x.id===c.id||x.id===c[0]);return{name:p?p.name:'Produk',qty:c.qty||c[1],buyPrice:c.buyPrice||c[2],returQty:c.returQty||0};});this.lastVendorTx={invoice:nd.invoice,date:new Date().toLocaleString('id-ID'),supplier:nd.supplier||'Vendor',cart:rc,total:nd.total,discount:nd.discount,grandTotal:nd.grandTotal,method:nd.method,notes:nd.keteranganManual};this.isPrintingVendor=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingVendor=false;},3000);},500);},
+        async deleteVendorNota(id,nd){const ns=nd.supplier||'Vendor';const s=prompt(`🔒 HAPUS NOTA\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS NOTA ${nd.invoice}?`))return;const r2=await fetch(`${SERVER_URL}/api/expenses/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dihapus. Kurangi stok kue manual!`);this.fetchReport();}}catch(e){}},
+        async deleteStockHistory(id){const s=prompt(`🔒 BATALKAN STOK\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN BATALKAN STOK INI?`))return;const r2=await fetch(`${SERVER_URL}/api/stock-history/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dihapus.`);this.fetchReport();this.fetchCatalog();}}catch(e){}},
+        async fetchReport(){try{let qp=`?period=${this.reportPeriod}`;if(this.reportPeriod==='custom'){if(!this.startDate||!this.endDate)return alert('Isi Tanggal!');qp+=`&start=${this.startDate}&end=${this.endDate}`;}const rg=await fetch(`${SERVER_URL}/api/reports${qp}`);if((await rg.clone().json()).success)this.reportData=(await rg.json()).data;const ri=await fetch(`${SERVER_URL}/api/reports/items${qp}`);if((await ri.clone().json()).success)this.itemReports=(await ri.json()).data;}catch(e){}},
+        reprintTransaction(tx){let rc=[];let ip=tx.invoice&&tx.invoice.startsWith('PKT-');let ipd=tx.invoice&&tx.invoice.startsWith('DP-');if(tx.items){rc=tx.items.split(', ').map(p=>{let n=p.trim();let q=1;const m=p.match(/(.*) \(x(\d+)\)/);if(m){n=m[1].trim();q=parseInt(m[2]);}let fp=this.products.find(x=>x.name===n);return{name:n,qty:q,price:fp?fp.price:0};});}let tq=rc.reduce((s,i)=>s+(i.qty||1),0);this.lastTx={invoice:tx.invoice+" (COPY)",date:new Date(tx.time).toLocaleString('id-ID'),cart:rc,total:tx.total,cash:tx.total,change:0,isPackage:ip,method:tx.paymentMethod||'Tunai',totalQty:tq,isPO:ipd,downPayment:ipd?tx.total:0,remaining:0,shippingCost:0};this.printReceipt();},
+        async batalPiutang(i){const s=prompt(`🔒 BATALKAN PIUTANG\nPIN Admin:`);if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS PIUTANG INI?`))return;const r2=await fetch(`${SERVER_URL}/api/transactions/${i}`,{method:'DELETE'});if((await r2.json()).success){alert(`✅ Dibatalkan.`);this.fetchPiutang();this.fetchReport();this.fetchCatalog();}}catch(e){}},
+        async terimaPelunasan(i){const m=prompt(`💰 TERIMA PELUNASAN\n1: TUNAI\n2: QRIS`,'1');if(m===null)return;const nm=m==='2'?'QRIS':'Tunai';if(!confirm(`Tandai LUNAS pakai ${nm}?`))return;try{const r=await fetch(`${SERVER_URL}/api/transactions/${i}/pay`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentMethod:nm})});if((await r.json()).success){alert(`✅ BERHASIL!`);if(this.currentTab==='piutang')this.fetchPiutang();if(this.currentTab==='laporan')this.fetchReport();}}catch(e){}},
+        printReceipt(){this.isPrintingReceipt=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingReceipt=false;},3000);},500);},
+        printCatalog(){this.isPrintingCatalog=true;setTimeout(()=>{window.print();setTimeout(()=>{this.isPrintingCatalog=false;},3000);},500);},
+        async submitExpense(){if(!this.expDesc||!this.expAmount)return alert('Isi beban');try{const r=await fetch(`${SERVER_URL}/api/expenses`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:this.expCat,description:this.expDesc,amount:this.expAmount,paymentMethod:this.expMethod})});if((await r.json()).success){alert('Tercatat!');this.expDesc='';this.expAmount='';this.fetchReport();}}catch(e){}},
+        async fetchOptions(){try{const r=await fetch(`${SERVER_URL}/api/options`);const d=await r.json();if(d.success){this.options.categories=d.data.categories;this.options.suppliers=d.data.suppliers;this.updatePendingDrafts();}}catch(e){}},
+        async openAddProduct(){const s=prompt("🔒 OTORISASI ADMIN\nPIN:");if(!s)return;try{const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");}catch(e){return;}this.fetchOptions();this.newProduct={name:'',categoryId:'',supplierId:'',buyPrice:'',sellPrice:'',stock:'',image:''};this.showAddProductModal=true;setTimeout(()=>lucide.createIcons(),10);},
+        closeAddProduct(){this.showAddProductModal=false;},
+        async submitProduct(){if(!this.newProduct.name||!this.newProduct.categoryId||!this.newProduct.supplierId||!this.newProduct.sellPrice)return alert('Isi data wajib');this.isProcessing=true;try{const r=await fetch(`${SERVER_URL}/api/products`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(this.newProduct)});if((await r.json()).success){alert('✅ Ditambahkan!');this.closeAddProduct();this.fetchCatalog();}}catch(e){}finally{this.isProcessing=false;}},
+        get totalProductTypes(){return this.products.filter(p=>p.type==='product').length;},get totalPhysicalStock(){return this.products.filter(p=>p.type==='product').reduce((s,p)=>s+(p.stock>0?p.stock:0),0);},get totalStockValue(){return this.products.filter(p=>p.type==='product').reduce((s,p)=>s+(p.price*(p.stock>0?p.stock:0)),0);},
+        async updateStock(p){const s=prompt("🔒 PIN Admin:");if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");const ins=prompt(`📦 KEDATANGAN STOK\nProduk: ${p.name}\n(Angka minus jika rusak)`,"0");if(ins===null||ins.trim()==="")return;const dq=parseInt(ins);if(isNaN(dq)||dq===0)return;const ns=p.stock+dq;if(ns<0)return alert('Stok akhir minus!');try{const r2=await fetch(`${SERVER_URL}/api/products/${p.id}/stock-v2`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({newStock:ns})});if((await r2.json()).success){if(dq>0)localStorage.setItem('last_restock_date_'+p.id,new Date().toISOString());alert(`Berhasil!`);this.fetchCatalog();}}catch(e){}},
+        async deleteTransaction(inv){const s=prompt(`🔒 HAPUS STRUK ${inv}\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS ${inv}?`))return;try{const r2=await fetch(`${SERVER_URL}/api/transactions/${inv}`,{method:'DELETE'});if((await r2.json()).success){alert(`Dihapus & stok kembali.`);this.fetchReport();this.fetchCatalog();}}catch(e){}},
+        async deleteExpense(id){const s=prompt(`🔒 HAPUS PENGELUARAN\nPIN Admin:`);if(!s)return;const r=await fetch(`${SERVER_URL}/api/settings/verify-pin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:s})});if(!(await r.json()).success)return alert("❌ Ditolak!");if(!confirm(`⚠️ YAKIN HAPUS PENGELUARAN?`))return;try{const r2=await fetch(`${SERVER_URL}/api/expenses/${id}`,{method:'DELETE'});if((await r2.json()).success){alert(`Dihapus.`);this.fetchReport();}}catch(e){}}
+        }}
+    </script>
+</body>
+</html>
