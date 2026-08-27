@@ -514,10 +514,9 @@ function posApp() {
                         if (!item.alreadyInStock) {
                             const prod = this.products.find(p => p.id === item.id);
                             if (prod) {
-                                // PENTING: Saat simpan pagi, stok yang masuk ke etalase langsung dikurangi retur (qty - returQty)
+                                // PERBAIKAN STOK: Tambah ke etalase hanya stok yang SUDAH dikurangi retur
                                 const jumlahBersih = item.qty - (item.returQty || 0);
                                 const newStock = prod.stock + jumlahBersih;
-                                
                                 await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
                                     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) 
                                 });
@@ -528,7 +527,7 @@ function posApp() {
                     }
                     this.restockStockAddedPagi = true;
                     this.saveDraftLocally();
-                    alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase (sudah dikurangi retur). Tersimpan di Draft untuk dibayar nanti malam.');
+                    alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase aplikasi (sudah dikurangi retur). Tersimpan di Draft untuk dibayar nanti malam.');
                     
                     this.restockSupplierId = '';
                     this.restockSupplierName = '';
@@ -543,17 +542,36 @@ function posApp() {
                 }
 
                 if (isPrintingMalam) {
+                    // PERBAIKAN SERVER: Kirim data qty utuh dan retur utuh agar tidak terpotong di cetakan
                     const payloadItems = this.restockCart.map(item => ({
                         ...item,
                         qty: item.qty,
                         returQty: item.returQty || 0
                     })).filter(item => item.qty > 0);
 
+                    let stokAsli = {};
+                    for (let item of this.restockCart) {
+                        if (this.restockStockAddedPagi || item.alreadyInStock) {
+                            const prod = this.products.find(p => p.id === item.id);
+                            if (prod) {
+                                stokAsli[item.id] = prod.stock; 
+                            }
+                        }
+                    }
+
                     const payload = { supplierId: this.restockSupplierId, supplierName: this.restockSupplierName, items: payloadItems, discount: this.restockDiscount, paymentMethod: this.restockMethod, notes: this.cleanNotes(this.restockNotes), printNow: true };
                     const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     const result = await res.json();
                     
                     if(result.success) {
+                        for (let idKue in stokAsli) {
+                            try {
+                                await fetch(`${SERVER_URL}/api/products/${idKue}/stock-v2`, { 
+                                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: stokAsli[idKue] }) 
+                                });
+                            } catch(e) {}
+                        }
+                        
                         for (let item of this.restockCart) {
                             if (!item.alreadyInStock) {
                                 localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
