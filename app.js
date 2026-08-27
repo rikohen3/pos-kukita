@@ -514,7 +514,10 @@ function posApp() {
                         if (!item.alreadyInStock) {
                             const prod = this.products.find(p => p.id === item.id);
                             if (prod) {
-                                const newStock = prod.stock + item.qty;
+                                // PENTING: Saat simpan pagi, stok yang masuk ke etalase langsung dikurangi retur (qty - returQty)
+                                const jumlahBersih = item.qty - (item.returQty || 0);
+                                const newStock = prod.stock + jumlahBersih;
+                                
                                 await fetch(`${SERVER_URL}/api/products/${item.id}/stock-v2`, { 
                                     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) 
                                 });
@@ -525,7 +528,7 @@ function posApp() {
                     }
                     this.restockStockAddedPagi = true;
                     this.saveDraftLocally();
-                    alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase aplikasi. Tersimpan di Draft untuk dibayar nanti malam.');
+                    alert('✅ STOK BERTAMBAH!\nBarang sudah masuk etalase (sudah dikurangi retur). Tersimpan di Draft untuk dibayar nanti malam.');
                     
                     this.restockSupplierId = '';
                     this.restockSupplierName = '';
@@ -540,37 +543,17 @@ function posApp() {
                 }
 
                 if (isPrintingMalam) {
-                    // SEBELUM KIRIM KE SERVER, JANGAN KURANGI QTY DENGAN RETUR. KIRIM APA ADANYA!
-                    // Server butuh data lengkap (qty asli & returQty) supaya bisa disimpan ke memori
                     const payloadItems = this.restockCart.map(item => ({
                         ...item,
-                        // qty dikirim UTUH, bukan dikurangi retur
-                        qty: item.qty
+                        qty: item.qty,
+                        returQty: item.returQty || 0
                     })).filter(item => item.qty > 0);
-
-                    let stokAsli = {};
-                    for (let item of this.restockCart) {
-                        if (this.restockStockAddedPagi || item.alreadyInStock) {
-                            const prod = this.products.find(p => p.id === item.id);
-                            if (prod) {
-                                stokAsli[item.id] = prod.stock; 
-                            }
-                        }
-                    }
 
                     const payload = { supplierId: this.restockSupplierId, supplierName: this.restockSupplierName, items: payloadItems, discount: this.restockDiscount, paymentMethod: this.restockMethod, notes: this.cleanNotes(this.restockNotes), printNow: true };
                     const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     const result = await res.json();
                     
                     if(result.success) {
-                        for (let idKue in stokAsli) {
-                            try {
-                                await fetch(`${SERVER_URL}/api/products/${idKue}/stock-v2`, { 
-                                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: stokAsli[idKue] }) 
-                                });
-                            } catch(e) {}
-                        }
-                        
                         for (let item of this.restockCart) {
                             if (!item.alreadyInStock) {
                                 localStorage.setItem('last_restock_date_' + item.id, new Date().toISOString());
@@ -604,17 +587,13 @@ function posApp() {
         },
 
         reprintVendorNota(notaDetail) {
-            // PERBAIKAN: Membaca data retur dari database
             const reconstructedCart = notaDetail.cart.map(c => {
-                if(c.name) return c; // Format lama
-                
-                // Format baru dari array
+                if(c.name) return c; 
                 const prod = this.products.find(p => p.id === c.id || p.id === c[0]); 
                 return { 
                     name: prod ? prod.name : 'Produk', 
                     qty: c.qty || c[1], 
                     buyPrice: c.buyPrice || c[2], 
-                    // Ambil angka returQty kalau ada, kalau tidak ada default 0
                     returQty: c.returQty || c[3] || 0 
                 };
             });
