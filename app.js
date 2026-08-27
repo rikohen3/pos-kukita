@@ -804,7 +804,10 @@ function posApp() {
             const sandi = prompt("🔒 Masukkan PIN Admin:"); if (!sandi) return;
             const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
             if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
-            const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\n\nKetik jumlah kedatangan barang. (Gunakan angka minus jika barang rusak)`, "0");
+            
+            // PERBAIKAN: Menambahkan keterangan Sisa Stok Saat Ini
+            const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\nSisa Stok Saat Ini: ${product.stock} Pcs\n\nKetik jumlah kedatangan barang. (Gunakan angka minus jika barang rusak)`, "0");
+            
             if (inputStr === null || inputStr.trim() === "") return alert('Batal.'); const diffQty = parseInt(inputStr); if (isNaN(diffQty) || diffQty === 0) return alert('Batal.');
             const newStock = product.stock + diffQty; if (newStock < 0) return alert('Stok akhir tidak boleh minus!');
             try {
