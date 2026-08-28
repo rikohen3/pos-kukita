@@ -850,6 +850,12 @@ function posApp() {
 
         async submitExpense() {
             if(!this.expDesc || !this.expAmount) return alert('Isi keterangan & nominal beban');
+            
+            // POLISI TIDUR: Mencegah Double Input untuk Nota Vendor Baru
+            if (this.expCat === 'Pembayaran Vendor (Kue / Stok)') {
+                if (!confirm('⚠️ STOP!\n\nApakah ini pembayaran untuk kue yang baru datang (stok masuk) hari ini?\n\n- JIKA YA: Klik BATAL (Cancel) dan gunakan menu Terima Barang.\n- JIKA BUKAN (Hanya bayar sisa utang lama): Klik OK untuk lanjut mencatat.')) return;
+            }
+
             try {
                 const payload = { category: this.expCat, description: this.expDesc, amount: this.expAmount, paymentMethod: this.expMethod };
                 const res = await fetch(`${SERVER_URL}/api/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
