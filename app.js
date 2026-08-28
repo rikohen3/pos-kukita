@@ -338,7 +338,8 @@ function posApp() {
                 const res = await fetch(`${SERVER_URL}/api/orders/${order.id}/complete`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentMethod: method }) });
                 const result = await res.json();
                 if (result.success) {
-                    this.lastTx = { invoice: `LUNAS-${order.invoice} (${order.customerName})`, date: new Date().toLocaleString('id-ID'), cart: order.items.map(i => ({ name: i.product ? i.product.name : i.package.name, qty: i.qty, price: i.price })), total: remaining, cash: method === 'Tunai' ? remaining : 0, change: 0, isPackage: false, method: method, totalQty: order.items.reduce((sum, i) => sum + i.qty, 0) };
+                    const prefix = method === 'Piutang' ? 'TAGIHAN' : 'LUNAS';
+                    this.lastTx = { invoice: `${prefix}-${order.invoice} (${order.customerName})`, date: new Date().toLocaleString('id-ID'), cart: order.items.map(i => ({ name: i.product ? i.product.name : i.package.name, qty: i.qty, price: i.price })), total: remaining, cash: method === 'Tunai' ? remaining : 0, change: 0, isPackage: false, method: method, totalQty: order.items.reduce((sum, i) => sum + i.qty, 0) };
                     this.paymentStep = 'success'; this.showPaymentModal = true; this.fetchOrders(); this.fetchCatalog();
                 } else alert('Gagal memproses pesanan.');
             } catch (e) {} finally { this.isProcessing = false; }
