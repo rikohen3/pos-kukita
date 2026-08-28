@@ -47,12 +47,35 @@ app.post('/api/checkout', async (req, res) => {
 });
 
 app.put('/api/transactions/:invoice/pay', async (req, res) => {
-    const { invoice } = req.params; const { paymentMethod } = req.body;
+    const { invoice } = req.params; 
+    const { paymentMethod, paymentDate, notes } = req.body;
+    
     try {
         const sales = await prisma.sale.findMany({ where: { invoice } });
         if(sales.length === 0) return res.json({ success: false });
         const sale = sales[0];
-        await prisma.sale.update({ where: { id: sale.id }, data: { paymentMethod: paymentMethod, cashReceived: paymentMethod === 'Tunai' ? sale.totalAmount : 0 } });
+        
+        // Ubah kata TAGIHAN kembali menjadi LUNAS, dan sisipkan Keterangan jika ada
+        let newInvoice = sale.invoice.replace('TAGIHAN-', 'LUNAS-').replace('INV-', 'LUNAS-INV-');
+        if (notes) newInvoice += ` [Ket: ${notes}]`;
+
+        let updateData = { 
+            paymentMethod: paymentMethod, 
+            cashReceived: paymentMethod === 'Tunai' ? sale.totalAmount : 0,
+            invoice: newInvoice
+        };
+
+        // Ganti tanggal laci (createdAt) menjadi tanggal pelunasan yang dipilih kasir
+        if (paymentDate) {
+            const d = new Date(paymentDate);
+            const now = new Date();
+            d.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+            updateData.createdAt = d;
+        } else {
+            updateData.createdAt = new Date();
+        }
+
+        await prisma.sale.update({ where: { id: sale.id }, data: updateData });
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
@@ -96,7 +119,11 @@ app.put('/api/orders/:id/complete', async (req, res) => {
             }
             const remainingBalance = (order.totalAmount + order.shippingCost) - order.downPayment;
             const finalPaymentMethod = paymentMethod || order.paymentMethod || 'Tunai';
-            const sale = await tx.sale.create({ data: { invoice: `LUNAS-${order.invoice} (${order.customerName})`, totalAmount: remainingBalance, paymentMethod: finalPaymentMethod, cashReceived: finalPaymentMethod === 'Tunai' ? remainingBalance : 0 } });
+            
+            // PERBAIKAN: Gunakan awalan TAGIHAN jika diselesaikan sebagai Piutang
+            const prefix = finalPaymentMethod === 'Piutang' ? 'TAGIHAN' : 'LUNAS';
+            const sale = await tx.sale.create({ data: { invoice: `${prefix}-${order.invoice} (${order.customerName})`, totalAmount: remainingBalance, paymentMethod: finalPaymentMethod, cashReceived: finalPaymentMethod === 'Tunai' ? remainingBalance : 0 } });
+            
             for (const item of order.items) { await tx.saleItem.create({ data: { saleId: sale.id, productId: item.productId, packageId: item.packageId, qty: item.qty, price: item.price, subtotal: item.subtotal } }); }
             return order;
         });
