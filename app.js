@@ -516,6 +516,11 @@ function posApp() {
 
             this.isProcessing = true;
             try {
+                // PERBAIKAN UTAMA: Hubungkan kotak centang dengan mesin penghitung stok
+                if (this.restockStockAddedPagi) {
+                    this.restockCart.forEach(item => item.alreadyInStock = true);
+                }
+
                 const hasNewItems = this.restockCart.some(item => !item.alreadyInStock);
                 
                 if (!isPrintingMalam) {
@@ -584,7 +589,6 @@ function posApp() {
                         items: payloadItems, 
                         discount: this.restockDiscount, 
                         paymentMethod: this.restockMethod, 
-                        // Gabungkan note asli Mba Ayu dengan note rahasia
                         notes: (this.cleanNotes(this.restockNotes) + secretReturNote).trim(), 
                         printNow: true 
                     };
