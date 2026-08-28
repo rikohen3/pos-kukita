@@ -204,11 +204,17 @@ function posApp() {
             if (this.isCustomPackage) return alert('❌ Harga tidak bisa diubah satuan karena sedang terikat dalam mode Paket Custom. Batalkan paket terlebih dahulu jika ingin ubah harga satuan.');
             
             const item = this.cart[index];
-            const inputPrice = prompt(`✏️ UBAH HARGA MANUAL\n\nProduk: ${item.name}\n\nMasukkan harga khusus / baru untuk item ini:`, item.price);
+            // Tambahan: Menampilkan informasi Harga Modal di pop-up agar kasir tahu batas bawahnya
+            const inputPrice = prompt(`✏️ UBAH HARGA MANUAL\n\nProduk: ${item.name}\nHarga Modal: ${this.formatRupiah(item.buyPrice || 0)}\n\nMasukkan harga khusus / baru untuk item ini:`, item.price);
             
             if (inputPrice === null || inputPrice.trim() === "") return;
             const newPrice = parseInt(inputPrice);
             if (isNaN(newPrice) || newPrice < 0) return alert('❌ Nominal tidak valid!');
+            
+            // SABUK PENGAMAN: Blokir jika harga baru di bawah harga modal
+            if (newPrice < (item.buyPrice || 0)) {
+                return alert(`❌ HARGA TERLALU MURAH!\n\nHarga jual (Rp ${newPrice}) tidak boleh lebih rendah dari harga modal (Rp ${item.buyPrice || 0}).\nSistem otomatis menolak transaksi rugi.`);
+            }
             
             this.cart[index].price = newPrice;
         },
