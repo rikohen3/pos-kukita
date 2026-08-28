@@ -792,13 +792,46 @@ function posApp() {
         },
 
         async terimaPelunasan(invoice) {
-            const method = prompt(`💰 TERIMA PELUNASAN KASBON\n\nPelanggan: ${invoice.split(' [')[0]}\n\nUang pelunasan dibayar menggunakan apa?\nKetik "1" untuk TUNAI\nKetik "2" untuk QRIS / Transfer`, '1');
-            if (method === null) return; const newMethod = method === '2' ? 'QRIS' : 'Tunai';
-            if (!confirm(`Tandai piutang ini LUNAS menggunakan ${newMethod.toUpperCase()}?\n\nUang akan langsung tercatat masuk ke Laporan Hari Ini.`)) return;
+            const namaPelanggan = invoice.split(' [')[0];
+            
+            // 1. Tanya Metode Pembayaran
+            const method = prompt(`💰 TERIMA PELUNASAN KASBON\n\nPelanggan: ${namaPelanggan}\n\nDibayar menggunakan apa?\nKetik "1" untuk TUNAI\nKetik "2" untuk QRIS / Transfer`, '1');
+            if (method === null) return; 
+            const newMethod = method === '2' ? 'QRIS' : 'Tunai';
+
+            // 2. Tanya Tanggal Pelunasan (Fitur Baru)
+            const tglBayar = prompt(`📅 TANGGAL PELUNASAN\n\nKapan uang ini dibayarkan ke toko?\n(Gunakan format: YYYY-MM-DD, contoh: 2026-08-26)\n\nKosongkan kolom ini dan klik OK jika dibayar HARI INI:`, '');
+            if (tglBayar === null) return;
+
+            // 3. Tanya Keterangan Tambahan (Fitur Baru)
+            const keterangan = prompt(`📝 KETERANGAN TAMBAHAN\n\nContoh: "Pelunasan nota tgl 24 oleh Pak Budi"\n\nKosongkan jika tidak ada catatan khusus:`, '');
+            if (keterangan === null) return;
+
+            const tglTampil = tglBayar.trim() !== '' ? tglBayar : 'Hari Ini';
+            if (!confirm(`Tandai piutang ${namaPelanggan} LUNAS menggunakan ${newMethod.toUpperCase()}?\n\nTanggal Laporan: ${tglTampil}`)) return;
+
             try {
-                const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}/pay`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentMethod: newMethod }) });
-                if ((await res.json()).success) { alert(`✅ BERHASIL! Status piutang lunas dan uang masuk ke Laci Hari Ini.`); if(this.currentTab === 'piutang') this.fetchPiutang(); if(this.currentTab === 'laporan') this.fetchReport(); } 
-            } catch (e) {}
+                // Menambahkan paymentDate dan notes untuk dikirim ke Server
+                const payload = { 
+                    paymentMethod: newMethod, 
+                    paymentDate: tglBayar.trim() !== '' ? tglBayar : undefined, 
+                    notes: keterangan.trim() !== '' ? keterangan : undefined 
+                };
+                
+                const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}/pay`, { 
+                    method: 'PUT', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                if ((await res.json()).success) { 
+                    alert(`✅ BERHASIL! Piutang Lunas dan masuk laporan.`); 
+                    if(this.currentTab === 'piutang') this.fetchPiutang(); 
+                    if(this.currentTab === 'laporan') this.fetchReport(); 
+                } else {
+                    alert('Gagal memproses pelunasan ke server.');
+                }
+            } catch (e) { alert('Error koneksi ke server.'); }
         },
 
         printReceipt() { this.isPrintingReceipt = true; setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingReceipt = false; }, 3000); }, 500); },
