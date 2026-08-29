@@ -891,6 +891,12 @@ function posApp() {
 
         async submitProduct() {
             if (!this.newProduct.name || !this.newProduct.categoryId || !this.newProduct.supplierId || !this.newProduct.sellPrice) return alert('Lengkapi data wajib (*)');
+            
+            // SUNTIKAN OTOMATIS: Jika kolom stok dibiarkan kosong, otomatis ubah jadi 0 agar server tidak error
+            if (this.newProduct.stock === '' || this.newProduct.stock === null || this.newProduct.stock === undefined) {
+                this.newProduct.stock = 0;
+            }
+
             this.isProcessing = true;
             try {
                 const res = await fetch(`${SERVER_URL}/api/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.newProduct) });
