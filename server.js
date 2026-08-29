@@ -166,7 +166,7 @@ app.get('/api/piutang', async (req, res) => {
 });
 
 app.post('/api/restock', async (req, res) => {
-    const { supplierId, supplierName, items, discount, paymentMethod, notes, printNow } = req.body;
+    const { supplierId, supplierName, items, discount, tambahan, paymentMethod, notes, printNow } = req.body;
     try {
         const result = await prisma.$transaction(async (tx) => {
             let totalCost = 0; const rincianNota = []; 
@@ -178,14 +178,17 @@ app.post('/api/restock', async (req, res) => {
                 totalCost += ((item.buyPrice || 0) * parseInt(item.qty));
                 rincianNota.push(`${item.name} (x${item.qty})`);
             }
-            const grandTotal = totalCost - (parseInt(discount) || 0);
+            
+            // Rumus baru: Total Bayar + Tambahan Ongkir - Diskon
+            const grandTotal = totalCost - (parseInt(discount) || 0) + (parseInt(tambahan) || 0);
             let expense = null; const notaID = `NOTA-${Date.now()}`;
             
             if (printNow && paymentMethod !== 'Titip Jual') {
-                const notaData = { sup: supplierName, inv: notaID, c: items.map(i => [parseInt(i.id), parseInt(i.qty), parseInt(i.buyPrice||0)]), tot: totalCost, disc: parseInt(discount) || 0, gTot: grandTotal, met: paymentMethod, ket: notes || '', rin: rincianNota.join(', ').substring(0, 100) };
+                // Menyisipkan data 'tamb' (tambahan) ke dalam memori
+                const notaData = { sup: supplierName, inv: notaID, c: items.map(i => [parseInt(i.id), parseInt(i.qty), parseInt(i.buyPrice||0)]), tot: totalCost, disc: parseInt(discount) || 0, tamb: parseInt(tambahan) || 0, gTot: grandTotal, met: paymentMethod, ket: notes || '', rin: rincianNota.join(', ').substring(0, 100) };
                 expense = await tx.expense.create({ data: { category: 'Pembelian Stok / Restock', description: JSON.stringify(notaData), amount: grandTotal } });
             }
-            return { totalCost, discount, grandTotal, expense, method: paymentMethod, invoice: notaID };
+            return { totalCost, discount, tambahan, grandTotal, expense, method: paymentMethod, invoice: notaID };
         });
         res.json({ success: true, data: result });
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
@@ -251,7 +254,7 @@ app.get('/api/reports', async (req, res) => {
         if(e.category === 'Pembelian Stok / Restock') {
             try {
                 const p = JSON.parse(e.description);
-                const detailNota = { supplier: p.sup || p.supplier, invoice: p.inv || p.invoice, total: p.tot || p.total, discount: p.disc !== undefined ? p.disc : p.discount, grandTotal: p.gTot || p.grandTotal, method: p.met || p.method, keteranganManual: p.ket || p.keteranganManual, rincianTeks: p.rin || p.rincianTeks, cart: (p.c || p.cart || []).map(item => { if (Array.isArray(item)) return { id: item[0], qty: item[1], buyPrice: item[2] }; return item; }) };
+                const detailNota = { supplier: p.sup || p.supplier, invoice: p.inv || p.invoice, total: p.tot || p.total, discount: p.disc !== undefined ? p.disc : p.discount, tambahan: p.tamb !== undefined ? p.tamb : 0, grandTotal: p.gTot || p.grandTotal, method: p.met || p.method, keteranganManual: p.ket || p.keteranganManual, rincianTeks: p.rin || p.rincianTeks, cart: (p.c || p.cart || []).map(item => { if (Array.isArray(item)) return { id: item[0], qty: item[1], buyPrice: item[2] }; return item; }) };
                 vendorInvoices.push({ id: e.id, time: e.createdAt, amount: e.amount, rawDesc: e.description, detailNota: detailNota });
                 
                 if (detailNota.method === 'Transfer' || detailNota.method === 'QRIS') { expTransfer += e.amount; } else { expCash += e.amount; }

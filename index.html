@@ -287,6 +287,10 @@
                                 <span class="text-gray-600 font-semibold">Potongan Lain (Bila Ada)</span>
                                 <input type="number" x-model="restockDiscount" @change="saveDraftLocally()" placeholder="0" class="w-24 p-1.5 border border-gray-300 rounded text-right text-xs outline-none focus:border-red-500 text-red-500 font-bold bg-white">
                             </div>
+                            <div class="flex items-center justify-between text-xs mt-2">
+                                <span class="text-gray-600 font-semibold">Tamb. Biaya (Kurir/Dll)</span>
+                                <input type="number" x-model="restockTambahan" @change="saveDraftLocally()" placeholder="0" class="w-24 p-1.5 border border-gray-300 rounded text-right text-xs outline-none focus:border-blue-500 text-blue-500 font-bold bg-white">
+                            </div>
                             <div class="flex items-center justify-between text-xs pt-2 border-t border-dashed border-gray-300">
                                 <span class="text-gray-800 font-extrabold">Total Bayar Akhir</span>
                                 <span class="font-extrabold text-lg text-blue-600" x-text="formatRupiah(restockGrandTotal)"></span>
@@ -1265,6 +1269,10 @@
                     <div x-show="lastVendorTx.discount > 0" style="display: flex; justify-content: space-between; color: red;">
                         <div>Potongan Lain:</div>
                         <div x-text="'- ' + formatRupiah(lastVendorTx.discount)"></div>
+                    </div>
+                    <div x-show="lastVendorTx.tambahan > 0" style="display: flex; justify-content: space-between; color: black; margin-top: 2px;">
+                        <div>Tambahan Biaya:</div>
+                        <div x-text="'+ ' + formatRupiah(lastVendorTx.tambahan)"></div>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 3px;">
                         <div>Jumlah Bayar Rp:</div>

@@ -27,7 +27,7 @@ function posApp() {
         packageTotal: 0, productSortBy: 'name_asc', poList: [], piutangList: [], showPoModal: false,
         poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
 
-        restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
+        restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockTambahan: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
         restockStockAddedPagi: false, pendingDrafts: [],
 
         async init() {
@@ -402,6 +402,7 @@ function posApp() {
                     const parsed = JSON.parse(savedDraft);
                     this.restockCart = parsed.cart || [];
                     this.restockDiscount = parsed.discount || '';
+                    this.restockTambahan = parsed.tambahan || '';
                     this.restockMethod = parsed.method || 'Tunai';
                     this.restockNotes = parsed.notes || '';
                     if (this.restockCart.some(i => i.alreadyInStock)) {
@@ -416,7 +417,7 @@ function posApp() {
             if(this.restockCart.length === 0 && !this.restockDiscount && !this.restockNotes) {
                 localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
             } else {
-                const draftData = { cart: this.restockCart, discount: this.restockDiscount, method: this.restockMethod, notes: this.restockNotes };
+                const draftData = { cart: this.restockCart, discount: this.restockDiscount, tambahan: this.restockTambahan, method: this.restockMethod, notes: this.restockNotes };
                 localStorage.setItem(`draft_restock_${this.restockSupplierId}`, JSON.stringify(draftData));
             }
             this.updatePendingDrafts();
@@ -500,7 +501,7 @@ function posApp() {
         get restockTotal() { 
             return this.restockCart.reduce((sum, i) => sum + ((i.buyPrice || 0) * (i.qty - (i.returQty || 0))), 0); 
         },
-        get restockGrandTotal() { return this.restockTotal - (parseInt(this.restockDiscount) || 0); },
+        get restockGrandTotal() { return this.restockTotal - (parseInt(this.restockDiscount) || 0) + (parseInt(this.restockTambahan) || 0); },
         
         async submitRestock(isPrintingMalam) {
             if(this.restockCart.length === 0) return alert('Keranjang penerimaan kosong!');
@@ -593,7 +594,8 @@ function posApp() {
                         supplierId: this.restockSupplierId, 
                         supplierName: this.restockSupplierName, 
                         items: payloadItems, 
-                        discount: this.restockDiscount, 
+                        discount: this.restockDiscount,
+                        tambahan: this.restockTambahan,
                         paymentMethod: this.restockMethod, 
                         notes: (this.cleanNotes(this.restockNotes) + secretReturNote).trim(), 
                         printNow: true 
@@ -616,7 +618,7 @@ function posApp() {
                         }
 
                         const savedCartForReceipt = JSON.parse(JSON.stringify(this.restockCart));
-                        this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: savedCartForReceipt, total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.cleanNotes(this.restockNotes) };
+                        this.lastVendorTx = { invoice: result.data.invoice, date: new Date().toLocaleString('id-ID'), supplier: this.restockSupplierName, cart: savedCartForReceipt, total: this.restockTotal, discount: parseInt(this.restockDiscount) || 0, tambahan: parseInt(this.restockTambahan) || 0, grandTotal: result.data.grandTotal, method: this.restockMethod, notes: this.cleanNotes(this.restockNotes) };
                         alert(`✅ NOTA LUNAS DITUTUP!\nPengeluaran kas sudah tercatat otomatis.`);
                         
                         localStorage.removeItem(`draft_restock_${this.restockSupplierId}`);
@@ -686,6 +688,7 @@ function posApp() {
                 cart: reconstructedCart,
                 total: notaDetail.total,
                 discount: notaDetail.discount,
+                tambahan: notaDetail.tambahan,
                 grandTotal: notaDetail.grandTotal,
                 method: notaDetail.method,
                 // Bersihkan cetakan dari kode rahasia agar tetap rapi
