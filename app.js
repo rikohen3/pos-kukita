@@ -23,7 +23,7 @@ function posApp() {
         newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' },
         
         showDetailModal: false, selectedTx: null, selectedTxCart: [],
-        saldoAwalLaci: localStorage.getItem('saldo_laci') || 0,
+        saldoAwalLaci: 0,
         packageTotal: 0, productSortBy: 'name_asc', poList: [], piutangList: [], showPoModal: false,
         poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
 
@@ -108,13 +108,23 @@ function posApp() {
             try {
                 const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
                 if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
-                const inputStr = prompt("💰 MASUKKAN SALDO AWAL LACI\nKetik jumlah uang kas di laci pagi ini:", this.saldoAwalLaci);
+                
+                let tglTarget = new Date();
+                if (this.currentTab === 'laporan' && this.reportPeriod === 'custom' && this.startDate) {
+                    tglTarget = new Date(this.startDate);
+                }
+                const strDate = tglTarget.getFullYear() + '-' + String(tglTarget.getMonth() + 1).padStart(2, '0') + '-' + String(tglTarget.getDate()).padStart(2, '0');
+                
+                const currentVal = parseInt(localStorage.getItem('saldo_laci_' + strDate)) || 0;
+                const inputStr = prompt(`💰 MASUKKAN SALDO AWAL LACI\nTanggal Laporan: ${strDate}\nKetik jumlah uang kas di laci pagi ini:`, currentVal);
+                
                 if (inputStr === null || inputStr.trim() === "") return;
                 const nominal = parseInt(inputStr);
                 if (isNaN(nominal) || nominal < 0) return alert('Nominal tidak valid!');
+                
                 this.saldoAwalLaci = nominal;
-                localStorage.setItem('saldo_laci', this.saldoAwalLaci);
-                alert('✅ Saldo Awal berhasil disimpan!');
+                localStorage.setItem('saldo_laci_' + strDate, this.saldoAwalLaci);
+                alert(`✅ Saldo Awal berhasil disimpan khusus untuk tanggal ${strDate}!`);
             } catch (e) { alert('Gagal memverifikasi PIN.'); }
         },
 
@@ -748,6 +758,13 @@ function posApp() {
                 if (this.reportPeriod === 'custom') { if (!this.startDate || !this.endDate) return alert('Isi Tanggal!'); queryParam += `&start=${this.startDate}&end=${this.endDate}`; }
                 const resGlobal = await fetch(`${SERVER_URL}/api/reports${queryParam}`); if((await resGlobal.clone().json()).success) this.reportData = (await resGlobal.json()).data;
                 const resItems = await fetch(`${SERVER_URL}/api/reports/items${queryParam}`); if((await resItems.clone().json()).success) this.itemReports = (await resItems.json()).data;
+                
+                // MENGAMBIL SALDO AWAL KHUSUS UNTUK TANGGAL YANG DIPILIH KASIR
+                let tglTarget = new Date();
+                if (this.reportPeriod === 'custom' && this.startDate) tglTarget = new Date(this.startDate);
+                const strDate = tglTarget.getFullYear() + '-' + String(tglTarget.getMonth() + 1).padStart(2, '0') + '-' + String(tglTarget.getDate()).padStart(2, '0');
+                this.saldoAwalLaci = parseInt(localStorage.getItem('saldo_laci_' + strDate)) || 0;
+                
             } catch (error) {}
         },
 
