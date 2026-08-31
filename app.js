@@ -533,17 +533,18 @@ function posApp() {
 
             this.isProcessing = true;
             try {
-                // PERBAIKAN UTAMA: Hubungkan kotak centang dengan mesin penghitung stok
-                if (this.restockStockAddedPagi) {
-                    this.restockCart.forEach(item => item.alreadyInStock = true);
-                }
-
-                const hasNewItems = this.restockCart.some(item => !item.alreadyInStock);
+                let hasNewItems = this.restockCart.some(item => !item.alreadyInStock);
                 
                 if (!isPrintingMalam) {
+                    // CEGAH BENTROK: Kasir centang "Koreksi Stok" tapi klik "Simpan Draft"
+                    if (this.restockStockAddedPagi) {
+                        this.isProcessing = false;
+                        return alert('❌ GAGAL MENYIMPAN!\n\nAnda mencentang "Koreksi Stok" (yang artinya stok sudah ditambah manual sebelumnya).\n\nJika ingin SISTEM MENAMBAH STOK OTOMATIS, silakan hilangkan centangnya, lalu klik lagi tombol Simpan Draft Pagi.');
+                    }
+
                     if (!hasNewItems) {
                         this.isProcessing = false;
-                        return alert('Tidak ada barang baru untuk ditambahkan ke stok pagi. Silakan klik Tutup Nota Malam jika ingin membayar.');
+                        return alert('Semua barang di keranjang ini sudah masuk ke stok fisik. Silakan klik Tutup Nota Malam jika ingin mencetak dan membayar.');
                     }
                     
                     for (let item of this.restockCart) {
@@ -568,6 +569,7 @@ function posApp() {
                     this.restockSupplierName = '';
                     this.restockCart = [];
                     this.restockDiscount = '';
+                    this.restockTambahan = '';
                     this.restockNotes = '';
                     this.restockStockAddedPagi = false;
                     
@@ -577,6 +579,10 @@ function posApp() {
                 }
 
                 if (isPrintingMalam) {
+                    if (this.restockStockAddedPagi) {
+                        this.restockCart.forEach(item => item.alreadyInStock = true);
+                    }
+
                     // Kirim stok bersih (Net) ke server agar laporan akuntansi 100% akurat
                     const payloadItems = this.restockCart.map(item => ({
                         ...item,
@@ -604,7 +610,7 @@ function posApp() {
                         supplierId: this.restockSupplierId, 
                         supplierName: this.restockSupplierName, 
                         items: payloadItems, 
-                        discount: this.restockDiscount,
+                        discount: this.restockDiscount, 
                         tambahan: this.restockTambahan,
                         paymentMethod: this.restockMethod, 
                         notes: (this.cleanNotes(this.restockNotes) + secretReturNote).trim(), 
@@ -637,6 +643,7 @@ function posApp() {
                         this.restockSupplierName = '';
                         this.restockCart = [];
                         this.restockDiscount = '';
+                        this.restockTambahan = '';
                         this.restockNotes = '';
                         this.restockStockAddedPagi = false;
                         this.updatePendingDrafts(); 

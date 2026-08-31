@@ -252,7 +252,7 @@
                                     <div class="text-[10px] text-gray-500 font-bold">Barang Masuk:</div>
                                     <div class="flex items-center bg-white border rounded-md shadow-sm">
                                         <button @click="updateRestockQty(index, -1)" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-l-md text-sm font-bold text-gray-600">-</button>
-                                        <input type="number" :value="item.qty" @change="setRestockQty(index, $event.target.value)" class="w-10 text-center text-xs font-bold border-x outline-none p-0 h-7" min="1">
+                                        <input type="number" x-model.number="item.qty" @input="if(item.qty > 0) saveDraftLocally()" @blur="if(!item.qty || item.qty < 1) { item.qty = 1; saveDraftLocally(); }" class="w-10 text-center text-xs font-bold border-x outline-none p-0 h-7" min="1">
                                         <button @click="updateRestockQty(index, 1)" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-r-md text-sm font-bold text-gray-600">+</button>
                                     </div>
                                 </div>
@@ -261,7 +261,7 @@
                                         <div class="text-[10px] font-bold text-red-500">Jumlah Retur (Ditarik Vendor):</div>
                                         <div class="flex items-center bg-white border border-red-200 rounded shadow-sm">
                                             <button @click="updateReturQty(index, -1)" class="w-7 h-7 flex items-center justify-center hover:bg-red-50 rounded-l text-red-600 font-bold">-</button>
-                                            <input type="number" x-model.number="item.returQty" @change="validateReturQty(index)" class="w-10 text-center text-xs font-bold border-x border-red-200 text-red-600 outline-none p-0 h-7" min="0">
+                                            <input type="number" x-model.number="item.returQty" @input="validateReturQty(index)" class="w-10 text-center text-xs font-bold border-x border-red-200 text-red-600 outline-none p-0 h-7" min="0">
                                             <button @click="updateReturQty(index, 1)" class="w-7 h-7 flex items-center justify-center hover:bg-red-50 rounded-r text-red-600 font-bold">+</button>
                                         </div>
                                     </div>
