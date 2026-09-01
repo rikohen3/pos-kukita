@@ -442,14 +442,14 @@ function posApp() {
         
         updateRestockQty(index, diff) {
             if(this.restockCart[index].alreadyInStock) return alert('Barang ini sudah masuk ke stok fisik pagi. Jumlahnya tidak bisa dikurangi dari draft.');
-            if(diff < 0 && this.restockCart[index].qty <= 1) return;
+            if(diff < 0 && this.restockCart[index].qty <= 0) return;
             this.restockCart[index].qty += diff;
             this.saveDraftLocally();
         },
         
         setRestockQty(index, val) {
             if(this.restockCart[index].alreadyInStock) return alert('Barang ini sudah masuk ke stok fisik pagi.');
-            let num = parseInt(val); if(isNaN(num) || num < 1) num = 1;
+            let num = parseInt(val); if(isNaN(num) || num < 0) num = 0;
             this.restockCart[index].qty = num;
             this.saveDraftLocally();
         },
@@ -468,7 +468,14 @@ function posApp() {
             let item = this.restockCart[index];
             let val = parseInt(item.returQty);
             if(isNaN(val) || val < 0) val = 0;
-            if(val > item.qty) { alert('Jumlah retur tidak boleh lebih besar dari jumlah barang masuk!'); val = item.qty; }
+
+            const prod = this.products.find(p => p.id === item.id);
+            const currentStock = prod ? prod.stock : 0;
+            if (val > (item.qty + currentStock)) {
+                alert('❌ STOK FISIK KUE TIDAK CUKUP!\n\nJumlah retur tidak boleh melebihi sisa stok yang ada di etalase toko.');
+                val = item.qty + currentStock;
+            }
+
             item.returQty = val;
             this.saveDraftLocally();
         },
@@ -587,7 +594,7 @@ function posApp() {
                     const payloadItems = this.restockCart.map(item => ({
                         ...item,
                         qty: item.qty - (item.returQty || 0)
-                    })).filter(item => item.qty > 0);
+                    })).filter(item => item.qty !== 0 || (item.returQty && item.returQty > 0));
 
                     // Buat Catatan Rahasia (Secret Note) untuk menyimpan memori retur ke Server
                     let returStrings = [];

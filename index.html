@@ -252,7 +252,7 @@
                                     <div class="text-[10px] text-gray-500 font-bold">Barang Masuk:</div>
                                     <div class="flex items-center bg-white border rounded-md shadow-sm">
                                         <button @click="updateRestockQty(index, -1)" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-l-md text-sm font-bold text-gray-600">-</button>
-                                        <input type="number" x-model.number="item.qty" @input="if(item.qty > 0) saveDraftLocally()" @blur="if(!item.qty || item.qty < 1) { item.qty = 1; saveDraftLocally(); }" class="w-10 text-center text-xs font-bold border-x outline-none p-0 h-7" min="1">
+                                        <input type="number" x-model.number="item.qty" @input="saveDraftLocally()" class="w-10 text-center text-xs font-bold border-x outline-none p-0 h-7" min="0">
                                         <button @click="updateRestockQty(index, 1)" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-r-md text-sm font-bold text-gray-600">+</button>
                                     </div>
                                 </div>
