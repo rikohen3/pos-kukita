@@ -655,10 +655,13 @@ function posApp() {
                         this.restockStockAddedPagi = false;
                         this.updatePendingDrafts(); 
                         
-                        this.fetchReport();
+                        // PERBAIKAN: Gunakan await agar layar selesai menghitung potongannya dulu
+                        await this.fetchReport();
+                        await this.fetchCatalog(); 
+                        
+                        // BARU MUNCULKAN JENDELA PRINT SETELAH ANGKA LAYAR BERUBAH
                         this.isPrintingVendor = true;
-                        setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500);
-                        this.fetchCatalog(); 
+                        setTimeout(() => { window.print(); setTimeout(() => { this.isPrintingVendor = false; }, 3000); }, 500); 
                     } else {
                         alert('Gagal menyimpan!\nAlasan Server: ' + (result.message || 'Error Database Tidak Dikenal'));
                     }
