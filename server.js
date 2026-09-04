@@ -205,13 +205,8 @@ app.post('/api/suppliers', async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ success: false, message: "Nama vendor kosong" });
   try {
-    // Kita tembak data dummy "-" berjaga-jaga jika database mewajibkan kolom lain
     const newSupplier = await prisma.supplier.create({ 
-        data: { 
-            name: name,
-            phone: "-",
-            address: "-"
-        } 
+        data: { name: name } 
     });
     res.json({ success: true, data: newSupplier });
   } catch (error) { 
