@@ -914,10 +914,13 @@ function posApp() {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: newName.trim() })
                 });
-                if ((await res.json()).success) {
+                const result = await res.json();
+                if (result.success) {
                     alert(`✅ Vendor "${newName.trim()}" berhasil ditambahkan!`);
                     this.fetchOptions(); // Refresh daftar dropdown
-                } else { alert('Gagal menambah vendor.'); }
+                } else { 
+                    alert('❌ Gagal menambah vendor!\n\nAlasan Database: ' + (result.message || 'Error Tidak Dikenal')); 
+                }
             } catch (e) { alert('Error koneksi ke server.'); } 
             finally { this.isProcessing = false; }
         },
