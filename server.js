@@ -203,11 +203,21 @@ app.post('/api/expenses', async (req, res) => {
 app.get('/api/options', async (req, res) => { try { res.json({ success: true, data: { categories: await prisma.category.findMany(), suppliers: await prisma.supplier.findMany() } }); } catch (error) { res.status(500).json({ success: false }); } });
 app.post('/api/suppliers', async (req, res) => {
   const { name } = req.body;
-  if (!name) return res.status(400).json({ success: false });
+  if (!name) return res.status(400).json({ success: false, message: "Nama vendor kosong" });
   try {
-    const newSupplier = await prisma.supplier.create({ data: { name } });
+    // Kita tembak data dummy "-" berjaga-jaga jika database mewajibkan kolom lain
+    const newSupplier = await prisma.supplier.create({ 
+        data: { 
+            name: name,
+            phone: "-",
+            address: "-"
+        } 
+    });
     res.json({ success: true, data: newSupplier });
-  } catch (error) { res.status(500).json({ success: false }); }
+  } catch (error) { 
+    console.error("ERROR DATABASE VENDOR:", error);
+    res.status(500).json({ success: false, message: error.message }); 
+  }
 });
 app.post('/api/products', async (req, res) => {
   const { name, categoryId, supplierId, buyPrice, sellPrice, stock, image } = req.body;
