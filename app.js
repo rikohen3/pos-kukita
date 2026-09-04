@@ -897,6 +897,31 @@ function posApp() {
             } catch(e) {}
         },
 
+        async addSupplier() {
+            const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin untuk menambah Vendor baru:");
+            if (!sandi) return;
+            try {
+                const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN salah.");
+            } catch(e) { return alert("Gagal verifikasi PIN."); }
+
+            const newName = prompt("🚚 TAMBAH VENDOR\n\nKetik nama Vendor / Supplier baru (Contoh: Titip Jajan, Mba Rini):");
+            if (!newName || newName.trim() === "") return;
+
+            this.isProcessing = true;
+            try {
+                const res = await fetch(`${SERVER_URL}/api/suppliers`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName.trim() })
+                });
+                if ((await res.json()).success) {
+                    alert(`✅ Vendor "${newName.trim()}" berhasil ditambahkan!`);
+                    this.fetchOptions(); // Refresh daftar dropdown
+                } else { alert('Gagal menambah vendor.'); }
+            } catch (e) { alert('Error koneksi ke server.'); } 
+            finally { this.isProcessing = false; }
+        },
+
         async fetchOptions() {
             try {
                 const res = await fetch(`${SERVER_URL}/api/options`); const data = await res.json();
