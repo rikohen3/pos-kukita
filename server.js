@@ -204,10 +204,24 @@ app.get('/api/options', async (req, res) => { try { res.json({ success: true, da
 app.post('/api/suppliers', async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ success: false, message: "Nama vendor kosong" });
+  
   try {
-    const newSupplier = await prisma.supplier.create({ 
-        data: { name: name } 
+    // 1. Cari nomor urut (ID) vendor paling besar yang ada saat ini
+    const lastSupplier = await prisma.supplier.findFirst({
+        orderBy: { id: 'desc' }
     });
+    
+    // 2. Buat nomor urut baru (ID terakhir + 1) untuk mencegah bentrok
+    const nextId = lastSupplier ? lastSupplier.id + 1 : 1;
+
+    // 3. Simpan vendor baru dengan nomor urut yang sudah pasti aman
+    const newSupplier = await prisma.supplier.create({ 
+        data: { 
+            id: nextId,
+            name: name 
+        } 
+    });
+    
     res.json({ success: true, data: newSupplier });
   } catch (error) { 
     console.error("ERROR DATABASE VENDOR:", error);
