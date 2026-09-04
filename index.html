@@ -909,7 +909,10 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-sm font-semibold text-gray-700">Kategori <span class="text-red-500">*</span></label>
+                                    <button @click="addCategory()" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold hover:bg-blue-200 transition">+ Kategori Baru</button>
+                                </div>
                                 <select x-model="newProduct.categoryId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-brand-brown">
                                     <option value="">Pilih...</option>
                                     <template x-for="cat in options.categories" :key="cat.id">

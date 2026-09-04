@@ -925,6 +925,34 @@ function posApp() {
             finally { this.isProcessing = false; }
         },
 
+        async addCategory() {
+            const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin untuk menambah Kategori baru:");
+            if (!sandi) return;
+            try {
+                const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN salah.");
+            } catch(e) { return alert("Gagal verifikasi PIN."); }
+
+            const newName = prompt("📁 TAMBAH KATEGORI\n\nKetik nama Kategori baru (Contoh: Kue Kering, Minuman Dingin):");
+            if (!newName || newName.trim() === "") return;
+
+            this.isProcessing = true;
+            try {
+                const res = await fetch(`${SERVER_URL}/api/categories`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName.trim() })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert(`✅ Kategori "${newName.trim()}" berhasil ditambahkan!`);
+                    this.fetchOptions(); // Refresh daftar kategori otomatis
+                } else { 
+                    alert('❌ Gagal menambah kategori!\n\nAlasan Database: ' + (result.message || 'Error Tidak Dikenal')); 
+                }
+            } catch (e) { alert('Error koneksi ke server.'); } 
+            finally { this.isProcessing = false; }
+        },
+
         async fetchOptions() {
             try {
                 const res = await fetch(`${SERVER_URL}/api/options`); const data = await res.json();

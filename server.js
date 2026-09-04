@@ -228,6 +228,33 @@ app.post('/api/suppliers', async (req, res) => {
     res.status(500).json({ success: false, message: error.message }); 
   }
 });
+app.post('/api/categories', async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ success: false, message: "Nama kategori kosong" });
+  
+  try {
+    // 1. Cari nomor urut (ID) kategori paling besar saat ini
+    const lastCategory = await prisma.category.findFirst({
+        orderBy: { id: 'desc' }
+    });
+    
+    // 2. Buat nomor urut baru (ID terakhir + 1)
+    const nextId = lastCategory ? lastCategory.id + 1 : 1;
+
+    // 3. Simpan kategori baru dengan aman
+    const newCategory = await prisma.category.create({ 
+        data: { 
+            id: nextId,
+            name: name 
+        } 
+    });
+    
+    res.json({ success: true, data: newCategory });
+  } catch (error) { 
+    console.error("ERROR DATABASE KATEGORI:", error);
+    res.status(500).json({ success: false, message: error.message }); 
+  }
+});
 app.post('/api/products', async (req, res) => {
   const { name, categoryId, supplierId, buyPrice, sellPrice, stock, image } = req.body;
   try {
