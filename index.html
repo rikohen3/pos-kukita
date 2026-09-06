@@ -906,6 +906,8 @@
             <button @click="currentTab = 'po'; fetchOrders();" :class="currentTab === 'po' ? 'text-purple-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="calendar-days" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">PO</span></button>
             <button x-show="activeCashier === 'Admin Toko'" @click="currentTab = 'restock'; fetchOptions();" :class="currentTab === 'restock' ? 'text-blue-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="truck" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Masuk</span></button>
             <button @click="currentTab = 'piutang'; fetchPiutang();" :class="currentTab === 'piutang' ? 'text-red-600' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="book-down" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Piutang</span></button>
+            <!-- IKON TAMBAHAN: MASTER PRODUK -->
+            <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'text-brand-orange' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="package" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Produk</span></button>
             <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'text-brand-brown' : 'text-gray-400'" class="flex flex-col items-center p-2 rounded-lg flex-1 min-w-[50px]"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[9px] mt-1 font-semibold">Laporan</span></button>
         </nav>
 
