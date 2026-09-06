@@ -1041,6 +1041,61 @@ function posApp() {
                 const res = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
                 if ((await res.json()).success) { alert(`Pengeluaran dihapus.`); this.fetchReport(); } 
             } catch (e) {}
+        }, // <--- JANGAN LUPA TAMBAHKAN KOMA DI SINI
+
+        // MULAI PASTE DARI SINI: FUNGSI MENU PENGATURAN
+        async changeAdminPin() {
+            if (!this.oldPin || !this.newPin) return alert('Isi PIN Lama dan PIN Baru!');
+            if (this.newPin.length < 4) return alert('PIN minimal 4 angka.');
+            try {
+                const res = await fetch(`${SERVER_URL}/api/settings/update-pin`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ oldPin: this.oldPin, newPin: this.newPin })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ PIN Admin berhasil diubah!');
+                    this.oldPin = ''; this.newPin = '';
+                } else {
+                    alert('❌ Gagal! PIN Lama salah.');
+                }
+            } catch (e) { alert('Error koneksi ke server.'); }
+        },
+
+        async addCashier() {
+            if (!this.newCashierName || !this.newCashierPin) return alert('Isi Nama dan PIN Kasir!');
+            try {
+                const res = await fetch(`${SERVER_URL}/api/cashiers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: this.newCashierName, pin: this.newCashierPin })
+                });
+                if ((await res.json()).success) {
+                    alert('✅ Kasir berhasil ditambah!');
+                    this.newCashierName = ''; this.newCashierPin = '';
+                    this.fetchCashiers();
+                } else { 
+                    alert('Gagal menambah kasir. PIN mungkin sudah dipakai oleh kasir lain.'); 
+                }
+            } catch(e) { alert('Error koneksi ke server.'); }
+        },
+
+        async deleteCashier(id, name) {
+            const sandi = prompt(`🔒 HAPUS KASIR\nMasukkan PIN Admin untuk menghapus kasir ${name}:`); 
+            if (!sandi) return;
+            try {
+                const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Admin Salah.");
+
+                if (!confirm(`Yakin ingin menghapus akses login untuk ${name}?`)) return;
+                
+                const res = await fetch(`${SERVER_URL}/api/cashiers/${id}`, { method: 'DELETE' });
+                if ((await res.json()).success) {
+                    alert(`✅ Akses kasir ${name} dicabut.`);
+                    this.fetchCashiers();
+                }
+            } catch(e) { alert('Error koneksi ke server.'); }
         }
     }
 }
