@@ -609,7 +609,13 @@ function posApp() {
                     for (let item of this.restockCart) {
                         if (this.restockStockAddedPagi || item.alreadyInStock) {
                             const prod = this.products.find(p => p.id === item.id);
-                            if (prod) { stokAsli[item.id] = prod.stock; }
+                            if (prod) {
+                                // TAMBAHKAN BARIS INI: Pastikan jumlah retur terbaca (jika kosong, anggap 0)
+                                let jumlahRetur = item.returQty ? parseInt(item.returQty) : 0;
+            
+                                // PERBAIKAN: Kurangi stok utuh pagi dengan jumlah retur malam
+                                stokAsli[item.id] = prod.stock - jumlahRetur; 
+                            }
                         }
                     }
 
