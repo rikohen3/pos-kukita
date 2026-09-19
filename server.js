@@ -265,11 +265,29 @@ app.post('/api/products', async (req, res) => {
 });
 
 app.put('/api/products/:id/stock-v2', async (req, res) => {
-    const { id } = req.params; const { newStock } = req.body;
+    const { id } = req.params; 
+    const { newStock } = req.body;
+    const cashier = req.query.cashier || 'Admin'; // Tangkap nama pelaku
+    
     try {
         const oldProduct = await prisma.product.findUnique({ where: { id: parseInt(id) } });
         const updatedProduct = await prisma.product.update({ where: { id: parseInt(id) }, data: { stock: newStock } });
-        if (newStock - oldProduct.stock > 0) { await prisma.stockHistory.create({ data: { productId: updatedProduct.id, productName: updatedProduct.name, qtyAdded: newStock - oldProduct.stock, newTotal: newStock } }); }
+        
+        const selisih = newStock - oldProduct.stock;
+        
+        if (selisih > 0) { 
+            // Jika nambah stok
+            await prisma.stockHistory.create({ data: { productId: updatedProduct.id, productName: updatedProduct.name, qtyAdded: selisih, newTotal: newStock } }); 
+        } else if (selisih < 0) {
+            // JIKA STOK DIKURANGI (MINUS) KARENA BASI/RUSAK, CATAT KE CCTV!
+            await prisma.auditLog.create({ 
+                data: { 
+                    action: 'KOREKSI_STOK_MINUS', 
+                    description: `Mengurangi stok ${updatedProduct.name} sebanyak ${Math.abs(selisih)} Pcs (Sisa etalase: ${newStock})`, 
+                    cashierName: cashier 
+                } 
+            });
+        }
         res.json({ success: true, data: updatedProduct });
     } catch (error) { res.status(500).json({ success: false }); }
 });

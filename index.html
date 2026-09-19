@@ -911,7 +911,7 @@
                                             <span class="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs" x-text="log.cashierName"></span>
                                         </td>
                                         <td class="p-3">
-                                            <span :class="log.action === 'HAPUS_STRUK' ? 'bg-red-100 text-red-700' : (log.action === 'BATAL_STOK' ? 'bg-orange-100 text-orange-700' : 'bg-purple-100 text-purple-700')" 
+                                            <span :class="log.action === 'HAPUS_STRUK' ? 'bg-red-100 text-red-700' : (log.action === 'BATAL_STOK' ? 'bg-orange-100 text-orange-700' : (log.action === 'KOREKSI_STOK_MINUS' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'))" 
                                                   class="px-2 py-1 rounded text-xs font-bold" 
                                                   x-text="log.action.replace('_', ' ')"></span>
                                         </td>

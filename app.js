@@ -28,7 +28,7 @@ function posApp() {
         poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
 
         restockSupplierId: '', restockSupplierName: '', restockCart: [], restockDiscount: '', restockTambahan: '', restockMethod: 'Tunai', restockNotes: '', isPrintingVendor: false, lastVendorTx: null,
-        restockStockAddedPagi: false, pendingDrafts: [],
+        restockStockAddedPagi: false, pendingDrafts: [], auditLogs: [],
 
         async init() {
             setTimeout(() => { lucide.createIcons(); }, 100);
@@ -37,6 +37,14 @@ function posApp() {
             this.$watch('showMobileCart', () => { setTimeout(() => { lucide.createIcons(); }, 10); }); 
             await this.fetchCashiers(); 
             await this.fetchCatalog();
+        },
+
+        async fetchAuditLogs() {
+            try {
+                const res = await fetch(`${SERVER_URL}/api/audit-logs`);
+                const result = await res.json();
+                if (result.success) this.auditLogs = result.data;
+            } catch(e) {}
         },
 
         hasDraft(supId) { return localStorage.getItem('draft_restock_' + supId) !== null; },
@@ -742,11 +750,17 @@ function posApp() {
                 
                 if (!confirm(`⚠️ YAKIN HAPUS NOTA ${detailNota.invoice}?\nIni akan MENGHAPUS pengeluaran kas. Stok kue mohon dikurangi manual di Master Produk.`)) return;
 
-                const res = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
+                // 1. MENGIRIM NAMA KASIR KE SERVER
+                const res = await fetch(`${SERVER_URL}/api/expenses/${id}?cashier=${encodeURIComponent(this.activeCashier)}`, { method: 'DELETE' });
+                
                 if ((await res.json()).success) { 
                     alert(`✅ Nota dan Pengeluaran Kas berhasil dihapus.\n\n⚠️ PENTING: Sistem tidak mengurangi stok kue secara otomatis. Silakan kurangi stok kue secara manual di menu Master Produk jika perlu.`); 
                     this.fetchReport(); 
-                } 
+                    // 2. MEREFRESH DATA CCTV
+                    this.fetchAuditLogs(); 
+                } else {
+                    alert('Gagal menghapus nota vendor dari server.');
+                }
             } catch (e) {
                 alert('Gagal menghapus nota.');
             }
@@ -762,11 +776,15 @@ function posApp() {
                 
                 if (!confirm(`⚠️ YAKIN MEMBATALKAN STOK INI?\nStok fisik produk ini di etalase akan otomatis dikurangi/ditarik kembali.`)) return;
 
-                const res = await fetch(`${SERVER_URL}/api/stock-history/${id}`, { method: 'DELETE' });
+                // 1. TAMBAHKAN INFO KASIR DI SINI
+                const res = await fetch(`${SERVER_URL}/api/stock-history/${id}?cashier=${encodeURIComponent(this.activeCashier)}`, { method: 'DELETE' });
+                
                 if ((await res.json()).success) { 
                     alert(`✅ Berhasil! Riwayat penerimaan barang dihapus dan stok kue telah dikurangi.`); 
                     this.fetchReport(); 
                     this.fetchCatalog(); 
+                    // 2. TAMBAHKAN PEMANGGIL CCTV DI SINI
+                    this.fetchAuditLogs(); 
                 } else {
                     alert('Gagal menghapus riwayat stok.');
                 }
@@ -1013,18 +1031,24 @@ function posApp() {
             const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
             if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
             
-            // PERBAIKAN: Menambahkan keterangan Sisa Stok Saat Ini
-            const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\nSisa Stok Saat Ini: ${product.stock} Pcs\n\nKetik jumlah kedatangan barang. (Gunakan angka minus jika barang rusak)`, "0");
+            const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\nSisa Stok Saat Ini: ${product.stock} Pcs\n\nKetik jumlah kedatangan barang. (Gunakan angka minus jika kue basi/rusak)`, "0");
             
             if (inputStr === null || inputStr.trim() === "") return alert('Batal.'); const diffQty = parseInt(inputStr); if (isNaN(diffQty) || diffQty === 0) return alert('Batal.');
             const newStock = product.stock + diffQty; if (newStock < 0) return alert('Stok akhir tidak boleh minus!');
             try {
-                const res = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) });
+                // KIRIM NAMA KASIR KE SERVER
+                const res = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2?cashier=${encodeURIComponent(this.activeCashier)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) });
+                
                 if ((await res.json()).success) { 
-                    if (diffQty > 0) { localStorage.setItem('last_restock_date_' + product.id, new Date().toISOString()); }
+                    if (diffQty > 0) { 
+                        localStorage.setItem('last_restock_date_' + product.id, new Date().toISOString()); 
+                    } else if (diffQty < 0) {
+                        // JIKA MINUS (KUE BASI), REFRESH TABEL CCTV
+                        this.fetchAuditLogs();
+                    }
                     alert(`Berhasil!`); this.fetchCatalog(); 
                 } 
-            } catch (e) {}
+            } catch (e) { alert('Error koneksi saat ubah stok.'); }
         },
         
         async deleteTransaction(invoice) {
@@ -1033,8 +1057,8 @@ function posApp() {
             if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
             if (!confirm(`⚠️ YAKIN INGIN MEMBATALKAN STRUK ${invoice}?`)) return;
             try {
-                const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}`, { method: 'DELETE' });
-                if ((await res.json()).success) { alert(`Struk dihapus & stok dikembalikan.`); this.fetchReport(); this.fetchCatalog(); } 
+                const res = await fetch(`${SERVER_URL}/api/transactions/${invoice}?cashier=${encodeURIComponent(this.activeCashier)}`, { method: 'DELETE' });
+                if ((await res.json()).success) { alert(`Struk dihapus & stok dikembalikan.`); this.fetchReport(); this.fetchCatalog(); this.fetchAuditLogs(); } 
             } catch (e) {}
         },
 
@@ -1044,10 +1068,10 @@ function posApp() {
             if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
             if (!confirm(`⚠️ YAKIN INGIN MENGHAPUS PENGELUARAN INI?`)) return;
             try {
-                const res = await fetch(`${SERVER_URL}/api/expenses/${id}`, { method: 'DELETE' });
-                if ((await res.json()).success) { alert(`Pengeluaran dihapus.`); this.fetchReport(); } 
+                const res = await fetch(`${SERVER_URL}/api/expenses/${id}?cashier=${encodeURIComponent(this.activeCashier)}`, { method: 'DELETE' });
+                if ((await res.json()).success) { alert(`Pengeluaran dihapus.`); this.fetchReport(); this.fetchAuditLogs(); } 
             } catch (e) {}
-        }, // <--- JANGAN LUPA TAMBAHKAN KOMA DI SINI
+        },
 
         // MULAI PASTE DARI SINI: FUNGSI MENU PENGATURAN
         async changeAdminPin() {
