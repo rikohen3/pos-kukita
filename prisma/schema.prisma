@@ -144,3 +144,14 @@ model OrderItem {
   price       Int
   subtotal    Int
 }
+
+// ==========================================
+// KAMAR BARU UNTUK RIWAYAT PENGHAPUSAN (AUDIT LOG)
+// ==========================================
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  action      String   // Jenis aksi: "HAPUS_STRUK", "BATAL_STOK", "HAPUS_PENGELUARAN"
+  description String   // Rincian apa yang dihapus
+  cashierName String   // Nama kasir yang menghapus
+  createdAt   DateTime @default(now()) // Waktu kejadian
+}
