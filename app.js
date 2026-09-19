@@ -146,7 +146,7 @@ function posApp() {
         
         async login() {
             if(!this.loginPin) return;
-            if (this.loginPin === '030388' || this.loginPin === '100515' || this.loginPin === '818283') { 
+            if (this.loginPin === '030388' || this.loginPin === '100515' || this.loginPin === '5456') { 
                 this.activeCashier = 'Admin Toko'; this.loginPin = ''; setTimeout(() => lucide.createIcons(), 50); 
                 await this.fetchCashiers(); await this.fetchCatalog(); return; 
             }
