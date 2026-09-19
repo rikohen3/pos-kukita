@@ -535,16 +535,9 @@ function posApp() {
             const selectedSup = this.options.suppliers.find(s => s.id == this.restockSupplierId);
             this.restockSupplierName = selectedSup ? selectedSup.name : 'Vendor Tidak Diketahui';
 
-            const pesan = isPrintingMalam ? 
-                "🔒 TUTUP NOTA MALAM\n\nMasukkan PIN Admin untuk menyetujui Pembayaran ke Vendor & Cetak Nota:" : 
-                "🔒 SIMPAN DRAFT PAGI/SIANG\n\nMasukkan PIN Admin untuk menyetujui Penambahan Stok tanpa mengeluarkan uang:";
-            
-            const sandi = prompt(pesan); 
-            if (!sandi) return;
-            try {
-                const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                if (!(await resPin.json()).success) return alert("❌ PIN Salah.");
-            } catch(e) { return alert("Gagal verifikasi PIN."); }
+            // KONFIRMASI TANPA PIN ADMIN (Agar Kasir Bisa Akses dengan Namanya Sendiri)
+            const aksi = isPrintingMalam ? "TUTUP NOTA MALAM (Bayar & Cetak)" : "SIMPAN DRAFT PAGI (Tambah Stok)";
+            if (!confirm(`⚠️ KONFIRMASI: ${this.activeCashier}\n\nAnda akan melakukan proses: ${aksi}\n\nApakah data kue, diskon, dan retur sudah benar?`)) return;
 
             this.isProcessing = true;
             try {
