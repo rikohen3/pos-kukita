@@ -81,6 +81,9 @@
                 <button @click="currentTab = 'produk'" :class="currentTab === 'produk' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="package" class="w-6 h-6 md:mr-3"></i><span class="hidden md:block font-medium">Master Produk</span></button>
                 <button @click="currentTab = 'pengeluaran'" :class="currentTab === 'pengeluaran' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="wallet" class="w-6 h-6 md:mr-3"></i><span class="hidden md:block font-medium">Pengeluaran</span></button>
                 <button @click="currentTab = 'laporan'; fetchReport();" :class="currentTab === 'laporan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="bar-chart-3" class="w-6 h-6 md:mr-3"></i><span class="hidden md:block font-medium">Laporan & Analitik</span></button>
+                <button x-show="activeCashier === 'Admin Toko'" @click="currentTab = 'riwayat'; fetchAuditLogs();" :class="currentTab === 'riwayat' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left">
+                    <i data-lucide="shield-alert" class="w-6 h-6 md:mr-3 text-orange-500"></i><span class="hidden md:block font-bold">Riwayat Aktivitas</span>
+                </button>
                 <button @click="currentTab = 'pengaturan'" :class="currentTab === 'pengaturan' ? 'bg-brand-brown text-white' : 'text-gray-600 hover:bg-brand-gray'" class="flex items-center p-3 rounded-lg transition text-left"><i data-lucide="settings" class="w-6 h-6 md:mr-3"></i><span class="hidden md:block font-medium">Pengaturan</span></button>
             </nav>
             <div class="p-4 border-t flex items-center justify-center md:justify-start"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold"><i data-lucide="wifi" class="w-5 h-5"></i></div><div class="hidden md:block ml-3"><p class="text-sm font-bold text-green-600">Server Online</p><p class="text-xs text-gray-500">Terkoneksi ke DB</p></div></div>
@@ -670,13 +673,17 @@
                             <p class="text-[7px] md:text-[9px] opacity-80 mt-1 md:mt-2 relative z-10 leading-tight">(Awal + Tunai) - Keluar</p>
                         </div>
                         
-                        <!-- Kotak Total Transaksi -->
-                        <div class="bg-white p-3 md:p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-start">
-                            <div class="flex items-center mb-1 md:mb-2">
-                                <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-2 md:mr-3"><i data-lucide="receipt" class="w-4 h-4 md:w-5 md:h-5"></i></div>
-                                <p class="text-[10px] md:text-sm font-semibold text-gray-500 leading-tight">Total Transaksi</p>
+                        <!-- Kotak Total Pengeluaran -->
+                        <div class="bg-white p-3 md:p-5 rounded-xl border border-red-100 shadow-sm flex flex-col justify-start relative overflow-hidden">
+                            <div class="absolute right-[-10px] top-[-10px] opacity-5 text-red-500"><i data-lucide="arrow-down-circle" class="w-16 h-16 md:w-24 md:h-24"></i></div>
+                            <div class="flex items-center mb-1 md:mb-2 relative z-10">
+                                <div class="w-8 h-8 md:w-10 md:h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center mr-2 md:mr-3"><i data-lucide="receipt" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                                <p class="text-[10px] md:text-sm font-semibold text-gray-500 leading-tight">Total Pengeluaran</p>
                             </div>
-                            <p class="text-lg md:text-2xl font-bold text-gray-800 mt-2"><span x-text="reportData.transactions"></span> <span class="text-[10px] md:text-sm font-normal text-gray-500">Struk</span></p>
+                            <p class="text-lg md:text-2xl font-bold text-red-600 mt-2 relative z-10" x-text="formatRupiah(reportData.expenses || 0)"></p>
+                            <div class="mt-2 pt-2 border-t border-red-50 relative z-10">
+                                <p class="text-[8px] md:text-[10px] text-gray-400 font-semibold uppercase">Vendor & Operasional</p>
+                            </div>
                         </div>
                     </div>
 
@@ -715,6 +722,10 @@
                 <div x-show="reportSubTab === 'struk'" style="display: none;">
                     <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
                         <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-orange"></i> Riwayat Transaksi Penjualan (Struk Harian) </h2>
+                        <div class="flex justify-between items-center mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            <span class="text-sm font-semibold text-blue-800">Total Transaksi Selesai:</span>
+                            <span class="text-lg font-bold text-blue-600" x-text="reportData.transactions + ' Struk'"></span>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse mt-4 min-w-max">
                                 <thead>
@@ -867,6 +878,51 @@
                     </div>
                 </div>
 
+            </div>
+        </main>
+
+        <!-- TAB RIWAYAT AKTIVITAS (AUDIT LOG) -->
+        <main x-show="currentTab === 'riwayat'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
+            <header class="flex-shrink-0 h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="shield-alert" class="text-orange-500"></i> Riwayat Penghapusan (CCTV)</h1>
+                    <p class="text-sm text-gray-500 hidden md:block">Pantau semua aktivitas penghapusan struk, stok, dan nota oleh kasir.</p>
+                </div>
+                <button @click="fetchAuditLogs()" class="bg-orange-50 text-orange-600 hover:bg-orange-100 p-2 rounded-lg transition"><i data-lucide="refresh-cw" class="w-5 h-5"></i></button>
+            </header>
+            
+            <div class="flex-1 p-4 md:p-6 overflow-y-auto pb-24">
+                <div class="bg-white rounded-xl shadow-sm border p-4 md:p-6 mb-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                                    <th class="p-3">Waktu Kejadian</th>
+                                    <th class="p-3">Nama Pelaku (Kasir)</th>
+                                    <th class="p-3">Jenis Aktivitas</th>
+                                    <th class="p-3">Keterangan / Rincian Dihapus</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="log in auditLogs" :key="log.id">
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="p-3 text-sm text-gray-500" x-text="new Date(log.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td>
+                                        <td class="p-3 font-bold text-gray-700">
+                                            <span class="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs" x-text="log.cashierName"></span>
+                                        </td>
+                                        <td class="p-3">
+                                            <span :class="log.action === 'HAPUS_STRUK' ? 'bg-red-100 text-red-700' : (log.action === 'BATAL_STOK' ? 'bg-orange-100 text-orange-700' : 'bg-purple-100 text-purple-700')" 
+                                                  class="px-2 py-1 rounded text-xs font-bold" 
+                                                  x-text="log.action.replace('_', ' ')"></span>
+                                        </td>
+                                        <td class="p-3 text-sm text-gray-600" x-text="log.description"></td>
+                                    </tr>
+                                </template>
+                                <tr x-show="auditLogs.length === 0"><td colspan="4" class="p-6 text-center text-gray-400">Belum ada riwayat aktivitas mencurigakan. Sistem aman!</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </main>
 

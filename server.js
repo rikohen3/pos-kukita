@@ -350,12 +350,16 @@ app.get('/api/reports/items', async (req, res) => {
 
 app.delete('/api/transactions/:invoice', async (req, res) => {
     const { invoice } = req.params;
+    const cashier = req.query.cashier || 'Admin'; // Tangkap nama kasir
     try {
         const sale = await prisma.sale.findUnique({ where: { invoice: invoice }, include: { items: true } });
         await prisma.$transaction(async (tx) => {
             for (const item of sale.items) { if (item.productId) { await tx.product.update({ where: { id: item.productId }, data: { stock: { increment: item.qty } } }); } }
             await tx.saleItem.deleteMany({ where: { saleId: sale.id } });
             await tx.sale.delete({ where: { id: sale.id } });
+
+            // Catat Riwayat CCTV
+            await tx.auditLog.create({ data: { action: 'HAPUS_STRUK', description: `Membatalkan struk ${invoice} senilai Rp ${sale.totalAmount}`, cashierName: cashier } });
         });
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
@@ -382,20 +386,48 @@ app.put('/api/settings/update-pin', async (req, res) => {
 
 app.delete('/api/stock-history/:id', async (req, res) => {
     const { id } = req.params;
+    const cashier = req.query.cashier || 'Admin';
     try {
         const history = await prisma.stockHistory.findUnique({ where: { id: parseInt(id) } });
         await prisma.$transaction(async (tx) => {
             await tx.product.update({ where: { id: history.productId }, data: { stock: { decrement: history.qtyAdded } } });
             await tx.stockHistory.delete({ where: { id: parseInt(id) } });
+
+            // Catat Riwayat CCTV
+            await tx.auditLog.create({ data: { action: 'BATAL_STOK', description: `Membatalkan masuknya ${history.productName} sebanyak ${history.qtyAdded} Pcs`, cashierName: cashier } });
         });
         res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
+// API Tarik Data CCTV
+app.get('/api/audit-logs', async (req, res) => {
+    try {
+        const logs = await prisma.auditLog.findMany({ orderBy: { createdAt: 'desc' }, take: 100 });
+        res.json({ success: true, data: logs });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.get('/api/cashiers', async (req, res) => { try { res.json({ success: true, data: await prisma.cashier.findMany() }); } catch (error) { res.status(500).json({ success: false }); } });
 app.post('/api/cashiers', async (req, res) => { try { res.json({ success: true, data: await prisma.cashier.create({ data: req.body }) }); } catch (error) { res.status(500).json({ success: false }); } });
 app.delete('/api/cashiers/:id', async (req, res) => { try { await prisma.cashier.delete({ where: { id: parseInt(req.params.id) } }); res.json({ success: true }); } catch (error) { res.status(500).json({ success: false }); } });
-app.delete('/api/expenses/:id', async (req, res) => { try { await prisma.expense.delete({ where: { id: parseInt(req.params.id) } }); res.json({ success: true }); } catch (error) { res.status(500).json({ success: false }); } });
+
+app.delete('/api/expenses/:id', async (req, res) => {
+    const cashier = req.query.cashier || 'Admin';
+    try {
+        const exp = await prisma.expense.findUnique({ where: { id: parseInt(req.params.id) } });
+        let jenis = exp.category === 'Pembelian Stok / Restock' ? 'HAPUS_NOTA_VENDOR' : 'HAPUS_PENGELUARAN';
+        let detail = exp.category === 'Pembelian Stok / Restock' ? `Nota Vendor senilai Rp ${exp.amount}` : `Pengeluaran (${exp.category}) senilai Rp ${exp.amount}`;
+
+        await prisma.$transaction(async (tx) => {
+            await tx.expense.delete({ where: { id: parseInt(req.params.id) } });
+
+            // Catat Riwayat CCTV
+            await tx.auditLog.create({ data: { action: jenis, description: `Menghapus ${detail}`, cashierName: cashier } });
+        });
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
 
 app.get('/', (req, res) => { res.send('Server Normal 🚀'); });
 app.listen(PORT, () => { console.log(`🚀 Server berjalan di Port ${PORT}`); });
