@@ -23,8 +23,11 @@ app.post('/api/checkout', async (req, res) => {
   const { cart, paymentMethod, cashReceived, totalAmount, isPackage, customerName } = req.body;
   try {
     const result = await prisma.$transaction(async (tx) => {
+      const lastSale = await tx.sale.findFirst({ orderBy: { id: 'desc' } });
+      const nextId = lastSale ? lastSale.id + 1 : 1;
+      const sequence = String(nextId).padStart(5, '0'); // Menghasilkan format 00001
       const prefix = isPackage ? 'PKT-' : 'INV-';
-      const invoiceNumber = customerName ? `${prefix}${Date.now()} (${customerName})` : `${prefix}${Date.now()}`;
+      const invoiceNumber = customerName ? `${prefix}${sequence} (${customerName})` : `${prefix}${sequence}`;
       
       const sale = await tx.sale.create({
         data: { invoice: invoiceNumber, totalAmount, paymentMethod, cashReceived: cashReceived || 0 }
@@ -89,7 +92,10 @@ app.post('/api/orders', async (req, res) => {
     const { customerName, customerPhone, pickupDate, cart, shippingCost, downPayment, paymentMethod, notes, cashierName, totalAmount } = req.body;
     try {
         const result = await prisma.$transaction(async (tx) => {
-            const invoice = `PO-${Date.now()}`;
+            const lastOrder = await tx.order.findFirst({ orderBy: { id: 'desc' } });
+            const nextId = lastOrder ? lastOrder.id + 1 : 1;
+            const sequence = String(nextId).padStart(5, '0');
+            const invoice = `PO-${sequence}`;
             const finalTotal = totalAmount || cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
             
             const ongkir = parseInt(shippingCost) || 0; const dp = parseInt(downPayment) || 0;
@@ -181,7 +187,10 @@ app.post('/api/restock', async (req, res) => {
             
             // Rumus baru: Total Bayar + Tambahan Ongkir - Diskon
             const grandTotal = totalCost - (parseInt(discount) || 0) + (parseInt(tambahan) || 0);
-            let expense = null; const notaID = `NOTA-${Date.now()}`;
+            const lastExp = await tx.expense.findFirst({ orderBy: { id: 'desc' } });
+            const nextId = lastExp ? lastExp.id + 1 : 1;
+            const sequence = String(nextId).padStart(5, '0');
+            let expense = null; const notaID = `NOTA-${sequence}`;
             
             if (printNow && paymentMethod !== 'Titip Jual') {
                 // Menyisipkan data 'tamb' (tambahan) ke dalam memori
