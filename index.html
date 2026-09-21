@@ -184,144 +184,158 @@
 
         <!-- TAB TERIMA BARANG VENDOR (DRAFT MALAM) -->
         <main x-show="currentTab === 'restock'" class="flex-1 flex flex-col bg-gray-50 overflow-hidden" style="display: none;">
-            <header class="flex-shrink-0 h-16 bg-white border-b flex items-center justify-between px-4 md:px-6">
-                <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="truck" class="text-blue-500"></i> Terima Barang (Konsinyasi)</h1>
+            <header class="flex-shrink-0 h-14 md:h-16 bg-white border-b flex items-center justify-between px-4 md:px-6 z-10">
+                <h1 class="text-lg md:text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="truck" class="text-blue-500 w-5 h-5 md:w-6 md:h-6"></i> Terima Barang <span class="hidden md:inline">(Konsinyasi)</span></h1>
             </header>
             
-            <div class="flex flex-1 overflow-hidden relative flex-col md:flex-row">
-                <div class="flex-1 flex flex-col min-w-0 border-r md:border-b-0 border-b">
+            <!-- PEMBUNGKUS LAYAR (Terbelah otomatis: Atas-Bawah di HP, Kiri-Kanan di Tablet) -->
+            <div class="flex flex-1 overflow-hidden relative flex-col md:flex-row w-full">
+                
+                <!-- PANEL KIRI (Pilih Supplier & Produk) -->
+                <div class="flex-1 flex flex-col min-w-0 min-h-0 border-b md:border-b-0 md:border-r border-gray-200 bg-gray-50 relative">
                     
-                    <div x-show="pendingDrafts.length > 0" class="m-4 mb-0 p-3 bg-yellow-50 border border-yellow-200 rounded-lg shadow-sm">
-                        <div class="flex items-center text-yellow-800 text-[10px] font-bold mb-2 uppercase">
-                            <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i> Pengingat: Draft Nota Belum Ditutup Lunas
+                    <div x-show="pendingDrafts.length > 0" class="m-2 md:m-4 mb-0 p-2 bg-yellow-50 border border-yellow-200 rounded-lg shadow-sm flex-shrink-0">
+                        <div class="flex items-center text-yellow-800 text-[10px] font-bold mb-1.5 uppercase">
+                            <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> Ada Draft Belum Lunas
                         </div>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-wrap gap-1.5">
                             <template x-for="sup in pendingDrafts" :key="sup.id">
-                                <button @click="restockSupplierId = sup.id; loadDraftSupplier()" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 shadow-sm transition-transform hover:scale-105">
+                                <button @click="restockSupplierId = sup.id; loadDraftSupplier()" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-transform hover:scale-105">
                                     <i data-lucide="clock" class="w-3 h-3"></i> <span x-text="sup.name"></span>
                                 </button>
                             </template>
                         </div>
                     </div>
 
-                    <div class="p-4 bg-white border-b shadow-sm z-10">
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">1. Pilih Supplier (Vendor Asal)</label>
-                        <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700">
-                            <option value="">-- Sentuh untuk Pilih Supplier --</option>
+                    <div class="p-2 md:p-4 bg-white border-b shadow-sm z-10 flex-shrink-0">
+                        <select x-model="restockSupplierId" @change="loadDraftSupplier()" class="w-full p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-bold text-blue-700 text-sm">
+                            <option value="">-- Pilih Supplier Dahulu --</option>
                             <template x-for="sup in options.suppliers" :key="sup.id">
                                 <option :value="sup.id" x-text="hasDraft(sup.id) ? '🟡 ' + sup.name + ' (Ada Draft)' : sup.name"></option>
                             </template>
                         </select>
                     </div>
-                    <div class="flex-1 p-4 overflow-y-auto pb-24 bg-gray-50">
-                        <div x-show="!restockSupplierId" class="flex flex-col items-center justify-center h-full text-gray-400">
-                            <i data-lucide="store" class="w-16 h-16 mb-4 opacity-30"></i>
-                            <p class="font-medium">Pilih supplier di atas terlebih dahulu.</p>
+
+                    <!-- Area Scroll Daftar Kue -->
+                    <div class="flex-1 overflow-y-auto p-2 md:p-4 relative">
+                        <div x-show="!restockSupplierId" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-50/80 z-10">
+                            <i data-lucide="store" class="w-12 h-12 mb-2 opacity-30"></i>
+                            <p class="font-medium text-xs md:text-sm">Pilih supplier di atas</p>
                         </div>
-                        <div x-show="restockSupplierId" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        <div x-show="restockSupplierId" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3">
                             <template x-for="product in products.filter(p => p.type === 'product' && p.supplierId == restockSupplierId)" :key="product.id">
-                                <div @click="addToRestockCart(product)" class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition flex flex-col relative group">
-                                    <div class="absolute top-2 right-2 bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i data-lucide="plus" class="w-4 h-4"></i></div>
-                                    <h3 class="font-bold text-sm text-gray-800 line-clamp-2 pr-6" x-text="product.name"></h3>
-                                    <p class="text-[10px] text-gray-500 mt-1">Stok Saat Ini: <span class="font-bold" x-text="product.stock"></span></p>
-                                    <p class="text-blue-600 font-bold mt-2 text-sm" x-text="'Modal: ' + formatRupiah(product.buyPrice || 0)"></p>
+                                <div @click="addToRestockCart(product)" class="bg-white p-2 md:p-3 rounded-lg md:rounded-xl shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition flex flex-col relative group">
+                                    <div class="absolute top-1 right-1 bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i data-lucide="plus" class="w-3 h-3"></i></div>
+                                    <h3 class="font-bold text-xs md:text-sm text-gray-800 line-clamp-2 pr-4" x-text="product.name"></h3>
+                                    <p class="text-[9px] md:text-[10px] text-gray-500 mt-1">Stok Etalase: <span class="font-bold" x-text="product.stock"></span></p>
+                                    <p class="text-blue-600 font-bold mt-1.5 md:mt-2 text-[10px] md:text-xs" x-text="'Modal: ' + formatRupiah(product.buyPrice || 0)"></p>
                                 </div>
                             </template>
                         </div>
                     </div>
                 </div>
 
-                <!-- DIPERLEBAR AGAR FORM KIRI & KANAN LEBIH LEGA (md:w-96 lg:w-[450px]) -->
-                <aside class="flex-shrink-0 bg-white flex flex-col w-full md:w-96 lg:w-[450px] shadow-xl z-20">
-                    <div class="h-12 flex items-center justify-between px-4 border-b bg-blue-50 text-blue-800 font-bold text-sm">
-                        <div class="flex items-center"><i data-lucide="clipboard-list" class="w-4 h-4 mr-2"></i> Rincian Nota Datang</div>
-                        <div x-show="restockCart.length > 0" class="text-[10px] bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full animate-pulse">Draft Tersimpan</div>
+                <!-- PANEL KANAN (Keranjang Rincian Nota) -->
+                <aside class="flex-1 md:flex-none bg-white flex flex-col w-full md:w-[340px] lg:w-[420px] shadow-xl z-20 min-h-0 border-t md:border-t-0">
+                    
+                    <div class="h-10 md:h-12 flex items-center justify-between px-3 md:px-4 border-b bg-blue-50 text-blue-800 font-bold text-xs md:text-sm flex-shrink-0">
+                        <div class="flex items-center"><i data-lucide="clipboard-list" class="w-4 h-4 mr-1.5 md:mr-2"></i> Rincian Nota Datang</div>
+                        <div x-show="restockCart.length > 0" class="text-[9px] bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full animate-pulse">Draft Aktif</div>
                     </div>
-                    <div class="flex-1 overflow-y-auto p-2 md:p-3 flex flex-col gap-2 relative">
+                    
+                    <!-- Area Scroll Keranjang -->
+                    <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-2 bg-gray-50">
                         <template x-if="restockCart.length === 0">
-                            <div class="text-center text-gray-400 mt-10"><i data-lucide="box" class="w-10 h-10 mx-auto mb-2 opacity-30"></i><p class="text-xs">Klik kue di sebelah kiri<br>untuk memasukkan ke nota.</p></div>
+                            <div class="text-center text-gray-400 mt-8 flex flex-col items-center">
+                                <i data-lucide="box" class="w-8 h-8 mb-2 opacity-30"></i>
+                                <p class="text-[10px] md:text-xs">Nota masih kosong.<br>Klik produk di sebelah kiri.</p>
+                            </div>
                         </template>
                         <template x-for="(item, index) in restockCart" :key="index">
-                            <div class="p-2 md:p-3 border rounded-xl bg-gray-50 shadow-sm" :class="item.alreadyInStock ? 'border-green-300' : 'border-gray-200'">
-                                <div class="flex justify-between items-center mb-2 border-b border-gray-200 pb-2">
-                                    <div class="flex items-center gap-1 flex-1 pr-2">
-                                        <h4 class="font-bold text-sm text-gray-800 leading-tight line-clamp-1" x-text="item.name"></h4>
-                                        <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500 flex-shrink-0" x-show="item.alreadyInStock" title="Sudah masuk stok pagi"></i>
+                            <div class="p-2 border rounded-lg bg-white shadow-sm flex flex-col" :class="item.alreadyInStock ? 'border-green-300' : 'border-gray-200'">
+                                
+                                <div class="flex justify-between items-start mb-2 gap-2">
+                                    <div class="flex-1 min-w-0 flex items-start gap-1">
+                                        <h4 class="font-bold text-[11px] md:text-xs text-gray-800 leading-tight truncate" x-text="item.name"></h4>
+                                        <i data-lucide="check-circle-2" class="w-3 h-3 text-green-500 flex-shrink-0 mt-0.5" x-show="item.alreadyInStock" title="Sudah masuk stok pagi"></i>
                                     </div>
-                                    <button @click="removeRestockItem(index)" :disabled="isProcessing" class="text-red-400 hover:text-red-600 transition disabled:opacity-50">
-                                        <i data-lucide="x-circle" class="w-5 h-5"></i>
+                                    <button @click="removeRestockItem(index)" :disabled="isProcessing" class="flex-shrink-0 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition disabled:opacity-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                     </button>
                                 </div>
                                 
-                                <!-- FORM MASUK & RETUR DIBUAT SEJAJAR KIRI-KANAN -->
+                                <!-- Input Sejajar -->
                                 <div class="grid grid-cols-2 gap-2">
-                                    <!-- Masuk -->
-                                    <div class="flex flex-col bg-white border border-gray-200 rounded p-1.5 shadow-sm">
-                                        <span class="text-[9px] font-bold text-gray-500 mb-1 text-center">BARANG MASUK</span>
-                                        <div class="flex items-center justify-center">
-                                            <button @click="updateRestockQty(index, -1)" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-l text-sm font-bold text-gray-600 bg-gray-50">-</button>
-                                            <input type="number" x-model.number="item.qty" @input="saveDraftLocally()" class="w-10 text-center text-xs font-bold border-none outline-none h-7 bg-transparent" min="0">
-                                            <button @click="updateRestockQty(index, 1)" class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-r text-sm font-bold text-gray-600 bg-gray-50">+</button>
+                                    <div class="flex flex-col border border-gray-200 rounded p-1 md:p-1.5 bg-gray-50">
+                                        <span class="text-[8px] md:text-[9px] font-bold text-gray-500 mb-1 text-center uppercase tracking-wider">Masuk / Datang</span>
+                                        <div class="flex items-center justify-between bg-white rounded border border-gray-200 shadow-sm">
+                                            <button @click="updateRestockQty(index, -1)" class="w-6 h-6 md:w-7 md:h-7 flex items-center justify-center bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-l text-sm font-bold">-</button>
+                                            <input type="number" x-model.number="item.qty" @input="saveDraftLocally()" class="w-8 md:w-10 text-center text-[11px] md:text-xs font-bold outline-none bg-transparent p-0">
+                                            <button @click="updateRestockQty(index, 1)" class="w-6 h-6 md:w-7 md:h-7 flex items-center justify-center bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-r text-sm font-bold">+</button>
                                         </div>
                                     </div>
                                     
-                                    <!-- Retur -->
-                                    <div class="flex flex-col bg-red-50 border border-red-100 rounded p-1.5 shadow-sm">
-                                        <span class="text-[9px] font-bold text-red-500 mb-1 text-center">RETUR (DITARIK)</span>
-                                        <div class="flex items-center justify-center">
-                                            <button @click="updateReturQty(index, -1)" class="w-7 h-7 flex items-center justify-center hover:bg-red-100 rounded-l text-red-600 font-bold bg-white shadow-sm">-</button>
-                                            <input type="number" x-model.number="item.returQty" @input="validateReturQty(index)" class="w-10 text-center text-xs font-bold text-red-600 outline-none p-0 h-7 bg-transparent" min="0">
-                                            <button @click="updateReturQty(index, 1)" class="w-7 h-7 flex items-center justify-center hover:bg-red-100 rounded-r text-red-600 font-bold bg-white shadow-sm">+</button>
+                                    <div class="flex flex-col border border-red-100 rounded p-1 md:p-1.5 bg-red-50">
+                                        <span class="text-[8px] md:text-[9px] font-bold text-red-500 mb-1 text-center uppercase tracking-wider">Retur (Ditarik)</span>
+                                        <div class="flex items-center justify-between bg-white rounded border border-red-200 shadow-sm">
+                                            <button @click="updateReturQty(index, -1)" class="w-6 h-6 md:w-7 md:h-7 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 rounded-l text-sm font-bold">-</button>
+                                            <input type="number" x-model.number="item.returQty" @input="validateReturQty(index)" class="w-8 md:w-10 text-center text-[11px] md:text-xs font-bold text-red-600 outline-none bg-transparent p-0">
+                                            <button @click="updateReturQty(index, 1)" class="w-6 h-6 md:w-7 md:h-7 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 rounded-r text-sm font-bold">+</button>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="text-right mt-2 pt-1.5 border-t border-gray-200 border-dashed text-[11px] font-bold text-blue-600" x-text="'Dibayar: ' + formatRupiah(item.buyPrice * (item.qty - (item.returQty || 0)))"></div>
+                                <div class="text-right mt-1.5 text-[9px] md:text-[10px] font-bold text-blue-600 border-t border-dashed border-gray-200 pt-1.5 flex justify-between">
+                                    <span class="text-gray-400">Bayar Vendor:</span>
+                                    <span x-text="formatRupiah(item.buyPrice * (item.qty - (item.returQty || 0)))"></span>
+                                </div>
                             </div>
                         </template>
-                        <div x-show="restockCart.length > 0" class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <label class="flex items-start gap-2 text-sm text-yellow-800 font-medium cursor-pointer">
-                                <input type="checkbox" x-model="restockStockAddedPagi" class="w-5 h-5 mt-0.5 accent-brand-brown">
-                                <span class="leading-tight text-[10px]"><b>Koreksi Stok:</b> Centang jika stok sudah ditambah manual pagi tadi.</span>
+                        
+                        <div x-show="restockCart.length > 0" class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-center">
+                            <label class="inline-flex items-center gap-1.5 cursor-pointer text-left">
+                                <input type="checkbox" x-model="restockStockAddedPagi" class="w-3.5 h-3.5 accent-brand-brown">
+                                <span class="text-[9px] md:text-[10px] text-yellow-800 font-medium"><b>Centang ini</b> jika fisik sudah dimasukkan manual ke rak etalase pagi tadi.</span>
                             </label>
                         </div>
                     </div>
                     
-                    <!-- FOOTER DIBUAT JAUH LEBIH KOMPAK & SEJAJAR -->
-                    <div class="p-3 border-t bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                        <div class="grid grid-cols-2 gap-2 mb-2">
-                            <!-- Potongan -->
-                            <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-2 py-1.5">
-                                <span class="text-[10px] font-bold text-gray-500 uppercase">Potongan</span>
-                                <input type="number" x-model="restockDiscount" @change="saveDraftLocally()" placeholder="0" class="w-16 text-right text-xs font-bold outline-none text-red-500 bg-transparent">
+                    <!-- FOOTER CHECKOUT KOMPAK (Selalu nempel di bawah) -->
+                    <div class="flex-shrink-0 p-2 md:p-3 bg-white border-t border-gray-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-30">
+                        <div class="flex gap-2 mb-2">
+                            <div class="flex-1 flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-1.5 py-1">
+                                <span class="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase">Potong</span>
+                                <input type="number" x-model="restockDiscount" @change="saveDraftLocally()" placeholder="0" class="w-12 md:w-16 text-right text-[10px] md:text-xs font-bold outline-none text-red-500 bg-transparent">
                             </div>
-                            <!-- Tambahan -->
-                            <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-2 py-1.5">
-                                <span class="text-[10px] font-bold text-gray-500 uppercase">Tamb. Biaya</span>
-                                <input type="number" x-model="restockTambahan" @change="saveDraftLocally()" placeholder="0" class="w-16 text-right text-xs font-bold outline-none text-blue-500 bg-transparent">
+                            <div class="flex-1 flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-1.5 py-1">
+                                <span class="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase">Ongkir</span>
+                                <input type="number" x-model="restockTambahan" @change="saveDraftLocally()" placeholder="0" class="w-12 md:w-16 text-right text-[10px] md:text-xs font-bold outline-none text-blue-500 bg-transparent">
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between mb-2 border-b border-gray-100 pb-2">
-                            <span class="text-xs font-bold text-gray-800">Total Akhir (<span x-text="restockCart.reduce((s,i)=>s+(i.qty - (i.returQty||0)),0)"></span> pcs)</span>
-                            <span class="font-extrabold text-xl text-blue-600" x-text="formatRupiah(restockGrandTotal)"></span>
+                        <div class="flex justify-between items-end mb-2 px-1">
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold text-gray-400 uppercase">Total Tagihan</span>
+                                <span class="text-[10px] md:text-xs font-bold text-gray-800"><span x-text="restockCart.reduce((s,i)=>s+(i.qty - (i.returQty||0)),0)"></span> kue/pcs</span>
+                            </div>
+                            <span class="text-base md:text-xl font-extrabold text-blue-600 leading-none" x-text="formatRupiah(restockGrandTotal)"></span>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 mb-3">
-                            <select x-model="restockMethod" @change="saveDraftLocally()" class="w-full p-1.5 border border-gray-300 rounded text-[11px] font-bold outline-none text-gray-700 bg-white">
-                                <option value="Tunai">Tunai Laci</option>
-                                <option value="Transfer">Transfer Bank</option>
-                                <option value="Titip Jual">Kasbon / Titip</option>
+                        <div class="flex gap-2 mb-2 md:mb-3">
+                            <select x-model="restockMethod" @change="saveDraftLocally()" class="w-2/5 p-1.5 md:p-2 border border-gray-300 rounded text-[9px] md:text-[10px] font-bold outline-none text-gray-700 bg-white">
+                                <option value="Tunai">Uang Laci</option>
+                                <option value="Transfer">Transfer</option>
+                                <option value="Titip Jual">Kasbon/Tempo</option>
                             </select>
-                            <input type="text" x-model="restockNotes" @input="saveDraftLocally()" placeholder="Catatan opsi..." class="w-full p-1.5 border border-gray-300 rounded text-[11px] outline-none bg-white">
+                            <input type="text" x-model="restockNotes" @input="saveDraftLocally()" placeholder="Ketik keterangan..." class="w-3/5 p-1.5 md:p-2 border border-gray-300 rounded text-[9px] md:text-[10px] outline-none bg-white">
                         </div>
 
                         <div class="flex gap-2">
-                            <button @click="submitRestock(false)" :disabled="restockCart.length === 0 || isProcessing" class="flex-1 bg-yellow-500 text-yellow-900 py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1 hover:bg-yellow-600 disabled:opacity-50 transition-all shadow-sm">
-                                <i data-lucide="archive" class="w-4 h-4"></i> Draft Pagi
+                            <button @click="submitRestock(false)" :disabled="restockCart.length === 0 || isProcessing" class="flex-1 bg-yellow-500 text-yellow-900 py-2 md:py-2.5 rounded-lg font-bold text-[10px] md:text-xs flex items-center justify-center gap-1 hover:bg-yellow-600 disabled:opacity-50 transition-all shadow-sm">
+                                <i data-lucide="archive" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Draft Pagi
                             </button>
-                            <button @click="submitRestock(true)" :disabled="restockCart.length === 0 || isProcessing" class="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md">
-                                <i data-lucide="printer" class="w-4 h-4"></i> Tutup Nota
+                            <button @click="submitRestock(true)" :disabled="restockCart.length === 0 || isProcessing" class="flex-1 bg-blue-600 text-white py-2 md:py-2.5 rounded-lg font-bold text-[10px] md:text-xs flex items-center justify-center gap-1 hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm">
+                                <i data-lucide="printer" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Tutup Nota
                             </button>
                         </div>
                     </div>
