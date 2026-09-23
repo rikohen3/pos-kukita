@@ -629,7 +629,7 @@ function posApp() {
                         tambahan: this.restockTambahan,
                         paymentMethod: this.restockMethod, 
                         notes: (this.cleanNotes(this.restockNotes) + secretReturNote).trim(), 
-                        printNow: true 
+                        printNow: true, 
                         cashierName: this.activeCashier // <-- TAMBAHAN BARU: Kirim nama kasir ke server
                     };
                     
