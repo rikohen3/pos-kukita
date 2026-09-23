@@ -23,6 +23,7 @@ function posApp() {
         newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' },
         
         showDetailModal: false, selectedTx: null, selectedTxCart: [],
+        showEditStockModal: false, editStockData: { product: null, newStock: '', reason: '', notes: '' },
         saldoAwalLaci: 0,
         packageTotal: 0, productSortBy: 'name_asc', poList: [], piutangList: [], showPoModal: false,
         poForm: { name: '', phone: '', pickupDate: '', shippingCost: '', dp: '', paymentMethod: 'Tunai', notes: '' },
@@ -1019,29 +1020,45 @@ function posApp() {
         get totalPhysicalStock() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.stock > 0 ? p.stock : 0), 0); },
         get totalStockValue() { return this.products.filter(p => p.type === 'product').reduce((sum, p) => sum + (p.price * (p.stock > 0 ? p.stock : 0)), 0); },
         
+        closeEditStock() { this.showEditStockModal = false; },
+
         async updateStock(product) {
-            const sandi = prompt("🔒 Masukkan PIN Admin:"); if (!sandi) return;
+            const sandi = prompt("🔒 Masukkan PIN Admin untuk mengubah stok:"); if (!sandi) return;
             const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-            if (!(await resPin.json()).success) return alert("❌ Akses ditolak!");
+            if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Salah.");
             
-            const inputStr = prompt(`📦 TAMBAH / KURANGI STOK\n\nProduk: ${product.name}\nSisa Stok Saat Ini: ${product.stock} Pcs\n\nKetik jumlah kedatangan barang. (Gunakan angka minus jika kue basi/rusak)`, "0");
-            
-            if (inputStr === null || inputStr.trim() === "") return alert('Batal.'); const diffQty = parseInt(inputStr); if (isNaN(diffQty) || diffQty === 0) return alert('Batal.');
-            const newStock = product.stock + diffQty; if (newStock < 0) return alert('Stok akhir tidak boleh minus!');
+            // Buka jendela baru dengan data produk yang diklik
+            this.editStockData = { product: product, newStock: product.stock, reason: '', notes: '' };
+            this.showEditStockModal = true;
+            setTimeout(() => { lucide.createIcons(); }, 10);
+        },
+
+        async submitStockAdjustment() {
+            if (this.editStockData.newStock === '' || this.editStockData.newStock === this.editStockData.product.stock) return;
+            if (!this.editStockData.reason) return alert('Pilih alasan penyesuaian stok!');
+
+            this.isProcessing = true;
+            const diffQty = this.editStockData.newStock - this.editStockData.product.stock;
+            const reasonText = this.editStockData.reason + (this.editStockData.notes ? ` (${this.editStockData.notes})` : '');
+
             try {
-                // KIRIM NAMA KASIR KE SERVER
-                const res = await fetch(`${SERVER_URL}/api/products/${product.id}/stock-v2?cashier=${encodeURIComponent(this.activeCashier)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock }) });
+                // Kirim perubahan stok, nama kasir, beserta alasan lengkapnya ke server
+                const res = await fetch(`${SERVER_URL}/api/products/${this.editStockData.product.id}/stock-v2?cashier=${encodeURIComponent(this.activeCashier)}&reason=${encodeURIComponent(reasonText)}`, { 
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newStock: this.editStockData.newStock }) 
+                });
                 
                 if ((await res.json()).success) { 
                     if (diffQty > 0) { 
-                        localStorage.setItem('last_restock_date_' + product.id, new Date().toISOString()); 
+                        localStorage.setItem('last_restock_date_' + this.editStockData.product.id, new Date().toISOString()); 
                     } else if (diffQty < 0) {
-                        // JIKA MINUS (KUE BASI), REFRESH TABEL CCTV
                         this.fetchAuditLogs();
                     }
-                    alert(`Berhasil!`); this.fetchCatalog(); 
+                    alert(`✅ Penyesuaian stok berhasil disimpan!`); 
+                    this.closeEditStock();
+                    this.fetchCatalog(); 
                 } 
             } catch (e) { alert('Error koneksi saat ubah stok.'); }
+            finally { this.isProcessing = false; }
         },
         
         async deleteTransaction(invoice) {

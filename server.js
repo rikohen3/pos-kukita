@@ -276,23 +276,36 @@ app.post('/api/products', async (req, res) => {
 app.put('/api/products/:id/stock-v2', async (req, res) => {
     const { id } = req.params; 
     const { newStock } = req.body;
-    const cashier = req.query.cashier || 'Admin'; // Tangkap nama pelaku
+    const cashier = req.query.cashier || 'Admin';
+    const reason = req.query.reason || ''; // Tangkap alasan dari jendela baru
     
     try {
         const oldProduct = await prisma.product.findUnique({ where: { id: parseInt(id) } });
         const updatedProduct = await prisma.product.update({ where: { id: parseInt(id) }, data: { stock: newStock } });
         
         const selisih = newStock - oldProduct.stock;
+        let textAlasan = reason ? ` | Alasan: ${reason}` : '';
         
         if (selisih > 0) { 
-            // Jika nambah stok
+            // Masuk ke Riwayat Kedatangan Barang
             await prisma.stockHistory.create({ data: { productId: updatedProduct.id, productName: updatedProduct.name, qtyAdded: selisih, newTotal: newStock } }); 
+            
+            // Jika penambahan ini hasil dari tombol "Edit Stok" (bukan dari nota vendor), CATAT KE CCTV
+            if (reason) {
+                await prisma.auditLog.create({ 
+                    data: { 
+                        action: 'KOREKSI_STOK_PLUS', 
+                        description: `Menambah manual stok ${updatedProduct.name} (+${selisih} Pcs)${textAlasan}`, 
+                        cashierName: cashier 
+                    } 
+                });
+            }
         } else if (selisih < 0) {
-            // JIKA STOK DIKURANGI (MINUS) KARENA BASI/RUSAK, CATAT KE CCTV!
+            // JIKA STOK DIKURANGI, SELALU CATAT KE CCTV
             await prisma.auditLog.create({ 
                 data: { 
                     action: 'KOREKSI_STOK_MINUS', 
-                    description: `Mengurangi stok ${updatedProduct.name} sebanyak ${Math.abs(selisih)} Pcs (Sisa etalase: ${newStock})`, 
+                    description: `Mengurangi stok ${updatedProduct.name} (${selisih} Pcs)${textAlasan}`, 
                     cashierName: cashier 
                 } 
             });
