@@ -630,6 +630,7 @@ function posApp() {
                         paymentMethod: this.restockMethod, 
                         notes: (this.cleanNotes(this.restockNotes) + secretReturNote).trim(), 
                         printNow: true 
+                        cashierName: this.activeCashier // <-- TAMBAHAN BARU: Kirim nama kasir ke server
                     };
                     
                     const res = await fetch(`${SERVER_URL}/api/restock`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });

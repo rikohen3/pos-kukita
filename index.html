@@ -859,6 +859,9 @@
                                             <td class="p-3 text-sm text-gray-500" x-text="new Date(stok.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})"></td>
                                             <td class="p-3 text-sm font-bold text-gray-700" x-text="stok.productName"></td>
                                             <td class="p-3 text-center font-bold text-green-600" x-text="'+ ' + stok.qtyAdded + ' Pcs'"></td>
+                                            <td class="p-3 text-center font-bold text-gray-700">
+                                                <span class="bg-gray-200 text-gray-800 px-2 py-1 rounded text-[10px]" x-text="stok.cashierName || 'Sistem'"></span>
+                                            </td>
                                             <td class="p-3 text-right">
                                                 <button @click="deleteStockHistory(stok.id)" class="bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 border border-red-100 text-[10px] font-bold px-2 py-1 rounded flex items-center justify-end gap-1 ml-auto transition">
                                                     <i data-lucide="trash-2" class="w-3 h-3"></i> Batal Stok

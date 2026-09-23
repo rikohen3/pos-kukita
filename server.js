@@ -172,15 +172,19 @@ app.get('/api/piutang', async (req, res) => {
 });
 
 app.post('/api/restock', async (req, res) => {
-    const { supplierId, supplierName, items, discount, tambahan, paymentMethod, notes, printNow } = req.body;
+    // TAMBAHKAN cashierName di penangkap bawah ini:
+    const { supplierId, supplierName, items, discount, tambahan, paymentMethod, notes, printNow, cashierName } = req.body; 
     try {
         const result = await prisma.$transaction(async (tx) => {
             let totalCost = 0; const rincianNota = []; 
             for (const item of items) {
                 if(!item.alreadyInStock) {
                     const product = await tx.product.update({ where: { id: parseInt(item.id) }, data: { stock: { increment: parseInt(item.qty) } } });
-                    await tx.stockHistory.create({ data: { productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock } });
+                    
+                    // SISIPKAN cashierName di perintah create di bawah ini:
+                    await tx.stockHistory.create({ data: { productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock, cashierName: cashierName || 'Sistem' } });
                 }
+// ... sisa kodenya biarkan sama ...
                 totalCost += ((item.buyPrice || 0) * parseInt(item.qty));
                 rincianNota.push(`${item.name} (x${item.qty})`);
             }
@@ -287,9 +291,11 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
         let textAlasan = reason ? ` | Alasan: ${reason}` : '';
         
         if (selisih > 0) { 
-            // Masuk ke Riwayat Kedatangan Barang
-            await prisma.stockHistory.create({ data: { productId: updatedProduct.id, productName: updatedProduct.name, qtyAdded: selisih, newTotal: newStock } }); 
+            // Masuk ke Riwayat Kedatangan Barang (Sisipkan cashierName: cashier)
+            await prisma.stockHistory.create({ data: { productId: updatedProduct.id, productName: updatedProduct.name, qtyAdded: selisih, newTotal: newStock, cashierName: cashier } }); 
             
+            // ... (sisa kodenya biarkan sama) ...
+                
             // Jika penambahan ini hasil dari tombol "Edit Stok" (bukan dari nota vendor), CATAT KE CCTV
             if (reason) {
                 await prisma.auditLog.create({ 

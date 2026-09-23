@@ -101,6 +101,7 @@ model StockHistory {
   productName String
   qtyAdded    Int
   newTotal    Int
+  cashierName String   @default("Sistem") // <-- TAMBAHAN BARU
   createdAt   DateTime @default(now())
 }
 
