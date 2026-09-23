@@ -19,6 +19,17 @@ app.get('/api/catalog', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// API KHUSUS RESET UMUR KUE
+app.put('/api/products/:id/reset-age', async (req, res) => {
+    try {
+        await prisma.product.update({ 
+            where: { id: parseInt(req.params.id) }, 
+            data: { lastRestock: new Date() } 
+        });
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
 app.post('/api/checkout', async (req, res) => {
   const { cart, paymentMethod, cashReceived, totalAmount, isPackage, customerName } = req.body;
   try {
@@ -179,9 +190,12 @@ app.post('/api/restock', async (req, res) => {
             let totalCost = 0; const rincianNota = []; 
             for (const item of items) {
                 if(!item.alreadyInStock) {
-                    const product = await tx.product.update({ where: { id: parseInt(item.id) }, data: { stock: { increment: parseInt(item.qty) } } });
+                    const product = await tx.product.update({ 
+                        where: { id: parseInt(item.id) }, 
+                        data: { stock: { increment: parseInt(item.qty) }, lastRestock: new Date() } // <-- Catat tanggal umur kue
+                    });
                     
-                    // SISIPKAN cashierName di perintah create di bawah ini:
+                    // <-- Catat nama kasir ke CCTV Kedatangan Barang
                     await tx.stockHistory.create({ data: { productId: product.id, productName: product.name, qtyAdded: parseInt(item.qty), newTotal: product.stock, cashierName: cashierName || 'Sistem' } });
                 }
 // ... sisa kodenya biarkan sama ...
@@ -281,40 +295,26 @@ app.put('/api/products/:id/stock-v2', async (req, res) => {
     const { id } = req.params; 
     const { newStock } = req.body;
     const cashier = req.query.cashier || 'Admin';
-    const reason = req.query.reason || ''; // Tangkap alasan dari jendela baru
+    const reason = req.query.reason || ''; 
     
     try {
         const oldProduct = await prisma.product.findUnique({ where: { id: parseInt(id) } });
-        const updatedProduct = await prisma.product.update({ where: { id: parseInt(id) }, data: { stock: newStock } });
-        
         const selisih = newStock - oldProduct.stock;
+        
+        // Catat tanggal umur kue JIKA STOK BERTAMBAH
+        let updateData = { stock: newStock };
+        if (selisih > 0) updateData.lastRestock = new Date();
+
+        const updatedProduct = await prisma.product.update({ where: { id: parseInt(id) }, data: updateData });
         let textAlasan = reason ? ` | Alasan: ${reason}` : '';
         
         if (selisih > 0) { 
-            // Masuk ke Riwayat Kedatangan Barang (Sisipkan cashierName: cashier)
             await prisma.stockHistory.create({ data: { productId: updatedProduct.id, productName: updatedProduct.name, qtyAdded: selisih, newTotal: newStock, cashierName: cashier } }); 
-            
-            // ... (sisa kodenya biarkan sama) ...
-                
-            // Jika penambahan ini hasil dari tombol "Edit Stok" (bukan dari nota vendor), CATAT KE CCTV
             if (reason) {
-                await prisma.auditLog.create({ 
-                    data: { 
-                        action: 'KOREKSI_STOK_PLUS', 
-                        description: `Menambah manual stok ${updatedProduct.name} (+${selisih} Pcs)${textAlasan}`, 
-                        cashierName: cashier 
-                    } 
-                });
+                await prisma.auditLog.create({ data: { action: 'KOREKSI_STOK_PLUS', description: `Menambah manual stok ${updatedProduct.name} (+${selisih} Pcs)${textAlasan}`, cashierName: cashier } });
             }
         } else if (selisih < 0) {
-            // JIKA STOK DIKURANGI, SELALU CATAT KE CCTV
-            await prisma.auditLog.create({ 
-                data: { 
-                    action: 'KOREKSI_STOK_MINUS', 
-                    description: `Mengurangi stok ${updatedProduct.name} (${selisih} Pcs)${textAlasan}`, 
-                    cashierName: cashier 
-                } 
-            });
+            await prisma.auditLog.create({ data: { action: 'KOREKSI_STOK_MINUS', description: `Mengurangi stok ${updatedProduct.name} (${selisih} Pcs)${textAlasan}`, cashierName: cashier } });
         }
         res.json({ success: true, data: updatedProduct });
     } catch (error) { res.status(500).json({ success: false }); }

@@ -547,9 +547,9 @@
                                         <td class="p-3">
                                             <span x-show="product.type === 'product'" class="px-2 py-1 bg-green-100 text-green-700 rounded text-sm font-bold" x-text="product.stock + ' Pcs'"></span>
                                             <!-- INDIKATOR UMUR KUE (ALARM MERAH JIKA LEWAT BATAS WAKTU) -->
-                                            <div x-show="product.type === 'product' && product.lastRestock && product.stock > 0" class="mt-1.5 text-[10px] font-medium flex items-center flex-wrap gap-1" :class="isStockOld(product) ? 'text-red-600 font-bold' : 'text-gray-400'">
+                                            <div x-show="product.type === 'product' && product.stock > 0" class="mt-1.5 text-[10px] font-medium flex items-center flex-wrap gap-1" :class="isStockOld(product) ? 'text-red-600 font-bold' : 'text-gray-400'">
                                                 <i data-lucide="clock" class="w-3 h-3"></i> 
-                                                <span x-text="'Masuk: ' + formatDateShort(product.lastRestock)"></span>
+                                                <span x-text="product.lastRestock ? 'Masuk: ' + formatDateShort(product.lastRestock) : 'Waktu masuk belum tercatat'"></span>
                                                 <span x-show="isStockOld(product)" title="Cek Fisik! Barang ini kemungkinan basi/kadaluarsa karena nginap terlalu lama." class="bg-red-100 px-1 rounded animate-pulse">⚠️ LAMA</span>
                                                 <!-- TOMBOL RESET UMUR -->
                                                 <button x-show="isStockOld(product)" @click="resetStockAge(product.id, product.name)" class="bg-green-100 hover:bg-green-200 text-green-700 px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1 cursor-pointer transition">

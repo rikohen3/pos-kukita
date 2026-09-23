@@ -93,10 +93,12 @@ function posApp() {
             return date.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'}) + ' ' + date.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
         },
         
-        resetStockAge(id, name) {
+        async resetStockAge(id, name) {
             if(!confirm(`Perbarui umur kue ${name}?\n\nTanggal masuk kue ini akan di-reset menjadi hari ini sehingga peringatan kadaluarsa hilang.`)) return;
-            localStorage.setItem('last_restock_date_' + id, new Date().toISOString());
-            this.fetchCatalog();
+            try {
+                const res = await fetch(`${SERVER_URL}/api/products/${id}/reset-age`, { method: 'PUT' });
+                if ((await res.json()).success) { this.fetchCatalog(); }
+            } catch(e) {}
         },
 
         restorePrices() {
@@ -172,12 +174,11 @@ function posApp() {
                 const res = await fetch(`${SERVER_URL}/api/catalog`); const result = await res.json();
                 if(result.success) {
                     const prodList = result.data.products.map(p => {
-                        const lastRestock = localStorage.getItem('last_restock_date_' + p.id);
                         return { 
                             id: p.id, name: p.name, category: p.category.name, supplier: p.supplier.name, supplierId: p.supplier.id, 
                             price: p.sellPrice, buyPrice: p.buyPrice, stock: p.stock, image: p.image || null, 
                             icon: p.category.name.includes('Minuman') ? '🍹' : '🍩', type: 'product',
-                            lastRestock: lastRestock
+                            lastRestock: p.lastRestock // <-- Ditarik dari Database Online
                         };
                     });
                     const pkgList = result.data.packages.map(p => ({ id: p.id, name: p.name, category: 'Paket', supplier: 'Kombinasi Supplier', supplierId: null, price: p.sellPrice, stock: 999, image: p.image || null, icon: '🎁', type: 'package' }));
