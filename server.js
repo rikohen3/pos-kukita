@@ -416,7 +416,7 @@ app.post('/api/settings/verify-pin', async (req, res) => {
     try {
         const pinSetting = await prisma.setting.findUnique({ where: { name: 'admin_pin' } });
         const validPin = pinSetting ? pinSetting.value : '030388'; 
-        if (pin === validPin || pin === '100515' || pin === '5456') { res.json({ success: true }); } else { res.json({ success: false }); }
+        if (pin === validPin || pin === '100515' || pin === '1919') { res.json({ success: true }); } else { res.json({ success: false }); }
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
