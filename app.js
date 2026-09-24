@@ -921,13 +921,6 @@ function posApp() {
         },
 
         async addSupplier() {
-            const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin untuk menambah Vendor baru:");
-            if (!sandi) return;
-            try {
-                const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN salah.");
-            } catch(e) { return alert("Gagal verifikasi PIN."); }
-
             const newName = prompt("🚚 TAMBAH VENDOR\n\nKetik nama Vendor / Supplier baru (Contoh: Titip Jajan, Mba Rini):");
             if (!newName || newName.trim() === "") return;
 
@@ -949,13 +942,6 @@ function posApp() {
         },
 
         async addCategory() {
-            const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin untuk menambah Kategori baru:");
-            if (!sandi) return;
-            try {
-                const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN salah.");
-            } catch(e) { return alert("Gagal verifikasi PIN."); }
-
             const newName = prompt("📁 TAMBAH KATEGORI\n\nKetik nama Kategori baru (Contoh: Kue Kering, Minuman Dingin):");
             if (!newName || newName.trim() === "") return;
 
@@ -988,12 +974,6 @@ function posApp() {
         },
 
         async openAddProduct() {
-            const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin Anda untuk menambah produk baru ke dalam sistem:"); if (!sandi) return;
-            try {
-                const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
-                if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN yang dimasukkan salah.");
-            } catch(e) { return alert("Gagal memverifikasi PIN. Pastikan internet lancar."); }
-
             this.fetchOptions();
             this.newProduct = { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' };
             this.showAddProductModal = true;
