@@ -19,8 +19,9 @@ function posApp() {
         reportData: { revenue: 0, revenueCash: 0, revenueQris: 0, piutang: 0, grossProfit: 0, expenses: 0, expCash: 0, expTransfer: 0, transactions: 0, netProfit: 0, salesHistory: [], stockHistory: [], vendorHistory: [] }, 
         customerName: '', itemReports: [], reportPeriod: 'today', startDate: '', endDate: '', reportSubTab: 'ringkasan',
         oldPin: '', newPin: '', isPrintingReceipt: false, isPrintingCatalog: false,
-        showAddProductModal: false, options: { categories: [], suppliers: [] }, 
+        showAddProductModal: false, showEditProductModal: false, options: { categories: [], suppliers: [] }, 
         newProduct: { name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', stock: '', image: '' },
+        editProductData: { id: '', name: '', categoryId: '', supplierId: '', buyPrice: '', sellPrice: '', image: '' },
         
         showDetailModal: false, selectedTx: null, selectedTxCart: [],
         showEditStockModal: false, editStockData: { product: null, newStock: '', reason: '', notes: '' },
@@ -996,6 +997,31 @@ function posApp() {
                 const result = await res.json();
                 if (result.success) { alert('✅ Produk berhasil ditambahkan!'); this.closeAddProduct(); this.fetchCatalog(); } else { alert('Gagal.'); }
             } catch (e) {} finally { this.isProcessing = false; }
+        },
+
+        async openEditProduct(product) {
+            // -- MULAI GEMBOK PIN ADMIN --
+            const sandi = prompt("🔒 OTORISASI ADMIN\n\nMasukkan PIN Admin untuk mengubah nama atau harga produk:");
+            if (!sandi) return;
+            try {
+                const resPin = await fetch(`${SERVER_URL}/api/settings/verify-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: sandi }) });
+                if (!(await resPin.json()).success) return alert("❌ Akses ditolak! PIN Admin salah.");
+            } catch(e) { return alert("Gagal verifikasi PIN."); }
+            // -- SELESAI GEMBOK --
+
+            await this.fetchOptions();
+            const cat = this.options.categories.find(c => c.name === product.category);
+            this.editProductData = {
+                id: product.id,
+                name: product.name,
+                categoryId: cat ? cat.id : '',
+                supplierId: product.supplierId,
+                buyPrice: product.buyPrice,
+                sellPrice: product.price,
+                image: product.image || ''
+            };
+            this.showEditProductModal = true;
+            setTimeout(() => { lucide.createIcons(); }, 10);
         },
 
         get totalProductTypes() { return this.products.filter(p => p.type === 'product').length; },

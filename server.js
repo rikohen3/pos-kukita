@@ -290,6 +290,17 @@ app.post('/api/products', async (req, res) => {
     res.json({ success: true, data: newProduct });
   } catch (error) { res.status(500).json({ success: false }); }
 });
+app.put('/api/products/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, categoryId, supplierId, buyPrice, sellPrice, image } = req.body;
+  try {
+    const updatedProduct = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: { name, categoryId: parseInt(categoryId), supplierId: parseInt(supplierId), buyPrice: parseInt(buyPrice), sellPrice: parseInt(sellPrice), image: image || null }
+    });
+    res.json({ success: true, data: updatedProduct });
+  } catch (error) { res.status(500).json({ success: false }); }
+});
 
 app.put('/api/products/:id/stock-v2', async (req, res) => {
     const { id } = req.params; 

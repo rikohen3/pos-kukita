@@ -557,7 +557,10 @@
                                                 </button>
                                             </div>
                                         </td>
-                                        <td class="p-3"><button x-show="product.type === 'product'" @click="updateStock(product)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-1 px-3 rounded text-sm flex items-center gap-1 shadow-sm"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit Stok</button></td>
+                                        <td class="p-3 flex items-center gap-1">
+                                            <button x-show="product.type === 'product'" @click="openEditProduct(product)" class="bg-yellow-50 hover:bg-yellow-100 text-yellow-600 font-bold py-1 px-2 rounded text-xs flex items-center gap-1 shadow-sm border border-yellow-100"><i data-lucide="edit" class="w-3 h-3"></i> Ubah Info</button>
+                                            <button x-show="product.type === 'product'" @click="updateStock(product)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-1 px-2 rounded text-xs flex items-center gap-1 shadow-sm border border-blue-100"><i data-lucide="layers" class="w-3 h-3"></i> Stok</button>
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -1046,6 +1049,57 @@
                         <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
                         <i data-lucide="save" x-show="!isProcessing"></i>
                         <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PRODUK'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- JENDELA EDIT PRODUK -->
+        <div x-show="showEditProductModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 no-print" style="display: none;">
+            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden" @click.away="closeEditProduct()">
+                <div class="bg-yellow-500 p-4 text-white flex justify-between items-center">
+                    <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="edit"></i> Ubah Data Produk</h2>
+                    <button @click="closeEditProduct()" class="hover:bg-white hover:bg-opacity-20 p-1 rounded"><i data-lucide="x"></i></button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[80vh]">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kue / Produk <span class="text-red-500">*</span></label>
+                            <input type="text" x-model="editProductData.name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
+                                <select x-model="editProductData.categoryId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+                                    <template x-for="cat in options.categories" :key="cat.id"><option :value="cat.id" x-text="cat.name"></option></template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Supplier Asal <span class="text-red-500">*</span></label>
+                                <select x-model="editProductData.supplierId" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+                                    <template x-for="sup in options.suppliers" :key="sup.id"><option :value="sup.id" x-text="sup.name"></option></template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Modal</label>
+                                <input type="number" x-model="editProductData.buyPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Harga Jual <span class="text-red-500">*</span></label>
+                                <input type="number" x-model="editProductData.sellPrice" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+                            </div>
+                        </div>
+                        <div class="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Link Foto</label>
+                            <input type="text" x-model="editProductData.image" class="w-full p-2 border border-orange-200 rounded-lg outline-none text-sm bg-white">
+                        </div>
+                    </div>
+                    <button @click="submitEditProduct()" :disabled="isProcessing" class="w-full mt-6 bg-yellow-500 text-white py-3 rounded-xl font-bold text-lg hover:bg-yellow-600 disabled:opacity-50 flex justify-center items-center gap-2">
+                        <i data-lucide="loader-2" class="animate-spin" x-show="isProcessing"></i>
+                        <i data-lucide="save" x-show="!isProcessing"></i>
+                        <span x-text="isProcessing ? 'Menyimpan...' : 'SIMPAN PERUBAHAN'"></span>
                     </button>
                 </div>
             </div>
